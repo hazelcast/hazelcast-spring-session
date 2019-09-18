@@ -27,8 +27,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 /**
- * Integration tests that check the underlying data source - in this case Hazelcast
- * Server.
+ * Integration tests for {@link HazelcastIndexedSessionRepository} using embedded
+ * topology.
  *
  * @author Tommy Ludwig
  * @author Vedran Pavic
@@ -36,7 +36,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
 @WebAppConfiguration
-class HazelcastServerRepositoryITests extends AbstractHazelcastRepositoryITests {
+class EmbeddedHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
 
 	@EnableHazelcastHttpSession
 	@Configuration
