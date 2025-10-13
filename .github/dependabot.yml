@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "02:00"
+    labels:
+      - "Source: Internal"
+      - "Type: Dependencies"
+    open-pull-requests-limit: 100
+    target-branch: master
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "07:00"
+    labels:
+      - "Source: Internal"
+      - "Type: Dependencies"
+      - "Module: GitHub Actions"
+    open-pull-requests-limit: 100
