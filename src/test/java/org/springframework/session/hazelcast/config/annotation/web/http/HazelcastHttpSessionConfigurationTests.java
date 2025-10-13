@@ -420,6 +420,7 @@ class HazelcastHttpSessionConfigurationTests {
 		static IMap<Object, Object> hazelcastInstanceSessions = mock(IMap.class);
 
 		@Bean
+        @SpringSessionHazelcastInstance
 		HazelcastInstance hazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(hazelcastInstanceSessions);
