@@ -10,38 +10,41 @@ It also provides transparent integration with:
 
 ## This module 
 
-Hazelcast Spring Session uses https://github.com/hazelcast/hazelcast[Hazelcast Platform] to store user's session information in a cluster, The SessionRepository uses Hazelcast's IMap to store the session information, giving users https://www.designgurus.io/answers/detail/what-is-the-cap-theorem[AP characteristics].
+Hazelcast Spring Session uses [Hazelcast Platform](https://github.com/hazelcast/hazelcast) to store user's session information in a cluster, The SessionRepository uses Hazelcast's IMap to store the session information, giving users [AP characteristics](https://www.designgurus.io/answers/detail/what-is-the-cap-theorem).
 
 == Getting Started
 
-We recommend you visit the https://docs.hazelcast.com/[Hazelcast Documentation site] and check out provided tutorials and https://github.com/hazelcast/hazelcast-code-samples[Hazelcast Code Samples] for additional code samples (TBD).
+We recommend you visit the [Hazelcast Documentation site](https://docs.hazelcast.com/) and check out provided tutorials and [Hazelcast Code Samples](https://github.com/hazelcast/hazelcast-code-samples) for additional code samples (TBD).
 
 == Building from Source
 
-Hazelcasst Spring Session uses a https://gradle.org[Gradle]-based build system.
+Hazelcasst Spring Session uses a [Gradle](https://gradle.org-based) build system.
 In the instructions below, `./gradlew` is invoked from the root of the source tree and serves as
 a cross-platform, self-contained bootstrap mechanism for the build.
 
-Check out sources
-----
+Check out sources:
+
+```bash
 git clone git@github.com:hazelcast/hazelcast-spring-session.git
-----
+```
 
-Install jars into your local Maven cache
-----
+Install jars into your local Maven cache:
+
+```bash
 ./gradlew install
-----
+```
 
-Compile and test; build all jars
-----
+Compile and test; build all jars:
+
+```bash
 ./gradlew build
-----
+```
 
 
 ## Documentation
 
-You can find the documentation, samples, and guides for using Spring Session on the https://docs.hazelcast.com/home/[Hazelcast Docmentation page].
+You can find the documentation, samples, and guides for using Spring Session on the [Hazelcast Docmentation page](https://docs.hazelcast.com/home/).
 
 ## License
 
-Hazelcast Spring Session is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].
+Hazelcast Spring Session is Open Source software released under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.html).
