@@ -1,6 +1,6 @@
-= Hazelcast Spring Session
+# Hazelcast Spring Session
 
-== Spring Session
+## Spring Session
 Spring Session provides an API and implementations for managing a user's session information, while also making it trivial to support clustered sessions without being tied to an application container specific solution.
 It also provides transparent integration with:
 
@@ -8,7 +8,7 @@ It also provides transparent integration with:
 * `WebSocket` - provides the ability to keep the `HttpSession` alive when receiving WebSocket messages
 * `WebSession` - allows replacing the Spring WebFlux's `WebSession` in an application container neutral way.
 
-== Modules
+## This module 
 
 Hazelcast Spring Session uses https://github.com/hazelcast/hazelcast[Hazelcast Platform] to store user's session information in a cluster, The SessionRepository uses Hazelcast's IMap to store the session information, giving users https://www.designgurus.io/answers/detail/what-is-the-cap-theorem[AP characteristics].
 
@@ -38,10 +38,10 @@ Compile and test; build all jars
 ----
 
 
-== Documentation
+## Documentation
 
 You can find the documentation, samples, and guides for using Spring Session on the https://docs.hazelcast.com/home/[Hazelcast Docmentation page].
 
-== License
+## License
 
 Hazelcast Spring Session is Open Source software released under the https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0 license].
