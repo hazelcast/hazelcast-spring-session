@@ -43,7 +43,7 @@ Compile and test; build all jars:
 
 ## Documentation
 
-You can find the documentation, samples, and guides for using Spring Session on the [Hazelcast Docmentation page](https://docs.hazelcast.com/home/).
+You can find the documentation, samples, and guides for using Spring Session on the [Hazelcast Documentation page](https://docs.hazelcast.com/hazelcast/latest/spring/overview).
 
 ## License
 
