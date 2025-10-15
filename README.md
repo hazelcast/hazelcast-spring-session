@@ -10,15 +10,15 @@ It also provides transparent integration with:
 
 ## This module 
 
-Hazelcast Spring Session uses [Hazelcast Platform](https://github.com/hazelcast/hazelcast) to store user's session information in a cluster, The SessionRepository uses Hazelcast's IMap to store the session information, giving users [AP characteristics](https://www.designgurus.io/answers/detail/what-is-the-cap-theorem).
+Hazelcast Spring Session uses [Hazelcast Platform](https://github.com/hazelcast/hazelcast) to store user session information in a cluster. The SessionRepository uses Hazelcast's IMap to store the session information, giving users [AP characteristics](https://www.designgurus.io/answers/detail/what-is-the-cap-theorem).
 
-== Getting Started
+## Getting Started
 
 We recommend you visit the [Hazelcast Documentation site](https://docs.hazelcast.com/) and check out provided tutorials and [Hazelcast Code Samples](https://github.com/hazelcast/hazelcast-code-samples) for additional code samples (TBD).
 
-== Building from Source
+## Building from Source
 
-Hazelcasst Spring Session uses a [Gradle](https://gradle.org-based) build system.
+Hazelcast Spring Session uses a [Gradle](https://gradle.org-based) build system.
 In the instructions below, `./gradlew` is invoked from the root of the source tree and serves as
 a cross-platform, self-contained bootstrap mechanism for the build.
 
