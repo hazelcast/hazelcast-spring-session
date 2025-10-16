@@ -27,6 +27,9 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
 
+    - name: Run checkstyle
+      run: ./gradlew checkstyleMain checkstyleTest
+
     - name: Build with Gradle
       run: ./gradlew build
 
