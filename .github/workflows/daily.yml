@@ -2,7 +2,8 @@ name: Daily checks
 
 on:
   schedule:
-    - cron: @daily
+    # at 5 am, every day
+    - cron: 0 5 * * *
 
 jobs:
   build:
