@@ -1,5 +1,6 @@
 plugins {
 	id 'java-library'
+    id 'checkstyle'
 }
 
 group = 'com.hazelcast.spring'
@@ -22,7 +23,7 @@ ext {
 	springSessionVersion = '4.0.0-SNAPSHOT'
 	springFrameworkVersion = '7.0.0-M9'
 	springSecurityVersion = '7.0.0-M3'
-	hazelcastVersion = '5.5.0'
+	hazelcastVersion = project.properties['hazelcastVersion'] ?: '5.6.0'
 	jakartaServletVersion = '6.1.0'
 	junitVersion = '5.12.1'
 	mockitoVersion = '5.16.1'

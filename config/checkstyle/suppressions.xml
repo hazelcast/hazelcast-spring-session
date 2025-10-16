@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+		"https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+	<suppress files="[\\/]src[\\/]integration-test[\\/]java[\\/]" checks="Javadoc*"/>
+	<suppress files="[\\/]spring-session-docs[\\/]" checks="Javadoc*"/>
+	<suppress files="[\\/]spring-session-docs[\\/]" checks="InnerTypeLast"/>
+	<suppress files="[\\/]spring-session-samples[\\/]" checks="Javadoc*"/>
+	<suppress files="[\\/]spring-session-samples[\\/].+Application\.java" checks="HideUtilityClassConstructor"/>
+	<suppress files="CookieSerializer\.java" checks="SpringMethodVisibility"/>
+	<suppress files="RedisIndexedSessionRepositoryDynamicITests\.java" checks="RegexpSinglelineJava"/>
+</suppressions>

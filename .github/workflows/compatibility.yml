@@ -1,10 +1,9 @@
-name: CI
+name: Compatibility tests
 
 on:
-  push:
-    branches: main
-  pull_request:
-    branches: main
+  schedule:
+    # at 5 am, every day
+    - cron: 0 5 * * *
 
 jobs:
   build:
@@ -13,8 +12,9 @@ jobs:
     strategy:
       matrix:
         java: [ '17', '21', '25' ]
+        hazelcast: [ '5.4', '5.5', '5.6' ]
 
-    name: Build with Java ${{ matrix.java }}
+    name: Build with Java ${{ matrix.java }} and Hazelcast ${{ matrix.hazelcast }}
 
     steps:
     - name: Checkout code
@@ -27,11 +27,8 @@ jobs:
         distribution: 'temurin'
         cache: 'gradle'
 
-    - name: Run checkstyle
-      run: ./gradlew checkstyleMain checkstyleTest
-
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}"
 
     - name: Upload test results
       if: always()
