@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Community Slack
+    url: hazelcastcommunity.slack.com
+    about: In case of any questions or user stories, please come and join us on our Community Slack!
