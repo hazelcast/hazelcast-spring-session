@@ -13,6 +13,7 @@ jobs:
       matrix:
         java: [ '17', '21', '25' ]
         hazelcast: [ '5.4', '5.5', '5.6' ]
+        spring: [ { springSession: '3.5.2', springFramework: '6.2.12', springSecurity: '6.5.5' }, { springSession: '4.0.0-M2', springFramework: '7.0.0-RC1', springSecurity: '7.0.0-M3' } ]
 
     name: Build with Java ${{ matrix.java }} and Hazelcast ${{ matrix.hazelcast }}
 
@@ -28,7 +29,11 @@ jobs:
         cache: 'gradle'
 
     - name: Build with Gradle
-      run: ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}"
+      run: |
+        ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}" 
+          -DspringSessionVersion="${{ matrix.spring.springSession }}" 
+          -DspringFrameworkVersion="${{ matrix.spring.springFramework }}" 
+          -DspringSecurityVersion="${{ matrix.spring.springSecurity }}" 
 
     - name: Upload test results
       if: always()
