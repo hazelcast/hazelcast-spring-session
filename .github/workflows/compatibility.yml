@@ -30,10 +30,10 @@ jobs:
 
     - name: Build with Gradle
       run: |
-        ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}" 
-          -DspringSessionVersion="${{ matrix.spring.springSession }}" 
-          -DspringFrameworkVersion="${{ matrix.spring.springFramework }}" 
-          -DspringSecurityVersion="${{ matrix.spring.springSecurity }}" 
+        ./gradlew build -PhazelcastVersion="${{ matrix.hazelcast }}" 
+          -PspringSessionVersion="${{ matrix.spring.springSession }}" 
+          -PspringFrameworkVersion="${{ matrix.spring.springFramework }}" 
+          -PspringSecurityVersion="${{ matrix.spring.springSecurity }}" 
 
     - name: Upload test results
       if: always()
