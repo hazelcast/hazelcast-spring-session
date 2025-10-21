@@ -1,0 +1,23 @@
+apply plugin: 'jacoco'
+
+jacocoTestReport {
+    dependsOn test
+    dependsOn integrationTest
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.5
+            }
+        }
+    }
+}
+
+test {
+    finalizedBy jacocoTestReport
+}
+integrationTest {
+    finalizedBy jacocoTestReport
+}

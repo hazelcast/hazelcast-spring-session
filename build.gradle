@@ -97,3 +97,9 @@ test {
 		exceptionFormat = "full"
 	}
 }
+
+String enableCodeCov = System.properties['codeCoverage'] as String ?: "false";
+if (Boolean.parseBoolean(enableCodeCov)) {
+    println("Enabling code coverage checks")
+    apply from: 'jacoco.gradle'
+}
