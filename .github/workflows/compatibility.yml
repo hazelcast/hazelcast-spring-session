@@ -45,7 +45,7 @@ jobs:
           build/test-results/
 
     - name: Upload build artifacts
-      if: success() && matrix.java == '17'
+      if: success() && matrix.java == '17' && matrix.hazelcast == '5.6' && matrix.spring.springSession == '4.0.0-M2'
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
