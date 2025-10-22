@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.internal.relocated.kotlin.metadata.internal.metadata.deserialization.VersionRequirementTable.Companion.create
+
 plugins {
     `java-library`
 }
@@ -31,7 +33,7 @@ val assertjVersion = "3.27.3"
 val testcontainersVersion = "1.20.6"
 
 sourceSets {
-    create("integrationTest") {
+    create("integrationTest", Action<SourceSet> {
         java {
             srcDir("src/integration-test/java")
         }
@@ -40,7 +42,7 @@ sourceSets {
         }
         compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
         runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
-    }
+    })
 }
 
 val integrationTestImplementation by configurations.getting {
