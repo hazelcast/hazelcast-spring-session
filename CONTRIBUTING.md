@@ -1,8 +1,6 @@
 # Contributing to Hazelcast Spring Session
 
 Hazelcast Spring Session is Open Source software, licensed under the [Apache 2.0 license](LICENSE).
-The main benefit of Open Source is that you don't need to wait for a vendor to provide a fix or a feature.
-If you've got the skills (and the will), it's already at your fingertips.
 
 There are multiple ways to contribute:
 
@@ -46,7 +44,7 @@ All PRs follow the same process:
 1. Contributions are submitted, reviewed, and accepted using the PR system on GitHub.
 2. For first time contributors, our bot will automatically ask you to sign the Hazelcast Contributor Agreement on the
    PR.
-3. The latest changes are in the `master` branch.
+3. The latest changes are in the `main` branch.
 4. Make sure to design clean commits that are easily readable.
    That includes descriptive commit messages.
 5. Please keep your PRs as small as possible, _i.e._ if you plan to perform a huge change, do not submit a single and
