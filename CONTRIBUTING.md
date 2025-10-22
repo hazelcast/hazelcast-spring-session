@@ -11,7 +11,7 @@ There are multiple ways to contribute:
    Note that you don't need to be a developer to help us.
    Contributions that improve the documentation are always appreciated.
 
-If you feel yourself in need of assistance, please reach us directly via [Community Slack](https://slack.hazelcast.com/).
+If you need assistance, you can ask for help in the [Community Slack](https://slack.hazelcast.com/).
 
 ## Issue Reports
 
