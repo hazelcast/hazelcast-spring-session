@@ -36,7 +36,6 @@ Thanks a lot for creating your <abbr title="Pull Request">PR</abbr>!
 A PR can target many different subjects:
 
 * [Documentation](https://github.com/hazelcast/hz-docs):
-  either fix typos or improve the documentation as a whole
 * Fix a bug
 * Add a feature
 * Add additional tests to improve the test coverage, or fix flaky tests
