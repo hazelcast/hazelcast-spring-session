@@ -22,19 +22,25 @@ import com.hazelcast.core.HazelcastInstance;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.session.MapSession;
-import org.springframework.session.Session;
-import org.springframework.session.SessionIdGenerator;
 import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
@@ -46,23 +52,27 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
 @WebAppConfiguration
+@SuppressWarnings("resource")
 class ClientServerHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
 
-	// @formatter:off
-	private static GenericContainer container = new GenericContainer<>(new ImageFromDockerfile()
-			.withDockerfileFromBuilder((builder) -> builder
-					.from("hazelcast/hazelcast:5.3.2-slim")
-					.user("root")
-					.run("apk del --no-cache openjdk11-jre-headless")
-					.run("apk add --no-cache openjdk17-jre-headless")
-					.user("hazelcast")))
-			.withExposedPorts(5701).withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server.xml"),
-					"/opt/hazelcast/hazelcast.xml")
-			.withEnv("HAZELCAST_CONFIG", "hazelcast.xml");
-	// @formatter:on
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientServerHazelcastIndexedSessionRepositoryITests.class);
+	private static GenericContainer container;
 
 	@BeforeAll
-	static void setUpClass() {
+	static void setUpClass() throws IOException {
+        var jarResource = ClientServerHazelcastIndexedSessionRepositoryITests.class.getResource("../../../../HSS.jar");
+        assert jarResource != null;
+        var path = new File(jarResource.getFile()).getParentFile();
+
+        container = new GenericContainer<>(DockerImageName.parse("hazelcast/hazelcast:5.6.0-slim"))
+                .withExposedPorts(5701)
+                .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server.xml"), "/opt/hazelcast/hazelcast.xml")
+                .withEnv("HAZELCAST_CONFIG", "hazelcast.xml")
+                .withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix("hz>"));
+        Files.list(path.toPath()).forEach(file -> {
+            container.withCopyFileToContainer(MountableFile.forHostPath(file), "/opt/hazelcast/lib/"
+                    + file.getFileName().toString());
+        });
 		container.start();
 	}
 
@@ -74,20 +84,12 @@ class ClientServerHazelcastIndexedSessionRepositoryITests extends AbstractHazelc
 	@Configuration
 	@EnableHazelcastHttpSession
 	static class HazelcastSessionConfig {
-
 		@Bean
 		HazelcastInstance hazelcastInstance() {
 			ClientConfig clientConfig = new ClientConfig();
 			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-			clientConfig.getUserCodeDeploymentConfig()
-				.setEnabled(true)
-				.addClass(Session.class)
-				.addClass(MapSession.class)
-				.addClass(SessionUpdateEntryProcessor.class)
-				.addClass(SessionIdGenerator.class);
 			return HazelcastClient.newHazelcastClient(clientConfig);
 		}
-
 	}
 
 }
