@@ -4,6 +4,7 @@ on:
   schedule:
     # at 5 am, every day
     - cron: 0 5 * * *
+  workflow_dispatch:
 
 jobs:
   build:
