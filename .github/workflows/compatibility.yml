@@ -4,6 +4,7 @@ on:
   schedule:
     # at 5 am, every day
     - cron: 0 5 * * *
+  workflow_dispatch:
 
 jobs:
   build:
@@ -30,22 +31,22 @@ jobs:
 
     - name: Build with Gradle
       run: |
-        ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}" 
-          -DspringSessionVersion="${{ matrix.spring.springSession }}" 
-          -DspringFrameworkVersion="${{ matrix.spring.springFramework }}" 
+        ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}" \
+          -DspringSessionVersion="${{ matrix.spring.springSession }}" \
+          -DspringFrameworkVersion="${{ matrix.spring.springFramework }}" \
           -DspringSecurityVersion="${{ matrix.spring.springSecurity }}" 
 
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-java-${{ matrix.java }}
+        name: test-results-java-${{ matrix.java }}-hz-${{matrix.hazelcast}}-springSession-${{matrix.spring.springSession}}
         path: |
           build/reports/tests/
           build/test-results/
 
     - name: Upload build artifacts
-      if: success() && matrix.java == '17'
+      if: success() && matrix.java == '17' && matrix.hazelcast == '5.6' && matrix.spring.springSession == '4.0.0-M2'
       uses: actions/upload-artifact@v4
       with:
         name: build-artifacts
