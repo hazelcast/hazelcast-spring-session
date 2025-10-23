@@ -38,9 +38,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
@@ -56,7 +54,7 @@ import java.nio.file.Paths;
 class ClientServerHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientServerHazelcastIndexedSessionRepositoryITests.class);
-	private static GenericContainer container;
+	private static GenericContainer<?> container;
 
 	@BeforeAll
 	static void setUpClass() throws IOException {
@@ -69,10 +67,9 @@ class ClientServerHazelcastIndexedSessionRepositoryITests extends AbstractHazelc
                 .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server.xml"), "/opt/hazelcast/hazelcast.xml")
                 .withEnv("HAZELCAST_CONFIG", "hazelcast.xml")
                 .withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix("hz>"));
-        Files.list(path.toPath()).forEach(file -> {
-            container.withCopyFileToContainer(MountableFile.forHostPath(file), "/opt/hazelcast/lib/"
-                    + file.getFileName().toString());
-        });
+        Files.list(path.toPath()).forEach(file ->  container.withCopyFileToContainer(
+                MountableFile.forHostPath(file),
+                "/opt/hazelcast/lib/" + file.getFileName().toString()));
 		container.start();
 	}
 
