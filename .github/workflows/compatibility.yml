@@ -40,7 +40,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-java-${{ matrix.java }}
+        name: test-results-java-${{ matrix.java }}-hz-${{matrix.hazelcast}}-springSession-${{matrix.spring.springSession}}
         path: |
           build/reports/tests/
           build/test-results/
