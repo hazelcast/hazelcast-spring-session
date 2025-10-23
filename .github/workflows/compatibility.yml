@@ -30,9 +30,9 @@ jobs:
 
     - name: Build with Gradle
       run: |
-        ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}" 
-          -DspringSessionVersion="${{ matrix.spring.springSession }}" 
-          -DspringFrameworkVersion="${{ matrix.spring.springFramework }}" 
+        ./gradlew build -DhazelcastVersion="${{ matrix.hazelcast }}" \
+          -DspringSessionVersion="${{ matrix.spring.springSession }}" \
+          -DspringFrameworkVersion="${{ matrix.spring.springFramework }}" \
           -DspringSecurityVersion="${{ matrix.spring.springSecurity }}" 
 
     - name: Upload test results
