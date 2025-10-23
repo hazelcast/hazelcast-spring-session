@@ -1,7 +1,6 @@
-import org.gradle.kotlin.dsl.internal.relocated.kotlin.metadata.internal.metadata.deserialization.VersionRequirementTable.Companion.create
-
 plugins {
     `java-library`
+    checkstyle
 }
 
 group = "com.hazelcast.spring"
