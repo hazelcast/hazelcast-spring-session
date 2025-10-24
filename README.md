@@ -101,3 +101,9 @@ You can find the documentation, samples, and guides for using Spring Session on 
 ## License
 
 Hazelcast Spring Session is Open Source software released under the [Apache 2.0 license](https://www.apache.org/licenses/LICENSE-2.0.html).
+
+## Migration from `Spring Session Hazelcast` 3.x
+
+When migrating from [Spring Session](https://github.com/spring-projects/spring-session)'s Hazelcast module, which was under Spring Team ownership until 3.x, you need to do some adjustments:
+1. GroupId is changed to `com.hazelcast` and artifactId is now `hazelcast-spring-session`.
+2. All Hazelcast-specific classes were moved from `org.springframework.session.hazelcast` to `com.hazelcast.spring.session`.
