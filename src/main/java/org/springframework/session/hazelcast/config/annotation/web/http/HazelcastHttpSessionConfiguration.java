@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -107,8 +108,8 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
     @Autowired
     public void setHazelcastInstance(
-            @SpringSessionHazelcastInstance ObjectProvider<HazelcastInstance> springSessionHazelcastInstance,
-            ObjectProvider<HazelcastInstance> hazelcastInstance) {
+            @SpringSessionHazelcastInstance ObjectProvider<@NonNull HazelcastInstance> springSessionHazelcastInstance,
+            ObjectProvider<@NonNull HazelcastInstance> hazelcastInstance) {
         HazelcastInstance hazelcastInstanceToUse = springSessionHazelcastInstance.getIfAvailable();
         if (hazelcastInstanceToUse == null) {
             hazelcastInstanceToUse = hazelcastInstance.getObject();
@@ -128,7 +129,7 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
     @Autowired(required = false)
     public void setSessionRepositoryCustomizer(
-            ObjectProvider<SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers) {
+            ObjectProvider<@NonNull SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers) {
         this.sessionRepositoryCustomizers = sessionRepositoryCustomizers.orderedStream().collect(Collectors.toList());
     }
 

@@ -25,6 +25,7 @@ import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.StreamSerializer;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.session.MapSession;
 
 /**
@@ -110,8 +111,9 @@ public class HazelcastSessionSerializer implements StreamSerializer<MapSession> 
         out.writeInt(duration.getNano());
     }
 
+    @NonNull
     @Override
-    public MapSession read(ObjectDataInput in) throws IOException {
+    public MapSession read(@NonNull ObjectDataInput in) throws IOException {
         String originalId = in.readString();
         MapSession cached = new MapSession(originalId);
         cached.setId(in.readString());
@@ -151,6 +153,7 @@ public class HazelcastSessionSerializer implements StreamSerializer<MapSession> 
     }
 
     @Override
+    @SuppressWarnings("RedundantMethodOverride")
     public void destroy() {
     }
 

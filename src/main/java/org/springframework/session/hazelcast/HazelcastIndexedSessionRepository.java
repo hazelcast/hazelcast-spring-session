@@ -37,6 +37,7 @@ import com.hazelcast.query.Predicates;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationEventPublisher;
@@ -248,6 +249,7 @@ public class HazelcastIndexedSessionRepository
     }
 
     @Override
+    @NonNull
     public HazelcastSession createSession() {
         MapSession cached = new MapSession(this.sessionIdGenerator);
         cached.setMaxInactiveInterval(this.defaultMaxInactiveInterval);
@@ -256,9 +258,9 @@ public class HazelcastIndexedSessionRepository
         return session;
     }
 
-    @SuppressWarnings("checkstyle:RightCurly")
     @Override
-    public void save(HazelcastSession session) {
+    @SuppressWarnings("checkstyle:RightCurly")
+    public void save(@NonNull HazelcastSession session) {
         if (session.isNew) {
             this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
                               TimeUnit.SECONDS);
@@ -270,7 +272,7 @@ public class HazelcastIndexedSessionRepository
                               TimeUnit.SECONDS);
         }
         else if (session.hasChanges()) {
-            SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor();
+            var entryProcessor = new SessionUpdateEntryProcessor();
             if (session.lastAccessedTimeChanged) {
                 entryProcessor.setLastAccessedTime(session.getLastAccessedTime());
             }
@@ -370,7 +372,7 @@ public class HazelcastIndexedSessionRepository
      *
      * @author Aleksandar Stojsavljevic
      */
-    final class HazelcastSession implements Session {
+    public final class HazelcastSession implements Session {
 
         private final MapSession delegate;
 
@@ -384,7 +386,7 @@ public class HazelcastIndexedSessionRepository
 
         private String originalId;
 
-        private Map<String, Object> delta = new HashMap<>();
+        private final Map<String, Object> delta = new HashMap<>();
 
         HazelcastSession(MapSession cached, boolean isNew) {
             this.delegate = cached;
