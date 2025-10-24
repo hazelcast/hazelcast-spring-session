@@ -58,162 +58,162 @@ import static org.assertj.core.api.Assertions.assertThat;
 @WebAppConfiguration
 class SessionEventHazelcastIndexedSessionRepositoryTests<S extends Session> {
 
-	private static final int MAX_INACTIVE_INTERVAL_IN_SECONDS = 2;
+    private static final int MAX_INACTIVE_INTERVAL_IN_SECONDS = 2;
 
-	@Autowired
-	private SessionRepository<S> repository;
+    @Autowired
+    private SessionRepository<S> repository;
 
-	@Autowired
-	private SessionEventRegistry registry;
+    @Autowired
+    private SessionEventRegistry registry;
 
-	@BeforeEach
-	void setup() {
-		this.registry.clear();
-	}
+    @BeforeEach
+    void setup() {
+        this.registry.clear();
+    }
 
-	@Test
-	void saveSessionTest() throws InterruptedException {
-		String username = "saves-" + System.currentTimeMillis();
+    @Test
+    void saveSessionTest() throws InterruptedException {
+        String username = "saves-" + System.currentTimeMillis();
 
-		S sessionToSave = this.repository.createSession();
+        S sessionToSave = this.repository.createSession();
 
-		String expectedAttributeName = "a";
-		String expectedAttributeValue = "b";
-		sessionToSave.setAttribute(expectedAttributeName, expectedAttributeValue);
-		Authentication toSaveToken = new UsernamePasswordAuthenticationToken(username, "password",
-				AuthorityUtils.createAuthorityList("ROLE_USER"));
-		SecurityContext toSaveContext = SecurityContextHolder.createEmptyContext();
-		toSaveContext.setAuthentication(toSaveToken);
-		sessionToSave.setAttribute("SPRING_SECURITY_CONTEXT", toSaveContext);
-		sessionToSave.setAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, username);
+        String expectedAttributeName = "a";
+        String expectedAttributeValue = "b";
+        sessionToSave.setAttribute(expectedAttributeName, expectedAttributeValue);
+        Authentication toSaveToken = new UsernamePasswordAuthenticationToken(username, "password",
+                                                                             AuthorityUtils.createAuthorityList("ROLE_USER"));
+        SecurityContext toSaveContext = SecurityContextHolder.createEmptyContext();
+        toSaveContext.setAuthentication(toSaveToken);
+        sessionToSave.setAttribute("SPRING_SECURITY_CONTEXT", toSaveContext);
+        sessionToSave.setAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, username);
 
-		this.repository.save(sessionToSave);
+        this.repository.save(sessionToSave);
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
-		assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
-			.isInstanceOf(SessionCreatedEvent.class);
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
+        assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
+                .isInstanceOf(SessionCreatedEvent.class);
 
-		Session session = this.repository.findById(sessionToSave.getId());
+        Session session = this.repository.findById(sessionToSave.getId());
 
-		assertThat(session.getId()).isEqualTo(sessionToSave.getId());
-		assertThat(session.getAttributeNames()).isEqualTo(sessionToSave.getAttributeNames());
-		assertThat(session.<String>getAttribute(expectedAttributeName))
-			.isEqualTo(sessionToSave.getAttribute(expectedAttributeName));
-	}
+        assertThat(session.getId()).isEqualTo(sessionToSave.getId());
+        assertThat(session.getAttributeNames()).isEqualTo(sessionToSave.getAttributeNames());
+        assertThat(session.<String>getAttribute(expectedAttributeName))
+                .isEqualTo(sessionToSave.getAttribute(expectedAttributeName));
+    }
 
-	@Test
-	void expiredSessionTest() throws InterruptedException {
-		S sessionToSave = this.repository.createSession();
+    @Test
+    void expiredSessionTest() throws InterruptedException {
+        S sessionToSave = this.repository.createSession();
 
-		this.repository.save(sessionToSave);
+        this.repository.save(sessionToSave);
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
-		assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
-			.isInstanceOf(SessionCreatedEvent.class);
-		this.registry.clear();
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
+        assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
+                .isInstanceOf(SessionCreatedEvent.class);
+        this.registry.clear();
 
-		assertThat(sessionToSave.getMaxInactiveInterval())
-			.isEqualTo(Duration.ofSeconds(MAX_INACTIVE_INTERVAL_IN_SECONDS));
+        assertThat(sessionToSave.getMaxInactiveInterval())
+                .isEqualTo(Duration.ofSeconds(MAX_INACTIVE_INTERVAL_IN_SECONDS));
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
-		assertThat(this.registry.<SessionExpiredEvent>getEvent(sessionToSave.getId()))
-			.isInstanceOf(SessionExpiredEvent.class);
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
+        assertThat(this.registry.<SessionExpiredEvent>getEvent(sessionToSave.getId()))
+                .isInstanceOf(SessionExpiredEvent.class);
 
-		assertThat(this.repository.findById(sessionToSave.getId())).isNull();
-	}
+        assertThat(this.repository.findById(sessionToSave.getId())).isNull();
+    }
 
-	@Test
-	void deletedSessionTest() throws InterruptedException {
-		S sessionToSave = this.repository.createSession();
+    @Test
+    void deletedSessionTest() throws InterruptedException {
+        S sessionToSave = this.repository.createSession();
 
-		this.repository.save(sessionToSave);
+        this.repository.save(sessionToSave);
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
-		assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
-			.isInstanceOf(SessionCreatedEvent.class);
-		this.registry.clear();
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
+        assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
+                .isInstanceOf(SessionCreatedEvent.class);
+        this.registry.clear();
 
-		this.repository.deleteById(sessionToSave.getId());
+        this.repository.deleteById(sessionToSave.getId());
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
-		assertThat(this.registry.<SessionDeletedEvent>getEvent(sessionToSave.getId()))
-			.isInstanceOf(SessionDeletedEvent.class);
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
+        assertThat(this.registry.<SessionDeletedEvent>getEvent(sessionToSave.getId()))
+                .isInstanceOf(SessionDeletedEvent.class);
 
-		assertThat(this.repository.findById(sessionToSave.getId())).isNull();
-	}
+        assertThat(this.repository.findById(sessionToSave.getId())).isNull();
+    }
 
-	@Test
-	void saveUpdatesTimeToLiveTest() throws InterruptedException {
-		S sessionToSave = this.repository.createSession();
-		sessionToSave.setMaxInactiveInterval(Duration.ofSeconds(3));
-		this.repository.save(sessionToSave);
+    @Test
+    void saveUpdatesTimeToLiveTest() throws InterruptedException {
+        S sessionToSave = this.repository.createSession();
+        sessionToSave.setMaxInactiveInterval(Duration.ofSeconds(3));
+        this.repository.save(sessionToSave);
 
-		Thread.sleep(2000);
+        Thread.sleep(2000);
 
-		// Get and save the session like SessionRepositoryFilter would.
-		S sessionToUpdate = this.repository.findById(sessionToSave.getId());
-		sessionToUpdate.setLastAccessedTime(Instant.now());
-		this.repository.save(sessionToUpdate);
+        // Get and save the session like SessionRepositoryFilter would.
+        S sessionToUpdate = this.repository.findById(sessionToSave.getId());
+        sessionToUpdate.setLastAccessedTime(Instant.now());
+        this.repository.save(sessionToUpdate);
 
-		Thread.sleep(2000);
+        Thread.sleep(2000);
 
-		assertThat(this.repository.findById(sessionToUpdate.getId())).isNotNull();
-	}
+        assertThat(this.repository.findById(sessionToUpdate.getId())).isNotNull();
+    }
 
-	@Test // gh-1077
-	void changeSessionIdNoEventTest() throws InterruptedException {
-		S sessionToSave = this.repository.createSession();
-		sessionToSave.setMaxInactiveInterval(Duration.ofMinutes(30));
+    @Test // gh-1077
+    void changeSessionIdNoEventTest() throws InterruptedException {
+        S sessionToSave = this.repository.createSession();
+        sessionToSave.setMaxInactiveInterval(Duration.ofMinutes(30));
 
-		this.repository.save(sessionToSave);
+        this.repository.save(sessionToSave);
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
-		assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
-			.isInstanceOf(SessionCreatedEvent.class);
-		this.registry.clear();
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
+        assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
+                .isInstanceOf(SessionCreatedEvent.class);
+        this.registry.clear();
 
-		sessionToSave.changeSessionId();
-		this.repository.save(sessionToSave);
+        sessionToSave.changeSessionId();
+        this.repository.save(sessionToSave);
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isFalse();
-	}
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isFalse();
+    }
 
-	@Test // gh-1300
-	void updateMaxInactiveIntervalTest() throws InterruptedException {
-		S sessionToSave = this.repository.createSession();
-		sessionToSave.setMaxInactiveInterval(Duration.ofMinutes(30));
-		this.repository.save(sessionToSave);
+    @Test // gh-1300
+    void updateMaxInactiveIntervalTest() throws InterruptedException {
+        S sessionToSave = this.repository.createSession();
+        sessionToSave.setMaxInactiveInterval(Duration.ofMinutes(30));
+        this.repository.save(sessionToSave);
 
-		assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
-		assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
-			.isInstanceOf(SessionCreatedEvent.class);
-		this.registry.clear();
+        assertThat(this.registry.receivedEvent(sessionToSave.getId())).isTrue();
+        assertThat(this.registry.<SessionCreatedEvent>getEvent(sessionToSave.getId()))
+                .isInstanceOf(SessionCreatedEvent.class);
+        this.registry.clear();
 
-		S sessionToUpdate = this.repository.findById(sessionToSave.getId());
-		sessionToUpdate.setLastAccessedTime(Instant.now());
-		sessionToUpdate.setMaxInactiveInterval(Duration.ofSeconds(1));
-		this.repository.save(sessionToUpdate);
+        S sessionToUpdate = this.repository.findById(sessionToSave.getId());
+        sessionToUpdate.setLastAccessedTime(Instant.now());
+        sessionToUpdate.setMaxInactiveInterval(Duration.ofSeconds(1));
+        this.repository.save(sessionToUpdate);
 
-		assertThat(this.registry.receivedEvent(sessionToUpdate.getId())).isTrue();
-		assertThat(this.registry.<SessionExpiredEvent>getEvent(sessionToUpdate.getId()))
-			.isInstanceOf(SessionExpiredEvent.class);
-		assertThat(this.repository.findById(sessionToUpdate.getId())).isNull();
-	}
+        assertThat(this.registry.receivedEvent(sessionToUpdate.getId())).isTrue();
+        assertThat(this.registry.<SessionExpiredEvent>getEvent(sessionToUpdate.getId()))
+                .isInstanceOf(SessionExpiredEvent.class);
+        assertThat(this.repository.findById(sessionToUpdate.getId())).isNull();
+    }
 
-	@Configuration
-	@EnableHazelcastHttpSession(maxInactiveIntervalInSeconds = MAX_INACTIVE_INTERVAL_IN_SECONDS)
-	static class HazelcastSessionConfig {
+    @Configuration
+    @EnableHazelcastHttpSession(maxInactiveIntervalInSeconds = MAX_INACTIVE_INTERVAL_IN_SECONDS)
+    static class HazelcastSessionConfig {
 
-		@Bean
-		HazelcastInstance embeddedHazelcast() {
-			return HazelcastITestUtils.embeddedHazelcastServer();
-		}
+        @Bean
+        HazelcastInstance embeddedHazelcast() {
+            return HazelcastITestUtils.embeddedHazelcastServer();
+        }
 
-		@Bean
-		SessionEventRegistry sessionEventRegistry() {
-			return new SessionEventRegistry();
-		}
+        @Bean
+        SessionEventRegistry sessionEventRegistry() {
+            return new SessionEventRegistry();
+        }
 
-	}
+    }
 
 }

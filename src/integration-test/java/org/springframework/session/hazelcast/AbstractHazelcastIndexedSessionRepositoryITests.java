@@ -45,234 +45,234 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 abstract class AbstractHazelcastIndexedSessionRepositoryITests {
 
-	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
+    private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
-	@Autowired
-	private HazelcastInstance hazelcastInstance;
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
 
-	@Autowired
-	private HazelcastIndexedSessionRepository repository;
+    @Autowired
+    private HazelcastIndexedSessionRepository repository;
 
-	@Test
-	void createAndDestroySession() {
-		HazelcastSession sessionToSave = this.repository.createSession();
-		String sessionId = sessionToSave.getId();
+    @Test
+    void createAndDestroySession() {
+        HazelcastSession sessionToSave = this.repository.createSession();
+        String sessionId = sessionToSave.getId();
 
-		IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
-			.getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
+        IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
+                .getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
 
-		this.repository.save(sessionToSave);
+        this.repository.save(sessionToSave);
 
-		assertThat(hazelcastMap.get(sessionId)).isEqualTo(sessionToSave);
+        assertThat(hazelcastMap.get(sessionId)).isEqualTo(sessionToSave);
 
-		this.repository.deleteById(sessionId);
+        this.repository.deleteById(sessionId);
 
-		assertThat(hazelcastMap.get(sessionId)).isNull();
-	}
+        assertThat(hazelcastMap.get(sessionId)).isNull();
+    }
 
-	@Test
-	void changeSessionIdWhenOnlyChangeId() {
-		String attrName = "changeSessionId";
-		String attrValue = "changeSessionId-value";
-		HazelcastSession toSave = this.repository.createSession();
-		toSave.setAttribute(attrName, attrValue);
+    @Test
+    void changeSessionIdWhenOnlyChangeId() {
+        String attrName = "changeSessionId";
+        String attrValue = "changeSessionId-value";
+        HazelcastSession toSave = this.repository.createSession();
+        toSave.setAttribute(attrName, attrValue);
 
-		this.repository.save(toSave);
+        this.repository.save(toSave);
 
-		HazelcastSession findById = this.repository.findById(toSave.getId());
+        HazelcastSession findById = this.repository.findById(toSave.getId());
 
-		assertThat(findById.<String>getAttribute(attrName)).isEqualTo(attrValue);
+        assertThat(findById.<String>getAttribute(attrName)).isEqualTo(attrValue);
 
-		String originalFindById = findById.getId();
-		String changeSessionId = findById.changeSessionId();
+        String originalFindById = findById.getId();
+        String changeSessionId = findById.changeSessionId();
 
-		this.repository.save(findById);
+        this.repository.save(findById);
 
-		assertThat(this.repository.findById(originalFindById)).isNull();
+        assertThat(this.repository.findById(originalFindById)).isNull();
 
-		HazelcastSession findByChangeSessionId = this.repository.findById(changeSessionId);
+        HazelcastSession findByChangeSessionId = this.repository.findById(changeSessionId);
 
-		assertThat(findByChangeSessionId.<String>getAttribute(attrName)).isEqualTo(attrValue);
+        assertThat(findByChangeSessionId.<String>getAttribute(attrName)).isEqualTo(attrValue);
 
-		this.repository.deleteById(changeSessionId);
-	}
+        this.repository.deleteById(changeSessionId);
+    }
 
-	@Test
-	void changeSessionIdWhenChangeTwice() {
-		HazelcastSession toSave = this.repository.createSession();
+    @Test
+    void changeSessionIdWhenChangeTwice() {
+        HazelcastSession toSave = this.repository.createSession();
 
-		this.repository.save(toSave);
+        this.repository.save(toSave);
 
-		String originalId = toSave.getId();
-		String changeId1 = toSave.changeSessionId();
-		String changeId2 = toSave.changeSessionId();
+        String originalId = toSave.getId();
+        String changeId1 = toSave.changeSessionId();
+        String changeId2 = toSave.changeSessionId();
 
-		this.repository.save(toSave);
+        this.repository.save(toSave);
 
-		assertThat(this.repository.findById(originalId)).isNull();
-		assertThat(this.repository.findById(changeId1)).isNull();
-		assertThat(this.repository.findById(changeId2)).isNotNull();
+        assertThat(this.repository.findById(originalId)).isNull();
+        assertThat(this.repository.findById(changeId1)).isNull();
+        assertThat(this.repository.findById(changeId2)).isNotNull();
 
-		this.repository.deleteById(changeId2);
-	}
+        this.repository.deleteById(changeId2);
+    }
 
-	@Test
-	void changeSessionIdWhenSetAttributeOnChangedSession() {
-		String attrName = "changeSessionId";
-		String attrValue = "changeSessionId-value";
+    @Test
+    void changeSessionIdWhenSetAttributeOnChangedSession() {
+        String attrName = "changeSessionId";
+        String attrValue = "changeSessionId-value";
 
-		HazelcastSession toSave = this.repository.createSession();
+        HazelcastSession toSave = this.repository.createSession();
 
-		this.repository.save(toSave);
+        this.repository.save(toSave);
 
-		HazelcastSession findById = this.repository.findById(toSave.getId());
+        HazelcastSession findById = this.repository.findById(toSave.getId());
 
-		findById.setAttribute(attrName, attrValue);
+        findById.setAttribute(attrName, attrValue);
 
-		String originalFindById = findById.getId();
-		String changeSessionId = findById.changeSessionId();
+        String originalFindById = findById.getId();
+        String changeSessionId = findById.changeSessionId();
 
-		this.repository.save(findById);
+        this.repository.save(findById);
 
-		assertThat(this.repository.findById(originalFindById)).isNull();
+        assertThat(this.repository.findById(originalFindById)).isNull();
 
-		HazelcastSession findByChangeSessionId = this.repository.findById(changeSessionId);
+        HazelcastSession findByChangeSessionId = this.repository.findById(changeSessionId);
 
-		assertThat(findByChangeSessionId.<String>getAttribute(attrName)).isEqualTo(attrValue);
+        assertThat(findByChangeSessionId.<String>getAttribute(attrName)).isEqualTo(attrValue);
 
-		this.repository.deleteById(changeSessionId);
-	}
+        this.repository.deleteById(changeSessionId);
+    }
 
-	@Test
-	void changeSessionIdWhenHasNotSaved() {
-		HazelcastSession toSave = this.repository.createSession();
-		String originalId = toSave.getId();
-		toSave.changeSessionId();
+    @Test
+    void changeSessionIdWhenHasNotSaved() {
+        HazelcastSession toSave = this.repository.createSession();
+        String originalId = toSave.getId();
+        toSave.changeSessionId();
 
-		this.repository.save(toSave);
+        this.repository.save(toSave);
 
-		assertThat(this.repository.findById(toSave.getId())).isNotNull();
-		assertThat(this.repository.findById(originalId)).isNull();
+        assertThat(this.repository.findById(toSave.getId())).isNotNull();
+        assertThat(this.repository.findById(originalId)).isNull();
 
-		this.repository.deleteById(toSave.getId());
-	}
+        this.repository.deleteById(toSave.getId());
+    }
 
-	@Test // gh-1076
-	void attemptToUpdateSessionAfterDelete() {
-		HazelcastSession session = this.repository.createSession();
-		String sessionId = session.getId();
-		this.repository.save(session);
-		session = this.repository.findById(sessionId);
-		session.setAttribute("attributeName", "attributeValue");
-		this.repository.deleteById(sessionId);
-		this.repository.save(session);
+    @Test // gh-1076
+    void attemptToUpdateSessionAfterDelete() {
+        HazelcastSession session = this.repository.createSession();
+        String sessionId = session.getId();
+        this.repository.save(session);
+        session = this.repository.findById(sessionId);
+        session.setAttribute("attributeName", "attributeValue");
+        this.repository.deleteById(sessionId);
+        this.repository.save(session);
 
-		assertThat(this.repository.findById(sessionId)).isNull();
-	}
+        assertThat(this.repository.findById(sessionId)).isNull();
+    }
 
-	@Test
-	void createAndUpdateSession() {
-		HazelcastSession session = this.repository.createSession();
-		String sessionId = session.getId();
+    @Test
+    void createAndUpdateSession() {
+        HazelcastSession session = this.repository.createSession();
+        String sessionId = session.getId();
 
-		this.repository.save(session);
+        this.repository.save(session);
 
-		session = this.repository.findById(sessionId);
-		session.setAttribute("attributeName", "attributeValue");
+        session = this.repository.findById(sessionId);
+        session.setAttribute("attributeName", "attributeValue");
 
-		this.repository.save(session);
+        this.repository.save(session);
 
-		assertThat(this.repository.findById(sessionId)).isNotNull();
+        assertThat(this.repository.findById(sessionId)).isNotNull();
 
-		this.repository.deleteById(sessionId);
-	}
+        this.repository.deleteById(sessionId);
+    }
 
-	@Test
-	void createSessionWithSecurityContextAndFindById() {
-		HazelcastSession session = this.repository.createSession();
-		String sessionId = session.getId();
+    @Test
+    void createSessionWithSecurityContextAndFindById() {
+        HazelcastSession session = this.repository.createSession();
+        String sessionId = session.getId();
 
-		Authentication authentication = new UsernamePasswordAuthenticationToken("saves-" + System.currentTimeMillis(),
-				"password", AuthorityUtils.createAuthorityList("ROLE_USER"));
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(authentication);
-		session.setAttribute(SPRING_SECURITY_CONTEXT, securityContext);
+        Authentication authentication = new UsernamePasswordAuthenticationToken("saves-" + System.currentTimeMillis(),
+                                                                                "password", AuthorityUtils.createAuthorityList("ROLE_USER"));
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        session.setAttribute(SPRING_SECURITY_CONTEXT, securityContext);
 
-		this.repository.save(session);
+        this.repository.save(session);
 
-		assertThat(this.repository.findById(sessionId)).isNotNull();
+        assertThat(this.repository.findById(sessionId)).isNotNull();
 
-		this.repository.deleteById(sessionId);
-	}
+        this.repository.deleteById(sessionId);
+    }
 
-	@Test
-	void createSessionWithSecurityContextAndFindByPrincipal() {
-		Assumptions.assumeTrue(this.hazelcastInstance instanceof HazelcastInstanceProxy,
-				"Hazelcast runs in embedded server topology");
+    @Test
+    void createSessionWithSecurityContextAndFindByPrincipal() {
+        Assumptions.assumeTrue(this.hazelcastInstance instanceof HazelcastInstanceProxy,
+                               "Hazelcast runs in embedded server topology");
 
-		HazelcastSession session = this.repository.createSession();
+        HazelcastSession session = this.repository.createSession();
 
-		String username = "saves-" + System.currentTimeMillis();
-		Authentication authentication = new UsernamePasswordAuthenticationToken(username, "password",
-				AuthorityUtils.createAuthorityList("ROLE_USER"));
-		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-		securityContext.setAuthentication(authentication);
-		session.setAttribute(SPRING_SECURITY_CONTEXT, securityContext);
+        String username = "saves-" + System.currentTimeMillis();
+        Authentication authentication = new UsernamePasswordAuthenticationToken(username, "password",
+                                                                                AuthorityUtils.createAuthorityList("ROLE_USER"));
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        session.setAttribute(SPRING_SECURITY_CONTEXT, securityContext);
 
-		this.repository.save(session);
+        this.repository.save(session);
 
-		assertThat(this.repository
-			.findByIndexNameAndIndexValue(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, username))
-			.hasSize(1);
+        assertThat(this.repository
+                           .findByIndexNameAndIndexValue(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, username))
+                .hasSize(1);
 
-		this.repository.deleteById(session.getId());
-	}
+        this.repository.deleteById(session.getId());
+    }
 
-	@Test
-	void createAndUpdateSessionWhileKeepingOriginalTimeToLiveConfiguredOnRepository() {
-		final Duration defaultSessionTimeout = Duration.ofSeconds(1800);
+    @Test
+    void createAndUpdateSessionWhileKeepingOriginalTimeToLiveConfiguredOnRepository() {
+        final Duration defaultSessionTimeout = Duration.ofSeconds(1800);
 
-		final IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
-			.getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
+        final IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
+                .getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
 
-		HazelcastSession session = this.repository.createSession();
-		String sessionId = session.getId();
-		this.repository.save(session);
+        HazelcastSession session = this.repository.createSession();
+        String sessionId = session.getId();
+        this.repository.save(session);
 
-		assertThat(session.getMaxInactiveInterval()).isEqualTo(defaultSessionTimeout);
-		assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(defaultSessionTimeout.toMillis());
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(defaultSessionTimeout);
+        assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(defaultSessionTimeout.toMillis());
 
-		session = this.repository.findById(sessionId);
-		session.setLastAccessedTime(Instant.now());
-		this.repository.save(session);
+        session = this.repository.findById(sessionId);
+        session.setLastAccessedTime(Instant.now());
+        this.repository.save(session);
 
-		session = this.repository.findById(sessionId);
-		assertThat(session.getMaxInactiveInterval()).isEqualTo(defaultSessionTimeout);
-		assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(defaultSessionTimeout.toMillis());
-	}
+        session = this.repository.findById(sessionId);
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(defaultSessionTimeout);
+        assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(defaultSessionTimeout.toMillis());
+    }
 
-	@Test
-	void createAndUpdateSessionWhileKeepingTimeToLiveSetOnSession() {
-		final Duration individualSessionTimeout = Duration.ofSeconds(23);
+    @Test
+    void createAndUpdateSessionWhileKeepingTimeToLiveSetOnSession() {
+        final Duration individualSessionTimeout = Duration.ofSeconds(23);
 
-		final IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
-			.getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
+        final IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
+                .getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
 
-		HazelcastSession session = this.repository.createSession();
-		session.setMaxInactiveInterval(individualSessionTimeout);
-		String sessionId = session.getId();
-		this.repository.save(session);
+        HazelcastSession session = this.repository.createSession();
+        session.setMaxInactiveInterval(individualSessionTimeout);
+        String sessionId = session.getId();
+        this.repository.save(session);
 
-		assertThat(session.getMaxInactiveInterval()).isEqualTo(individualSessionTimeout);
-		assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(individualSessionTimeout.toMillis());
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(individualSessionTimeout);
+        assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(individualSessionTimeout.toMillis());
 
-		session = this.repository.findById(sessionId);
-		session.setAttribute("attribute", "value");
-		this.repository.save(session);
+        session = this.repository.findById(sessionId);
+        session.setAttribute("attribute", "value");
+        this.repository.save(session);
 
-		session = this.repository.findById(sessionId);
-		assertThat(session.getMaxInactiveInterval()).isEqualTo(individualSessionTimeout);
-		assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(individualSessionTimeout.toMillis());
-	}
+        session = this.repository.findById(sessionId);
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(individualSessionTimeout);
+        assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(individualSessionTimeout.toMillis());
+    }
 
 }

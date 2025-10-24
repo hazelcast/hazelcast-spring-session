@@ -115,389 +115,389 @@ import org.springframework.util.Assert;
  * @since 2.2.0
  */
 public class HazelcastIndexedSessionRepository
-		implements FindByIndexNameSessionRepository<HazelcastIndexedSessionRepository.HazelcastSession>,
-		EntryAddedListener<String, MapSession>, EntryEvictedListener<String, MapSession>,
-		EntryRemovedListener<String, MapSession>, EntryExpiredListener<String, MapSession>, InitializingBean,
-		DisposableBean {
+        implements FindByIndexNameSessionRepository<HazelcastIndexedSessionRepository.HazelcastSession>,
+                   EntryAddedListener<String, MapSession>, EntryEvictedListener<String, MapSession>,
+                   EntryRemovedListener<String, MapSession>, EntryExpiredListener<String, MapSession>, InitializingBean,
+                   DisposableBean {
 
-	/**
-	 * The default name of map used by Spring Session to store sessions.
-	 */
-	public static final String DEFAULT_SESSION_MAP_NAME = "spring:session:sessions";
+    /**
+     * The default name of map used by Spring Session to store sessions.
+     */
+    public static final String DEFAULT_SESSION_MAP_NAME = "spring:session:sessions";
 
-	/**
-	 * The principal name custom attribute name.
-	 */
-	public static final String PRINCIPAL_NAME_ATTRIBUTE = "principalName";
+    /**
+     * The principal name custom attribute name.
+     */
+    public static final String PRINCIPAL_NAME_ATTRIBUTE = "principalName";
 
-	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
+    private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
-	private static final Log logger = LogFactory.getLog(HazelcastIndexedSessionRepository.class);
+    private static final Log logger = LogFactory.getLog(HazelcastIndexedSessionRepository.class);
 
-	private final HazelcastInstance hazelcastInstance;
+    private final HazelcastInstance hazelcastInstance;
 
-	private ApplicationEventPublisher eventPublisher = (event) -> {
-	};
+    private ApplicationEventPublisher eventPublisher = (event) -> {
+    };
 
-	private Duration defaultMaxInactiveInterval = Duration.ofSeconds(MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
+    private Duration defaultMaxInactiveInterval = Duration.ofSeconds(MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
 
-	private IndexResolver<Session> indexResolver = new DelegatingIndexResolver<>(new PrincipalNameIndexResolver<>());
+    private IndexResolver<Session> indexResolver = new DelegatingIndexResolver<>(new PrincipalNameIndexResolver<>());
 
-	private String sessionMapName = DEFAULT_SESSION_MAP_NAME;
+    private String sessionMapName = DEFAULT_SESSION_MAP_NAME;
 
-	private FlushMode flushMode = FlushMode.ON_SAVE;
+    private FlushMode flushMode = FlushMode.ON_SAVE;
 
-	private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
+    private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
 
-	private IMap<String, MapSession> sessions;
+    private IMap<String, MapSession> sessions;
 
-	private UUID sessionListenerId;
+    private UUID sessionListenerId;
 
-	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
+    private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
-	/**
-	 * Create a new {@link HazelcastIndexedSessionRepository} instance.
-	 * @param hazelcastInstance the {@link HazelcastInstance} to use for managing sessions
-	 */
-	public HazelcastIndexedSessionRepository(HazelcastInstance hazelcastInstance) {
-		Assert.notNull(hazelcastInstance, "HazelcastInstance must not be null");
-		this.hazelcastInstance = hazelcastInstance;
-	}
+    /**
+     * Create a new {@link HazelcastIndexedSessionRepository} instance.
+     * @param hazelcastInstance the {@link HazelcastInstance} to use for managing sessions
+     */
+    public HazelcastIndexedSessionRepository(HazelcastInstance hazelcastInstance) {
+        Assert.notNull(hazelcastInstance, "HazelcastInstance must not be null");
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
-	@Override
-	public void afterPropertiesSet() {
-		this.sessions = this.hazelcastInstance.getMap(this.sessionMapName);
-		this.sessionListenerId = this.sessions.addEntryListener(this, true);
-	}
+    @Override
+    public void afterPropertiesSet() {
+        this.sessions = this.hazelcastInstance.getMap(this.sessionMapName);
+        this.sessionListenerId = this.sessions.addEntryListener(this, true);
+    }
 
-	@Override
-	public void destroy() {
-		this.sessions.removeEntryListener(this.sessionListenerId);
-	}
+    @Override
+    public void destroy() {
+        this.sessions.removeEntryListener(this.sessionListenerId);
+    }
 
-	/**
-	 * Sets the {@link ApplicationEventPublisher} that is used to publish
-	 * {@link AbstractSessionEvent session events}. The default is to not publish session
-	 * events.
-	 * @param applicationEventPublisher the {@link ApplicationEventPublisher} that is used
-	 * to publish session events. Cannot be null.
-	 */
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-		Assert.notNull(applicationEventPublisher, "ApplicationEventPublisher cannot be null");
-		this.eventPublisher = applicationEventPublisher;
-	}
+    /**
+     * Sets the {@link ApplicationEventPublisher} that is used to publish
+     * {@link AbstractSessionEvent session events}. The default is to not publish session
+     * events.
+     * @param applicationEventPublisher the {@link ApplicationEventPublisher} that is used
+     * to publish session events. Cannot be null.
+     */
+    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        Assert.notNull(applicationEventPublisher, "ApplicationEventPublisher cannot be null");
+        this.eventPublisher = applicationEventPublisher;
+    }
 
-	/**
-	 * Set the maximum inactive interval in seconds between requests before newly created
-	 * sessions will be invalidated. A negative time indicates that the session will never
-	 * time out. The default is 30 minutes.
-	 * @param defaultMaxInactiveInterval the default maxInactiveInterval
-	 */
-	public void setDefaultMaxInactiveInterval(Duration defaultMaxInactiveInterval) {
-		Assert.notNull(defaultMaxInactiveInterval, "defaultMaxInactiveInterval must not be null");
-		this.defaultMaxInactiveInterval = defaultMaxInactiveInterval;
-	}
+    /**
+     * Set the maximum inactive interval in seconds between requests before newly created
+     * sessions will be invalidated. A negative time indicates that the session will never
+     * time out. The default is 30 minutes.
+     * @param defaultMaxInactiveInterval the default maxInactiveInterval
+     */
+    public void setDefaultMaxInactiveInterval(Duration defaultMaxInactiveInterval) {
+        Assert.notNull(defaultMaxInactiveInterval, "defaultMaxInactiveInterval must not be null");
+        this.defaultMaxInactiveInterval = defaultMaxInactiveInterval;
+    }
 
-	/**
-	 * Set the maximum inactive interval in seconds between requests before newly created
-	 * sessions will be invalidated. A negative time indicates that the session will never
-	 * time out. The default is 1800 (30 minutes).
-	 * @param defaultMaxInactiveInterval the default maxInactiveInterval in seconds
-	 * @deprecated since 3.0.0, in favor of
-	 * {@link #setDefaultMaxInactiveInterval(Duration)}
-	 */
-	@Deprecated(since = "3.0.0")
-	public void setDefaultMaxInactiveInterval(Integer defaultMaxInactiveInterval) {
-		setDefaultMaxInactiveInterval(Duration.ofSeconds(defaultMaxInactiveInterval));
-	}
+    /**
+     * Set the maximum inactive interval in seconds between requests before newly created
+     * sessions will be invalidated. A negative time indicates that the session will never
+     * time out. The default is 1800 (30 minutes).
+     * @param defaultMaxInactiveInterval the default maxInactiveInterval in seconds
+     * @deprecated since 3.0.0, in favor of
+     * {@link #setDefaultMaxInactiveInterval(Duration)}
+     */
+    @Deprecated(since = "3.0.0")
+    public void setDefaultMaxInactiveInterval(Integer defaultMaxInactiveInterval) {
+        setDefaultMaxInactiveInterval(Duration.ofSeconds(defaultMaxInactiveInterval));
+    }
 
-	/**
-	 * Set the {@link IndexResolver} to use.
-	 * @param indexResolver the index resolver
-	 */
-	public void setIndexResolver(IndexResolver<Session> indexResolver) {
-		Assert.notNull(indexResolver, "indexResolver cannot be null");
-		this.indexResolver = indexResolver;
-	}
+    /**
+     * Set the {@link IndexResolver} to use.
+     * @param indexResolver the index resolver
+     */
+    public void setIndexResolver(IndexResolver<Session> indexResolver) {
+        Assert.notNull(indexResolver, "indexResolver cannot be null");
+        this.indexResolver = indexResolver;
+    }
 
-	/**
-	 * Set the name of map used to store sessions.
-	 * @param sessionMapName the session map name
-	 */
-	public void setSessionMapName(String sessionMapName) {
-		Assert.hasText(sessionMapName, "Map name must not be empty");
-		this.sessionMapName = sessionMapName;
-	}
+    /**
+     * Set the name of map used to store sessions.
+     * @param sessionMapName the session map name
+     */
+    public void setSessionMapName(String sessionMapName) {
+        Assert.hasText(sessionMapName, "Map name must not be empty");
+        this.sessionMapName = sessionMapName;
+    }
 
-	/**
-	 * Sets the Hazelcast flush mode. Default flush mode is {@link FlushMode#ON_SAVE}.
-	 * @param flushMode the new Hazelcast flush mode
-	 */
-	public void setFlushMode(FlushMode flushMode) {
-		Assert.notNull(flushMode, "flushMode cannot be null");
-		this.flushMode = flushMode;
-	}
+    /**
+     * Sets the Hazelcast flush mode. Default flush mode is {@link FlushMode#ON_SAVE}.
+     * @param flushMode the new Hazelcast flush mode
+     */
+    public void setFlushMode(FlushMode flushMode) {
+        Assert.notNull(flushMode, "flushMode cannot be null");
+        this.flushMode = flushMode;
+    }
 
-	/**
-	 * Set the save mode.
-	 * @param saveMode the save mode
-	 */
-	public void setSaveMode(SaveMode saveMode) {
-		Assert.notNull(saveMode, "saveMode must not be null");
-		this.saveMode = saveMode;
-	}
+    /**
+     * Set the save mode.
+     * @param saveMode the save mode
+     */
+    public void setSaveMode(SaveMode saveMode) {
+        Assert.notNull(saveMode, "saveMode must not be null");
+        this.saveMode = saveMode;
+    }
 
-	@Override
-	public HazelcastSession createSession() {
-		MapSession cached = new MapSession(this.sessionIdGenerator);
-		cached.setMaxInactiveInterval(this.defaultMaxInactiveInterval);
-		HazelcastSession session = new HazelcastSession(cached, true);
-		session.flushImmediateIfNecessary();
-		return session;
-	}
+    @Override
+    public HazelcastSession createSession() {
+        MapSession cached = new MapSession(this.sessionIdGenerator);
+        cached.setMaxInactiveInterval(this.defaultMaxInactiveInterval);
+        HazelcastSession session = new HazelcastSession(cached, true);
+        session.flushImmediateIfNecessary();
+        return session;
+    }
 
-	@Override
-	public void save(HazelcastSession session) {
-		if (session.isNew) {
-			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
-					TimeUnit.SECONDS);
-		}
-		else if (session.sessionIdChanged) {
-			this.sessions.delete(session.originalId);
-			session.originalId = session.getId();
-			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
-					TimeUnit.SECONDS);
-		}
-		else if (session.hasChanges()) {
-			SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor();
-			if (session.lastAccessedTimeChanged) {
-				entryProcessor.setLastAccessedTime(session.getLastAccessedTime());
-			}
-			if (session.maxInactiveIntervalChanged) {
-				entryProcessor.setMaxInactiveInterval(session.getMaxInactiveInterval());
-			}
-			if (!session.delta.isEmpty()) {
-				entryProcessor.setDelta(new HashMap<>(session.delta));
-			}
-			this.sessions.executeOnKey(session.getId(), entryProcessor);
-		}
-		session.clearChangeFlags();
-	}
+    @Override
+    public void save(HazelcastSession session) {
+        if (session.isNew) {
+            this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
+                              TimeUnit.SECONDS);
+        }
+        else if (session.sessionIdChanged) {
+            this.sessions.delete(session.originalId);
+            session.originalId = session.getId();
+            this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
+                              TimeUnit.SECONDS);
+        }
+        else if (session.hasChanges()) {
+            SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor();
+            if (session.lastAccessedTimeChanged) {
+                entryProcessor.setLastAccessedTime(session.getLastAccessedTime());
+            }
+            if (session.maxInactiveIntervalChanged) {
+                entryProcessor.setMaxInactiveInterval(session.getMaxInactiveInterval());
+            }
+            if (!session.delta.isEmpty()) {
+                entryProcessor.setDelta(new HashMap<>(session.delta));
+            }
+            this.sessions.executeOnKey(session.getId(), entryProcessor);
+        }
+        session.clearChangeFlags();
+    }
 
-	@Override
-	public HazelcastSession findById(String id) {
-		MapSession saved = this.sessions.get(id);
-		if (saved == null) {
-			return null;
-		}
-		if (saved.isExpired()) {
-			deleteById(saved.getId());
-			return null;
-		}
-		return new HazelcastSession(saved, false);
-	}
+    @Override
+    public HazelcastSession findById(String id) {
+        MapSession saved = this.sessions.get(id);
+        if (saved == null) {
+            return null;
+        }
+        if (saved.isExpired()) {
+            deleteById(saved.getId());
+            return null;
+        }
+        return new HazelcastSession(saved, false);
+    }
 
-	@Override
-	public void deleteById(String id) {
-		this.sessions.remove(id);
-	}
+    @Override
+    public void deleteById(String id) {
+        this.sessions.remove(id);
+    }
 
-	@Override
-	public Map<String, HazelcastSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
-		if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
-			return Collections.emptyMap();
-		}
-		Collection<MapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
-		Map<String, HazelcastSession> sessionMap = new HashMap<>(sessions.size());
-		for (MapSession session : sessions) {
-			sessionMap.put(session.getId(), new HazelcastSession(session, false));
-		}
-		return sessionMap;
-	}
+    @Override
+    public Map<String, HazelcastSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
+        if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
+            return Collections.emptyMap();
+        }
+        Collection<MapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
+        Map<String, HazelcastSession> sessionMap = new HashMap<>(sessions.size());
+        for (MapSession session : sessions) {
+            sessionMap.put(session.getId(), new HazelcastSession(session, false));
+        }
+        return sessionMap;
+    }
 
-	@Override
-	public void entryAdded(EntryEvent<String, MapSession> event) {
-		MapSession session = event.getValue();
-		if (session.getId().equals(session.getOriginalId())) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Session created with id: " + session.getId());
-			}
-			this.eventPublisher.publishEvent(new SessionCreatedEvent(this, session));
-		}
-	}
+    @Override
+    public void entryAdded(EntryEvent<String, MapSession> event) {
+        MapSession session = event.getValue();
+        if (session.getId().equals(session.getOriginalId())) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Session created with id: " + session.getId());
+            }
+            this.eventPublisher.publishEvent(new SessionCreatedEvent(this, session));
+        }
+    }
 
-	@Override
-	public void entryEvicted(EntryEvent<String, MapSession> event) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Session expired with id: " + event.getOldValue().getId());
-		}
-		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
-	}
+    @Override
+    public void entryEvicted(EntryEvent<String, MapSession> event) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Session expired with id: " + event.getOldValue().getId());
+        }
+        this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
+    }
 
-	@Override
-	public void entryRemoved(EntryEvent<String, MapSession> event) {
-		MapSession session = event.getOldValue();
-		if (session != null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Session deleted with id: " + session.getId());
-			}
-			this.eventPublisher.publishEvent(new SessionDeletedEvent(this, session));
-		}
-	}
+    @Override
+    public void entryRemoved(EntryEvent<String, MapSession> event) {
+        MapSession session = event.getOldValue();
+        if (session != null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Session deleted with id: " + session.getId());
+            }
+            this.eventPublisher.publishEvent(new SessionDeletedEvent(this, session));
+        }
+    }
 
-	@Override
-	public void entryExpired(EntryEvent<String, MapSession> event) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Session expired with id: " + event.getOldValue().getId());
-		}
-		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
-	}
+    @Override
+    public void entryExpired(EntryEvent<String, MapSession> event) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Session expired with id: " + event.getOldValue().getId());
+        }
+        this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
+    }
 
-	/**
-	 * Set the {@link SessionIdGenerator} to use to generate session ids.
-	 * @param sessionIdGenerator the {@link SessionIdGenerator} to use
-	 * @since 3.2
-	 */
-	public void setSessionIdGenerator(SessionIdGenerator sessionIdGenerator) {
-		Assert.notNull(sessionIdGenerator, "sessionIdGenerator cannot be null");
-		this.sessionIdGenerator = sessionIdGenerator;
-	}
+    /**
+     * Set the {@link SessionIdGenerator} to use to generate session ids.
+     * @param sessionIdGenerator the {@link SessionIdGenerator} to use
+     * @since 3.2
+     */
+    public void setSessionIdGenerator(SessionIdGenerator sessionIdGenerator) {
+        Assert.notNull(sessionIdGenerator, "sessionIdGenerator cannot be null");
+        this.sessionIdGenerator = sessionIdGenerator;
+    }
 
-	/**
-	 * A custom implementation of {@link Session} that uses a {@link MapSession} as the
-	 * basis for its mapping. It keeps track if changes have been made since last save.
-	 *
-	 * @author Aleksandar Stojsavljevic
-	 */
-	final class HazelcastSession implements Session {
+    /**
+     * A custom implementation of {@link Session} that uses a {@link MapSession} as the
+     * basis for its mapping. It keeps track if changes have been made since last save.
+     *
+     * @author Aleksandar Stojsavljevic
+     */
+    final class HazelcastSession implements Session {
 
-		private final MapSession delegate;
+        private final MapSession delegate;
 
-		private boolean isNew;
+        private boolean isNew;
 
-		private boolean sessionIdChanged;
+        private boolean sessionIdChanged;
 
-		private boolean lastAccessedTimeChanged;
+        private boolean lastAccessedTimeChanged;
 
-		private boolean maxInactiveIntervalChanged;
+        private boolean maxInactiveIntervalChanged;
 
-		private String originalId;
+        private String originalId;
 
-		private Map<String, Object> delta = new HashMap<>();
+        private Map<String, Object> delta = new HashMap<>();
 
-		HazelcastSession(MapSession cached, boolean isNew) {
-			this.delegate = cached;
-			this.isNew = isNew;
-			this.originalId = cached.getId();
-			if (this.isNew || (HazelcastIndexedSessionRepository.this.saveMode == SaveMode.ALWAYS)) {
-				getAttributeNames()
-					.forEach((attributeName) -> this.delta.put(attributeName, cached.getAttribute(attributeName)));
-			}
-		}
+        HazelcastSession(MapSession cached, boolean isNew) {
+            this.delegate = cached;
+            this.isNew = isNew;
+            this.originalId = cached.getId();
+            if (this.isNew || (HazelcastIndexedSessionRepository.this.saveMode == SaveMode.ALWAYS)) {
+                getAttributeNames()
+                        .forEach((attributeName) -> this.delta.put(attributeName, cached.getAttribute(attributeName)));
+            }
+        }
 
-		@Override
-		public void setLastAccessedTime(Instant lastAccessedTime) {
-			this.delegate.setLastAccessedTime(lastAccessedTime);
-			this.lastAccessedTimeChanged = true;
-			flushImmediateIfNecessary();
-		}
+        @Override
+        public void setLastAccessedTime(Instant lastAccessedTime) {
+            this.delegate.setLastAccessedTime(lastAccessedTime);
+            this.lastAccessedTimeChanged = true;
+            flushImmediateIfNecessary();
+        }
 
-		@Override
-		public boolean isExpired() {
-			return this.delegate.isExpired();
-		}
+        @Override
+        public boolean isExpired() {
+            return this.delegate.isExpired();
+        }
 
-		@Override
-		public Instant getCreationTime() {
-			return this.delegate.getCreationTime();
-		}
+        @Override
+        public Instant getCreationTime() {
+            return this.delegate.getCreationTime();
+        }
 
-		@Override
-		public String getId() {
-			return this.delegate.getId();
-		}
+        @Override
+        public String getId() {
+            return this.delegate.getId();
+        }
 
-		@Override
-		public String changeSessionId() {
-			String newSessionId = HazelcastIndexedSessionRepository.this.sessionIdGenerator.generate();
-			this.delegate.setId(newSessionId);
-			this.sessionIdChanged = true;
-			return newSessionId;
-		}
+        @Override
+        public String changeSessionId() {
+            String newSessionId = HazelcastIndexedSessionRepository.this.sessionIdGenerator.generate();
+            this.delegate.setId(newSessionId);
+            this.sessionIdChanged = true;
+            return newSessionId;
+        }
 
-		@Override
-		public Instant getLastAccessedTime() {
-			return this.delegate.getLastAccessedTime();
-		}
+        @Override
+        public Instant getLastAccessedTime() {
+            return this.delegate.getLastAccessedTime();
+        }
 
-		@Override
-		public void setMaxInactiveInterval(Duration interval) {
-			this.delegate.setMaxInactiveInterval(interval);
-			this.maxInactiveIntervalChanged = true;
-			flushImmediateIfNecessary();
-		}
+        @Override
+        public void setMaxInactiveInterval(Duration interval) {
+            this.delegate.setMaxInactiveInterval(interval);
+            this.maxInactiveIntervalChanged = true;
+            flushImmediateIfNecessary();
+        }
 
-		@Override
-		public Duration getMaxInactiveInterval() {
-			return this.delegate.getMaxInactiveInterval();
-		}
+        @Override
+        public Duration getMaxInactiveInterval() {
+            return this.delegate.getMaxInactiveInterval();
+        }
 
-		@Override
-		public <T> T getAttribute(String attributeName) {
-			T attributeValue = this.delegate.getAttribute(attributeName);
-			if (attributeValue != null
-					&& HazelcastIndexedSessionRepository.this.saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
-				this.delta.put(attributeName, attributeValue);
-			}
-			return attributeValue;
-		}
+        @Override
+        public <T> T getAttribute(String attributeName) {
+            T attributeValue = this.delegate.getAttribute(attributeName);
+            if (attributeValue != null
+                    && HazelcastIndexedSessionRepository.this.saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
+                this.delta.put(attributeName, attributeValue);
+            }
+            return attributeValue;
+        }
 
-		@Override
-		public Set<String> getAttributeNames() {
-			return this.delegate.getAttributeNames();
-		}
+        @Override
+        public Set<String> getAttributeNames() {
+            return this.delegate.getAttributeNames();
+        }
 
-		@Override
-		public void setAttribute(String attributeName, Object attributeValue) {
-			this.delegate.setAttribute(attributeName, attributeValue);
-			this.delta.put(attributeName, attributeValue);
-			if (SPRING_SECURITY_CONTEXT.equals(attributeName)) {
-				Map<String, String> indexes = HazelcastIndexedSessionRepository.this.indexResolver
-					.resolveIndexesFor(this);
-				String principal = (attributeValue != null) ? indexes.get(PRINCIPAL_NAME_INDEX_NAME) : null;
-				this.delegate.setAttribute(PRINCIPAL_NAME_INDEX_NAME, principal);
-				this.delta.put(PRINCIPAL_NAME_INDEX_NAME, principal);
-			}
-			flushImmediateIfNecessary();
-		}
+        @Override
+        public void setAttribute(String attributeName, Object attributeValue) {
+            this.delegate.setAttribute(attributeName, attributeValue);
+            this.delta.put(attributeName, attributeValue);
+            if (SPRING_SECURITY_CONTEXT.equals(attributeName)) {
+                Map<String, String> indexes = HazelcastIndexedSessionRepository.this.indexResolver
+                        .resolveIndexesFor(this);
+                String principal = (attributeValue != null) ? indexes.get(PRINCIPAL_NAME_INDEX_NAME) : null;
+                this.delegate.setAttribute(PRINCIPAL_NAME_INDEX_NAME, principal);
+                this.delta.put(PRINCIPAL_NAME_INDEX_NAME, principal);
+            }
+            flushImmediateIfNecessary();
+        }
 
-		@Override
-		public void removeAttribute(String attributeName) {
-			setAttribute(attributeName, null);
-		}
+        @Override
+        public void removeAttribute(String attributeName) {
+            setAttribute(attributeName, null);
+        }
 
-		MapSession getDelegate() {
-			return this.delegate;
-		}
+        MapSession getDelegate() {
+            return this.delegate;
+        }
 
-		boolean hasChanges() {
-			return (this.lastAccessedTimeChanged || this.maxInactiveIntervalChanged || !this.delta.isEmpty());
-		}
+        boolean hasChanges() {
+            return (this.lastAccessedTimeChanged || this.maxInactiveIntervalChanged || !this.delta.isEmpty());
+        }
 
-		void clearChangeFlags() {
-			this.isNew = false;
-			this.lastAccessedTimeChanged = false;
-			this.sessionIdChanged = false;
-			this.maxInactiveIntervalChanged = false;
-			this.delta.clear();
-		}
+        void clearChangeFlags() {
+            this.isNew = false;
+            this.lastAccessedTimeChanged = false;
+            this.sessionIdChanged = false;
+            this.maxInactiveIntervalChanged = false;
+            this.delta.clear();
+        }
 
-		private void flushImmediateIfNecessary() {
-			if (HazelcastIndexedSessionRepository.this.flushMode == FlushMode.IMMEDIATE) {
-				HazelcastIndexedSessionRepository.this.save(this);
-			}
-		}
+        private void flushImmediateIfNecessary() {
+            if (HazelcastIndexedSessionRepository.this.flushMode == FlushMode.IMMEDIATE) {
+                HazelcastIndexedSessionRepository.this.save(this);
+            }
+        }
 
-	}
+    }
 
 }

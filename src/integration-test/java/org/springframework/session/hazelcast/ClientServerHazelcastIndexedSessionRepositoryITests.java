@@ -61,33 +61,32 @@ class ClientServerHazelcastIndexedSessionRepositoryITests extends AbstractHazelc
 			.withEnv("HAZELCAST_CONFIG", "hazelcast.xml");
 	// @formatter:on
 
-	@BeforeAll
-	static void setUpClass() {
-		container.start();
-	}
+    @BeforeAll
+    static void setUpClass() {
+        container.start();
+    }
 
-	@AfterAll
-	static void tearDownClass() {
-		container.stop();
-	}
+    @AfterAll
+    static void tearDownClass() {
+        container.stop();
+    }
 
-	@Configuration
-	@EnableHazelcastHttpSession
-	static class HazelcastSessionConfig {
+    @Configuration
+    @EnableHazelcastHttpSession
+    static class HazelcastSessionConfig {
 
-		@Bean
-		HazelcastInstance hazelcastInstance() {
-			ClientConfig clientConfig = new ClientConfig();
-			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-			clientConfig.getUserCodeDeploymentConfig()
-				.setEnabled(true)
-				.addClass(Session.class)
-				.addClass(MapSession.class)
-				.addClass(SessionUpdateEntryProcessor.class)
-				.addClass(SessionIdGenerator.class);
-			return HazelcastClient.newHazelcastClient(clientConfig);
-		}
-
-	}
+        @Bean
+        HazelcastInstance hazelcastInstance() {
+            ClientConfig clientConfig = new ClientConfig();
+            clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
+            clientConfig.getUserCodeDeploymentConfig()
+                        .setEnabled(true)
+                        .addClass(Session.class)
+                        .addClass(MapSession.class)
+                        .addClass(SessionUpdateEntryProcessor.class)
+                        .addClass(SessionIdGenerator.class);
+            return HazelcastClient.newHazelcastClient(clientConfig);
+        }
+    }
 
 }

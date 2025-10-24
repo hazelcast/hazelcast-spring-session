@@ -34,93 +34,93 @@ import static org.mockito.Mockito.verify;
 
 class SessionUpdateEntryProcessorTests {
 
-	private SessionUpdateEntryProcessor processor;
+    private SessionUpdateEntryProcessor processor;
 
-	@BeforeEach
-	void setUp() {
-		this.processor = new SessionUpdateEntryProcessor();
-	}
+    @BeforeEach
+    void setUp() {
+        this.processor = new SessionUpdateEntryProcessor();
+    }
 
-	@Test
-	void shouldReturnFalseIfNoSessionExistsInHazelcastMapEntry() {
-		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+    @Test
+    void shouldReturnFalseIfNoSessionExistsInHazelcastMapEntry() {
+        @SuppressWarnings("unchecked")
+        ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
 
-		Object result = this.processor.process(mapEntry);
+        Object result = this.processor.process(mapEntry);
 
-		assertThat(result).isEqualTo(Boolean.FALSE);
-	}
+        assertThat(result).isEqualTo(Boolean.FALSE);
+    }
 
-	@Test
-	void shouldUpdateMaxInactiveIntervalOnSessionAndSetMapEntryValueWithNewTimeToLive() {
-		Duration newMaxInactiveInterval = Duration.ofSeconds(123L);
-		MapSession mapSession = new MapSession();
-		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
-		given(mapEntry.getValue()).willReturn(mapSession);
+    @Test
+    void shouldUpdateMaxInactiveIntervalOnSessionAndSetMapEntryValueWithNewTimeToLive() {
+        Duration newMaxInactiveInterval = Duration.ofSeconds(123L);
+        MapSession mapSession = new MapSession();
+        @SuppressWarnings("unchecked")
+        ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+        given(mapEntry.getValue()).willReturn(mapSession);
 
-		this.processor.setMaxInactiveInterval(newMaxInactiveInterval);
-		Object result = this.processor.process(mapEntry);
+        this.processor.setMaxInactiveInterval(newMaxInactiveInterval);
+        Object result = this.processor.process(mapEntry);
 
-		assertThat(result).isEqualTo(Boolean.TRUE);
-		assertThat(mapSession.getMaxInactiveInterval()).isEqualTo(newMaxInactiveInterval);
-		verify(mapEntry).setValue(mapSession, newMaxInactiveInterval.getSeconds(), TimeUnit.SECONDS);
-	}
+        assertThat(result).isEqualTo(Boolean.TRUE);
+        assertThat(mapSession.getMaxInactiveInterval()).isEqualTo(newMaxInactiveInterval);
+        verify(mapEntry).setValue(mapSession, newMaxInactiveInterval.getSeconds(), TimeUnit.SECONDS);
+    }
 
-	@Test
-	void shouldSetMapEntryValueWithOldTimeToLiveIfNoChangeToMaxInactiveIntervalIsRegistered() {
-		Duration maxInactiveInterval = Duration.ofSeconds(123L);
-		MapSession mapSession = new MapSession();
-		mapSession.setMaxInactiveInterval(maxInactiveInterval);
-		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
-		given(mapEntry.getValue()).willReturn(mapSession);
+    @Test
+    void shouldSetMapEntryValueWithOldTimeToLiveIfNoChangeToMaxInactiveIntervalIsRegistered() {
+        Duration maxInactiveInterval = Duration.ofSeconds(123L);
+        MapSession mapSession = new MapSession();
+        mapSession.setMaxInactiveInterval(maxInactiveInterval);
+        @SuppressWarnings("unchecked")
+        ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+        given(mapEntry.getValue()).willReturn(mapSession);
 
-		Object result = this.processor.process(mapEntry);
+        Object result = this.processor.process(mapEntry);
 
-		assertThat(result).isEqualTo(Boolean.TRUE);
-		assertThat(mapSession.getMaxInactiveInterval()).isEqualTo(maxInactiveInterval);
-		verify(mapEntry).setValue(mapSession, maxInactiveInterval.getSeconds(), TimeUnit.SECONDS);
-	}
+        assertThat(result).isEqualTo(Boolean.TRUE);
+        assertThat(mapSession.getMaxInactiveInterval()).isEqualTo(maxInactiveInterval);
+        verify(mapEntry).setValue(mapSession, maxInactiveInterval.getSeconds(), TimeUnit.SECONDS);
+    }
 
-	@Test
-	void shouldUpdateLastAccessTimeOnSessionAndSetMapEntryValueWithOldTimeToLive() {
-		Instant lastAccessTime = Instant.ofEpochSecond(1234L);
-		MapSession mapSession = new MapSession();
-		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
-		given(mapEntry.getValue()).willReturn(mapSession);
+    @Test
+    void shouldUpdateLastAccessTimeOnSessionAndSetMapEntryValueWithOldTimeToLive() {
+        Instant lastAccessTime = Instant.ofEpochSecond(1234L);
+        MapSession mapSession = new MapSession();
+        @SuppressWarnings("unchecked")
+        ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+        given(mapEntry.getValue()).willReturn(mapSession);
 
-		this.processor.setLastAccessedTime(lastAccessTime);
-		Object result = this.processor.process(mapEntry);
+        this.processor.setLastAccessedTime(lastAccessTime);
+        Object result = this.processor.process(mapEntry);
 
-		assertThat(result).isEqualTo(Boolean.TRUE);
-		assertThat(mapSession.getLastAccessedTime()).isEqualTo(lastAccessTime);
-		verify(mapEntry).setValue(mapSession, mapSession.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
-	}
+        assertThat(result).isEqualTo(Boolean.TRUE);
+        assertThat(mapSession.getLastAccessedTime()).isEqualTo(lastAccessTime);
+        verify(mapEntry).setValue(mapSession, mapSession.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+    }
 
-	@Test
-	void shouldUpdateSessionAttributesFromDeltaAndSetMapEntryValueWithOldTimeToLive() {
-		MapSession mapSession = new MapSession();
-		mapSession.setAttribute("changed", "oldValue");
-		mapSession.setAttribute("removed", "existingValue");
-		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
-		given(mapEntry.getValue()).willReturn(mapSession);
+    @Test
+    void shouldUpdateSessionAttributesFromDeltaAndSetMapEntryValueWithOldTimeToLive() {
+        MapSession mapSession = new MapSession();
+        mapSession.setAttribute("changed", "oldValue");
+        mapSession.setAttribute("removed", "existingValue");
+        @SuppressWarnings("unchecked")
+        ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+        given(mapEntry.getValue()).willReturn(mapSession);
 
-		HashMap<String, Object> delta = new HashMap<>();
-		delta.put("added", "addedValue");
-		delta.put("changed", "newValue");
-		delta.put("removed", null);
-		this.processor.setDelta(delta);
+        HashMap<String, Object> delta = new HashMap<>();
+        delta.put("added", "addedValue");
+        delta.put("changed", "newValue");
+        delta.put("removed", null);
+        this.processor.setDelta(delta);
 
-		Object result = this.processor.process(mapEntry);
+        Object result = this.processor.process(mapEntry);
 
-		assertThat(result).isEqualTo(Boolean.TRUE);
-		assertThat((String) mapSession.getAttribute("added")).isEqualTo("addedValue");
-		assertThat((String) mapSession.getAttribute("changed")).isEqualTo("newValue");
-		assertThat((String) mapSession.getAttribute("removed")).isNull();
-		verify(mapEntry).setValue(mapSession, mapSession.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
-	}
+        assertThat(result).isEqualTo(Boolean.TRUE);
+        assertThat((String) mapSession.getAttribute("added")).isEqualTo("addedValue");
+        assertThat((String) mapSession.getAttribute("changed")).isEqualTo("newValue");
+        assertThat((String) mapSession.getAttribute("removed")).isNull();
+        verify(mapEntry).setValue(mapSession, mapSession.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+    }
 
 }

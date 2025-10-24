@@ -35,49 +35,49 @@ import org.springframework.session.MapSession;
  */
 public class SessionUpdateEntryProcessor implements EntryProcessor<String, MapSession, Object> {
 
-	private Instant lastAccessedTime;
+    private Instant lastAccessedTime;
 
-	private Duration maxInactiveInterval;
+    private Duration maxInactiveInterval;
 
-	private Map<String, Object> delta;
+    private Map<String, Object> delta;
 
-	@Override
-	public Object process(Map.Entry<String, MapSession> entry) {
-		MapSession value = entry.getValue();
-		if (value == null) {
-			return Boolean.FALSE;
-		}
-		if (this.lastAccessedTime != null) {
-			value.setLastAccessedTime(this.lastAccessedTime);
-		}
-		if (this.maxInactiveInterval != null) {
-			value.setMaxInactiveInterval(this.maxInactiveInterval);
-		}
-		if (this.delta != null) {
-			for (final Map.Entry<String, Object> attribute : this.delta.entrySet()) {
-				if (attribute.getValue() != null) {
-					value.setAttribute(attribute.getKey(), attribute.getValue());
-				}
-				else {
-					value.removeAttribute(attribute.getKey());
-				}
-			}
-		}
-		((ExtendedMapEntry<String, MapSession>) entry).setValue(value, value.getMaxInactiveInterval().getSeconds(),
-				TimeUnit.SECONDS);
-		return Boolean.TRUE;
-	}
+    @Override
+    public Object process(Map.Entry<String, MapSession> entry) {
+        MapSession value = entry.getValue();
+        if (value == null) {
+            return Boolean.FALSE;
+        }
+        if (this.lastAccessedTime != null) {
+            value.setLastAccessedTime(this.lastAccessedTime);
+        }
+        if (this.maxInactiveInterval != null) {
+            value.setMaxInactiveInterval(this.maxInactiveInterval);
+        }
+        if (this.delta != null) {
+            for (final Map.Entry<String, Object> attribute : this.delta.entrySet()) {
+                if (attribute.getValue() != null) {
+                    value.setAttribute(attribute.getKey(), attribute.getValue());
+                }
+                else {
+                    value.removeAttribute(attribute.getKey());
+                }
+            }
+        }
+        ((ExtendedMapEntry<String, MapSession>) entry).setValue(value, value.getMaxInactiveInterval().getSeconds(),
+                                                                TimeUnit.SECONDS);
+        return Boolean.TRUE;
+    }
 
-	void setLastAccessedTime(Instant lastAccessedTime) {
-		this.lastAccessedTime = lastAccessedTime;
-	}
+    void setLastAccessedTime(Instant lastAccessedTime) {
+        this.lastAccessedTime = lastAccessedTime;
+    }
 
-	void setMaxInactiveInterval(Duration maxInactiveInterval) {
-		this.maxInactiveInterval = maxInactiveInterval;
-	}
+    void setMaxInactiveInterval(Duration maxInactiveInterval) {
+        this.maxInactiveInterval = maxInactiveInterval;
+    }
 
-	void setDelta(Map<String, Object> delta) {
-		this.delta = delta;
-	}
+    void setDelta(Map<String, Object> delta) {
+        this.delta = delta;
+    }
 
 }

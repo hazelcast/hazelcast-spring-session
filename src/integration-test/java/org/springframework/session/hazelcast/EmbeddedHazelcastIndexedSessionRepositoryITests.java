@@ -38,15 +38,15 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @WebAppConfiguration
 class EmbeddedHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
 
-	@EnableHazelcastHttpSession
-	@Configuration
-	static class HazelcastSessionConfig {
+    @EnableHazelcastHttpSession
+    @Configuration
+    static class HazelcastSessionConfig {
 
-		@Bean
-		HazelcastInstance hazelcastInstance() {
-			return HazelcastITestUtils.embeddedHazelcastServer();
-		}
+        @Bean
+        HazelcastInstance hazelcastInstance() {
+            return HazelcastITestUtils.embeddedHazelcastServer();
+        }
 
-	}
+    }
 
 }
