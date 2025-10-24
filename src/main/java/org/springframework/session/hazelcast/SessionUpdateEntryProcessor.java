@@ -57,8 +57,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor<String, MapSe
             for (final Map.Entry<String, Object> attribute : this.delta.entrySet()) {
                 if (attribute.getValue() != null) {
                     value.setAttribute(attribute.getKey(), attribute.getValue());
-                }
-                else {
+                } else {
                     value.removeAttribute(attribute.getKey());
                 }
             }

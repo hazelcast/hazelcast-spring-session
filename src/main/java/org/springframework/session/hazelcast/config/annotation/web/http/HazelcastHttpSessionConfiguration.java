@@ -61,116 +61,117 @@ import org.springframework.util.StringUtils;
 @Import(SpringHttpSessionConfiguration.class)
 public class HazelcastHttpSessionConfiguration implements ImportAware {
 
-	private Duration maxInactiveInterval = MapSession.DEFAULT_MAX_INACTIVE_INTERVAL;
+    private Duration maxInactiveInterval = MapSession.DEFAULT_MAX_INACTIVE_INTERVAL;
 
-	private String sessionMapName = HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME;
+    private String sessionMapName = HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME;
 
-	private FlushMode flushMode = FlushMode.ON_SAVE;
+    private FlushMode flushMode = FlushMode.ON_SAVE;
 
-	private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
+    private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
 
-	private HazelcastInstance hazelcastInstance;
+    private HazelcastInstance hazelcastInstance;
 
-	private ApplicationEventPublisher applicationEventPublisher;
+    private ApplicationEventPublisher applicationEventPublisher;
 
-	private IndexResolver<Session> indexResolver;
+    private IndexResolver<Session> indexResolver;
 
-	private List<SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers;
+    private List<SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers;
 
-	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
+    private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
-	@Bean
-	public FindByIndexNameSessionRepository<?> sessionRepository() {
-		return createHazelcastIndexedSessionRepository();
-	}
+    @Bean
+    public FindByIndexNameSessionRepository<?> sessionRepository() {
+        return createHazelcastIndexedSessionRepository();
+    }
 
-	public void setMaxInactiveInterval(Duration maxInactiveInterval) {
-		this.maxInactiveInterval = maxInactiveInterval;
-	}
+    public void setMaxInactiveInterval(Duration maxInactiveInterval) {
+        this.maxInactiveInterval = maxInactiveInterval;
+    }
 
-	@Deprecated
-	public void setMaxInactiveIntervalInSeconds(int maxInactiveIntervalInSeconds) {
-		setMaxInactiveInterval(Duration.ofSeconds(maxInactiveIntervalInSeconds));
-	}
+    @Deprecated
+    public void setMaxInactiveIntervalInSeconds(int maxInactiveIntervalInSeconds) {
+        setMaxInactiveInterval(Duration.ofSeconds(maxInactiveIntervalInSeconds));
+    }
 
-	public void setSessionMapName(String sessionMapName) {
-		this.sessionMapName = sessionMapName;
-	}
+    public void setSessionMapName(String sessionMapName) {
+        this.sessionMapName = sessionMapName;
+    }
 
-	public void setFlushMode(FlushMode flushMode) {
-		this.flushMode = flushMode;
-	}
+    public void setFlushMode(FlushMode flushMode) {
+        this.flushMode = flushMode;
+    }
 
-	public void setSaveMode(SaveMode saveMode) {
-		this.saveMode = saveMode;
-	}
+    public void setSaveMode(SaveMode saveMode) {
+        this.saveMode = saveMode;
+    }
 
-	@Autowired
-	public void setHazelcastInstance(
-			@SpringSessionHazelcastInstance ObjectProvider<HazelcastInstance> springSessionHazelcastInstance,
-			ObjectProvider<HazelcastInstance> hazelcastInstance) {
-		HazelcastInstance hazelcastInstanceToUse = springSessionHazelcastInstance.getIfAvailable();
-		if (hazelcastInstanceToUse == null) {
-			hazelcastInstanceToUse = hazelcastInstance.getObject();
-		}
-		this.hazelcastInstance = hazelcastInstanceToUse;
-	}
+    @Autowired
+    public void setHazelcastInstance(
+            @SpringSessionHazelcastInstance ObjectProvider<HazelcastInstance> springSessionHazelcastInstance,
+            ObjectProvider<HazelcastInstance> hazelcastInstance) {
+        HazelcastInstance hazelcastInstanceToUse = springSessionHazelcastInstance.getIfAvailable();
+        if (hazelcastInstanceToUse == null) {
+            hazelcastInstanceToUse = hazelcastInstance.getObject();
+        }
+        this.hazelcastInstance = hazelcastInstanceToUse;
+    }
 
-	@Autowired
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-		this.applicationEventPublisher = applicationEventPublisher;
-	}
+    @Autowired
+    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
 
-	@Autowired(required = false)
-	public void setIndexResolver(IndexResolver<Session> indexResolver) {
-		this.indexResolver = indexResolver;
-	}
+    @Autowired(required = false)
+    public void setIndexResolver(IndexResolver<Session> indexResolver) {
+        this.indexResolver = indexResolver;
+    }
 
-	@Autowired(required = false)
-	public void setSessionRepositoryCustomizer(
-			ObjectProvider<SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers) {
-		this.sessionRepositoryCustomizers = sessionRepositoryCustomizers.orderedStream().collect(Collectors.toList());
-	}
+    @Autowired(required = false)
+    public void setSessionRepositoryCustomizer(
+            ObjectProvider<SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers) {
+        this.sessionRepositoryCustomizers = sessionRepositoryCustomizers.orderedStream().collect(Collectors.toList());
+    }
 
-	@Override
-	public void setImportMetadata(AnnotationMetadata importMetadata) {
-		Map<String, Object> attributeMap = importMetadata
-			.getAnnotationAttributes(EnableHazelcastHttpSession.class.getName());
-		AnnotationAttributes attributes = AnnotationAttributes.fromMap(attributeMap);
-		if (attributes == null) {
-			return;
-		}
-		this.maxInactiveInterval = Duration.ofSeconds(attributes.<Integer>getNumber("maxInactiveIntervalInSeconds"));
-		String sessionMapNameValue = attributes.getString("sessionMapName");
-		if (StringUtils.hasText(sessionMapNameValue)) {
-			this.sessionMapName = sessionMapNameValue;
-		}
-		this.flushMode = attributes.getEnum("flushMode");
-		this.saveMode = attributes.getEnum("saveMode");
-	}
+    @Override
+    public void setImportMetadata(AnnotationMetadata importMetadata) {
+        Map<String, Object> attributeMap = importMetadata
+                .getAnnotationAttributes(EnableHazelcastHttpSession.class.getName());
+        AnnotationAttributes attributes = AnnotationAttributes.fromMap(attributeMap);
+        if (attributes == null) {
+            return;
+        }
+        this.maxInactiveInterval = Duration.ofSeconds(attributes.<Integer>getNumber("maxInactiveIntervalInSeconds"));
+        String sessionMapNameValue = attributes.getString("sessionMapName");
+        if (StringUtils.hasText(sessionMapNameValue)) {
+            this.sessionMapName = sessionMapNameValue;
+        }
+        this.flushMode = attributes.getEnum("flushMode");
+        this.saveMode = attributes.getEnum("saveMode");
+    }
 
-	private HazelcastIndexedSessionRepository createHazelcastIndexedSessionRepository() {
-		HazelcastIndexedSessionRepository sessionRepository = new HazelcastIndexedSessionRepository(
-				this.hazelcastInstance);
-		sessionRepository.setApplicationEventPublisher(this.applicationEventPublisher);
-		if (this.indexResolver != null) {
-			sessionRepository.setIndexResolver(this.indexResolver);
-		}
-		if (StringUtils.hasText(this.sessionMapName)) {
-			sessionRepository.setSessionMapName(this.sessionMapName);
-		}
-		sessionRepository.setDefaultMaxInactiveInterval(this.maxInactiveInterval);
-		sessionRepository.setFlushMode(this.flushMode);
-		sessionRepository.setSaveMode(this.saveMode);
-		sessionRepository.setSessionIdGenerator(this.sessionIdGenerator);
-		this.sessionRepositoryCustomizers
-			.forEach((sessionRepositoryCustomizer) -> sessionRepositoryCustomizer.customize(sessionRepository));
-		return sessionRepository;
-	}
+    private HazelcastIndexedSessionRepository createHazelcastIndexedSessionRepository() {
+        HazelcastIndexedSessionRepository sessionRepository = new HazelcastIndexedSessionRepository(
+                this.hazelcastInstance);
+        sessionRepository.setApplicationEventPublisher(this.applicationEventPublisher);
+        if (this.indexResolver != null) {
+            sessionRepository.setIndexResolver(this.indexResolver);
+        }
+        if (StringUtils.hasText(this.sessionMapName)) {
+            sessionRepository.setSessionMapName(this.sessionMapName);
+        }
+        sessionRepository.setDefaultMaxInactiveInterval(this.maxInactiveInterval);
+        sessionRepository.setFlushMode(this.flushMode);
+        sessionRepository.setSaveMode(this.saveMode);
+        sessionRepository.setSessionIdGenerator(this.sessionIdGenerator);
+        this.sessionRepositoryCustomizers
+                .forEach((sessionRepositoryCustomizer)
+                                 -> sessionRepositoryCustomizer.customize(sessionRepository));
+        return sessionRepository;
+    }
 
-	@Autowired(required = false)
-	public void setSessionIdGenerator(SessionIdGenerator sessionIdGenerator) {
-		this.sessionIdGenerator = sessionIdGenerator;
-	}
+    @Autowired(required = false)
+    public void setSessionIdGenerator(SessionIdGenerator sessionIdGenerator) {
+        this.sessionIdGenerator = sessionIdGenerator;
+    }
 
 }

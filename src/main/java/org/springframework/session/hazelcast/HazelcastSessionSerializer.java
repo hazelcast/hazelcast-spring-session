@@ -48,7 +48,7 @@ import org.springframework.session.MapSession;
  * <p>
  * An example of how to register the serializer on embedded instance can be seen below:
  *
- * <pre class="code">
+ * <pre class="code">{@code
  * Config config = new Config();
  *
  * // ... other configurations for Hazelcast ...
@@ -58,7 +58,7 @@ import org.springframework.session.MapSession;
  * config.getSerializationConfig().addSerializerConfig(serializerConfig);
  *
  * HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
- * </pre>
+ * }</pre>
  *
  * Below is the example of how to register the serializer on client instance. Note that,
  * to use the serializer in client/server mode, the serializer - and hence
@@ -66,9 +66,8 @@ import org.springframework.session.MapSession;
  * {@link com.hazelcast.config.SerializerConfig} with the configuration above for each
  * server.
  *
- * <pre class="code">
+ * <pre class="code">{@code
  * ClientConfig clientConfig = new ClientConfig();
- *
  * // ... other configurations for Hazelcast Client ...
  *
  * SerializerConfig serializerConfig = new SerializerConfig();
@@ -76,7 +75,7 @@ import org.springframework.session.MapSession;
  * clientConfig.getSerializationConfig().addSerializerConfig(serializerConfig);
  *
  * HazelcastInstance hazelcastClient = HazelcastClient.newHazelcastClient(clientConfig);
- * </pre>
+ * }</pre>
  *
  * @author Enes Ozcan
  * @since 2.4.0
@@ -129,8 +128,7 @@ public class HazelcastSessionSerializer implements StreamSerializer<MapSession> 
                 Object attrValue = in.readObject();
                 cached.setAttribute(attrName, attrValue);
             }
-        }
-        catch (EOFException ignored) {
+        }  catch (EOFException ignored) {
         }
         return cached;
     }

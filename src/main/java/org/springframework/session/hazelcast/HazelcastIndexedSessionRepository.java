@@ -63,7 +63,7 @@ import org.springframework.util.Assert;
  * <p>
  * An example of how to create a new instance can be seen below:
  *
- * <pre class="code">
+ * <pre class="code">{@code
  * Config config = new Config();
  *
  * // ... configure Hazelcast ...
@@ -72,12 +72,12 @@ import org.springframework.util.Assert;
  *
  * HazelcastIndexedSessionRepository sessionRepository =
  *         new HazelcastIndexedSessionRepository(hazelcastInstance);
- * </pre>
+ * }</pre>
  *
  * In order to support finding sessions by principal name using
  * {@link #findByIndexNameAndIndexValue(String, String)} method, custom configuration of
  * {@code IMap} supplied to this implementation is required.
- *
+ * <p>
  * The following snippet demonstrates how to define required configuration using
  * programmatic Hazelcast Configuration:
  *
@@ -93,7 +93,7 @@ import org.springframework.util.Assert;
  *         .addIndexConfig(new IndexConfig(
  *                 IndexType.HASH,
  *                 HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
- *
+ * <p>
  * Hazelcast.newHazelcastInstance(config);
  * </pre>
  *
@@ -132,7 +132,7 @@ public class HazelcastIndexedSessionRepository
 
     private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
-    private static final Log logger = LogFactory.getLog(HazelcastIndexedSessionRepository.class);
+    private static final Log LOGGER = LogFactory.getLog(HazelcastIndexedSessionRepository.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -256,6 +256,7 @@ public class HazelcastIndexedSessionRepository
         return session;
     }
 
+    @SuppressWarnings("checkstyle:RightCurly")
     @Override
     public void save(HazelcastSession session) {
         if (session.isNew) {
@@ -319,8 +320,8 @@ public class HazelcastIndexedSessionRepository
     public void entryAdded(EntryEvent<String, MapSession> event) {
         MapSession session = event.getValue();
         if (session.getId().equals(session.getOriginalId())) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Session created with id: " + session.getId());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Session created with id: " + session.getId());
             }
             this.eventPublisher.publishEvent(new SessionCreatedEvent(this, session));
         }
@@ -328,8 +329,8 @@ public class HazelcastIndexedSessionRepository
 
     @Override
     public void entryEvicted(EntryEvent<String, MapSession> event) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Session expired with id: " + event.getOldValue().getId());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Session expired with id: " + event.getOldValue().getId());
         }
         this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
     }
@@ -338,8 +339,8 @@ public class HazelcastIndexedSessionRepository
     public void entryRemoved(EntryEvent<String, MapSession> event) {
         MapSession session = event.getOldValue();
         if (session != null) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Session deleted with id: " + session.getId());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Session deleted with id: " + session.getId());
             }
             this.eventPublisher.publishEvent(new SessionDeletedEvent(this, session));
         }
@@ -347,8 +348,8 @@ public class HazelcastIndexedSessionRepository
 
     @Override
     public void entryExpired(EntryEvent<String, MapSession> event) {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Session expired with id: " + event.getOldValue().getId());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Session expired with id: " + event.getOldValue().getId());
         }
         this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
     }

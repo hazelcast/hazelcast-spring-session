@@ -68,39 +68,39 @@ import org.springframework.session.web.http.SessionRepositoryFilter;
 @Import(HazelcastHttpSessionConfiguration.class)
 public @interface EnableHazelcastHttpSession {
 
-	/**
-	 * The session timeout in seconds. By default, it is set to 1800 seconds (30 minutes).
-	 * This should be a non-negative integer.
-	 * @return the seconds a session can be inactive before expiring
-	 */
-	int maxInactiveIntervalInSeconds() default MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS;
+    /**
+     * The session timeout in seconds. By default, it is set to 1800 seconds (30 minutes).
+     * This should be a non-negative integer.
+     * @return the seconds a session can be inactive before expiring
+     */
+    int maxInactiveIntervalInSeconds() default MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS;
 
-	/**
-	 * This is the name of the Map that will be used in Hazelcast to store the session
-	 * data. Default is "spring:session:sessions".
-	 * @return the name of the Map to store the sessions in Hazelcast
-	 */
-	String sessionMapName() default "spring:session:sessions";
+    /**
+     * This is the name of the Map that will be used in Hazelcast to store the session
+     * data. Default is "spring:session:sessions".
+     * @return the name of the Map to store the sessions in Hazelcast
+     */
+    String sessionMapName() default "spring:session:sessions";
 
-	/**
-	 * Flush mode for the Hazelcast sessions. The default is {@code ON_SAVE} which only
-	 * updates the backing Hazelcast when {@link SessionRepository#save(Session)} is
-	 * invoked. In a web environment this happens just before the HTTP response is
-	 * committed.
-	 * <p>
-	 * Setting the value to {@code IMMEDIATE} will ensure that the any updates to the
-	 * Session are immediately written to the Hazelcast instance.
-	 * @return the {@link FlushMode} to use
-	 * @since 2.2.0
-	 */
-	FlushMode flushMode() default FlushMode.ON_SAVE;
+    /**
+     * Flush mode for the Hazelcast sessions. The default is {@code ON_SAVE} which only
+     * updates the backing Hazelcast when {@link SessionRepository#save(Session)} is
+     * invoked. In a web environment this happens just before the HTTP response is
+     * committed.
+     * <p>
+     * Setting the value to {@code IMMEDIATE} will ensure that the any updates to the
+     * Session are immediately written to the Hazelcast instance.
+     * @return the {@link FlushMode} to use
+     * @since 2.2.0
+     */
+    FlushMode flushMode() default FlushMode.ON_SAVE;
 
-	/**
-	 * Save mode for the session. The default is {@link SaveMode#ON_SET_ATTRIBUTE}, which
-	 * only saves changes made to session.
-	 * @return the save mode
-	 * @since 2.2.0
-	 */
-	SaveMode saveMode() default SaveMode.ON_SET_ATTRIBUTE;
+    /**
+     * Save mode for the session. The default is {@link SaveMode#ON_SET_ATTRIBUTE}, which
+     * only saves changes made to session.
+     * @return the save mode
+     * @since 2.2.0
+     */
+    SaveMode saveMode() default SaveMode.ON_SET_ATTRIBUTE;
 
 }
