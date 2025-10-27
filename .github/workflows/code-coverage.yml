@@ -3,7 +3,6 @@ name: Code Coverage check
 on:
   schedule:
     - cron: 0 3 * * *
-  pull_request:
   workflow_dispatch:
 
 jobs:
