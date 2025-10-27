@@ -24,12 +24,9 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build jacocoTestCoverageVerification -DcodeCoverage=true
 
-    - name: Build with Gradle
-      run: ./gradlew jacocoTestReport jacocoTestCoverageVerification
-
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results-java-${{ matrix.java }}
+        name: test-results
         path: build/reports/jacoco/
