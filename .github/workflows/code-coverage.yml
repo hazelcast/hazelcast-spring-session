@@ -1,4 +1,4 @@
-name: CI
+name: Code Coverage check
 
 on:
   schedule:
@@ -24,7 +24,7 @@ jobs:
         cache: 'gradle'
 
     - name: Build with Gradle
-      run: ./gradlew build jacocoTestCoverageVerification -DcodeCoverage=true
+      run: ./gradlew build jacocoTestCoverageVerification -PenableCodeCoverage=true
 
     - name: Upload test results
       if: always()
