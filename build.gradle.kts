@@ -58,7 +58,6 @@ val copyHSSJar = tasks.register<Copy>("copyHSSJar") {
     group = "verification"
 
     dependsOn(tasks.jar)
-    shouldRunAfter(tasks.jar)
 
     from(mainArtifactFile)
     rename { "HSS.jar" }
@@ -69,7 +68,6 @@ val copySpringJars = tasks.register<Copy>("copySpringJars") {
     group = "verification"
 
     dependsOn(tasks.jar)
-    shouldRunAfter(tasks.jar)
 
     from(configurations.runtimeClasspath) {
         // Optionally, filter files if needed
