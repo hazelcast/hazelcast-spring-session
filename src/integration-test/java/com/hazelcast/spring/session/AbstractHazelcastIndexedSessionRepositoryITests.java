@@ -22,6 +22,8 @@ import java.time.Instant;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.impl.HazelcastInstanceProxy;
 import com.hazelcast.map.IMap;
+import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
+
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +35,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
-import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

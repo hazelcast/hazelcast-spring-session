@@ -19,6 +19,7 @@ package com.hazelcast.spring.session;
 import java.util.Map;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -31,7 +32,6 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.session.FlushMode;
-import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;

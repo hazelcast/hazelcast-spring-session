@@ -21,10 +21,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.ApplicationListener;
 import org.springframework.session.events.AbstractSessionEvent;
 
-class SessionEventRegistry implements ApplicationListener<AbstractSessionEvent> {
+class SessionEventRegistry implements ApplicationListener<@NonNull AbstractSessionEvent> {
 
 	private Map<String, AbstractSessionEvent> events = new HashMap<>();
 
