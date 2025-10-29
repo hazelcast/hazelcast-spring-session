@@ -1,0 +1,14 @@
+name: Deploy SNAPSHOT to Maven Central
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy-snapshot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "Empty job"
