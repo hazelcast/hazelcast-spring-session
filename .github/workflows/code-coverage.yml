@@ -36,7 +36,6 @@ jobs:
         cat build/reports/jacoco/test/output_table.html >> $GITHUB_STEP_SUMMARY
 
     - name: Comment
-      if: ${{ github.event.type == 'IssueCommentEvent' }}
       env:
         PR_NUMBER: ${{ github.event.comment.body }}
         EVENT_TYPE: ${{ github.event.type }}
