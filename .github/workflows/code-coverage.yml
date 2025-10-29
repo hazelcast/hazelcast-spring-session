@@ -8,19 +8,11 @@ on:
     types: [created]
 
 jobs:
-  debug:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          cat << OBJECT
-          ${{ toJson(github) }}
-          OBJECT
-
   build:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'issue_comment' || (github.event_name == 'issue_comment' 
-      && github.event.issue.pull_request  
-      && contains(github.event.issue.comment.body, '/checkCoverage')) }}
+      && contains(github.event.comment.html_url), '/pull/')  
+      && contains(github.event.comment.body, '/checkCoverage')) }}
 
     name: Check test coverage
 
