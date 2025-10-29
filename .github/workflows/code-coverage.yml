@@ -25,7 +25,20 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build jacocoTestCoverageVerification -PenableCodeCoverage=true
 
-    - name: Upload test results
+    - name: Summarize tests results
+      uses: jeantessier/code-coverage-summary-action@v1
+
+    - name: Upload Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: report.xml
+        path: build/reports/jacoco/testCoverage/testCoverage.xml
+
+
+    - name: Update job summary
+      run: cat build/reports/jacoco/test/html/index.html >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload coverage result
       if: always()
       uses: actions/upload-artifact@v4
       with:
