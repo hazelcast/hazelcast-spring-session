@@ -37,9 +37,13 @@ jobs:
 
     - name: Comment
       if: ${{ github.event.type == 'IssueCommentEvent' }}
+      env:
+        PR_NUMBER: ${{ github.event.comment.body }}
+        EVENT_TYPE: ${{ github.event.type }}
       run: |
+        echo "$EVENT_TYPE"
         content=$(cat build/reports/jacoco/test/output_table.html)
-        gh pr comment ${{ github.event.issue.number }} --body "$content"
+        gh pr comment $PR_NUMBER --body "$content"
 
     - name: Upload coverage result
       if: always()
