@@ -8,6 +8,14 @@ on:
     types: [created]
 
 jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "event name ${{github.event_name}}"
+      - run: echo "event type ${{github.event_type}}"
+      - run: echo "Is PR ${{github.event.issue.pull_request}}"
+      - run: echo "Comment body ${{github.event.issue.comment.body}}"
+
   build:
     runs-on: ubuntu-latest
     if: ${{ github.event.type != 'IssueCommentEvent' || (github.event.type == 'IssueCommentEvent' && contains(github.event.comment.html_url, '/pull/')  && contains(github.event.issue.comment.body, '/checkCoverage')) }}
