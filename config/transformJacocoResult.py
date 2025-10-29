@@ -69,7 +69,7 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
                     """
 
     totalCov = round(totalBranchCovered * 100 / (totalBranchCovered + totalBranchMissed), 2)
-    h1Style = "red" if totalCov < 0.5 else "darkgreen"
+    h1Style = "red" if totalCov < 0.5 else "green"
     html_content += f"""
     </tbody></table>
     <h1 style="color: {h1Style};">Total Branch Coverage: {totalCov}%</h1>
