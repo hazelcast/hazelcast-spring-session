@@ -9,10 +9,8 @@ version = "4.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion = JavaLanguageVersion.of(17)
     }
-    withJavadocJar()
-    withSourcesJar()
 }
 
 repositories {
@@ -194,5 +192,11 @@ mavenPublishing {
             developerConnection = "scm:git:ssh://github.com:hazelcast/hazelcast-spring-session.git"
             url = "https://github.com/hazelcast/hazelcast-spring-session"
         }
+    }
+}
+
+tasks.register("printVersion") {
+    doLast {
+        print(project.version)
     }
 }
