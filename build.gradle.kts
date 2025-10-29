@@ -109,6 +109,10 @@ if (enableCodeCoverage.toBoolean()) {
     apply(plugin = "jacoco")
 
     val jacocoTestReport = tasks.withType(JacocoReport::class.java) {
+        reports {
+            xml.required.set(true)
+            csv.required.set(true)
+        }
         dependsOn(tasks.test, integrationTest)
     }
 
