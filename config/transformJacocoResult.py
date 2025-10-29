@@ -1,5 +1,6 @@
 import csv
 import sys
+import re
 
 def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
     """
@@ -27,12 +28,7 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
 
     tableStyle = "style=\"border: 1px solid black; border-collapse: collapse; padding: 5px;\""
     html_content = f"""
-    <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml" lang="pl">
-    <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/>
-    <title>hazelcast-spring-session</title>
-    </head>
+    <html>
     <body>
         <table style="border: 1px solid black; border-collapse: collapse;">
         <thead>
@@ -49,7 +45,6 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
 
     totalBranchCovered = 0
     totalBranchMissed = 0
-    # 3. Generate Table Body (<td>)
     for row in data_rows:
         # GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
         group = row[0]
@@ -74,17 +69,19 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
                     """
 
     totalCov = round(totalBranchCovered * 100 / (totalBranchCovered + totalBranchMissed), 2)
-    style =  "red" if totalCov < 0.5 else "darkgreen"
+    h1Style = "red" if totalCov < 0.5 else "darkgreen"
     html_content += f"""
     </tbody></table>
-    <h1 style="color: {style}">Total Branch Coverage: {totalCov}</h1>
+    <h1 style="color: {h1Style};">Total Branch Coverage: {totalCov}</h1>
     </body>
-    </html>
-    """
+    </html>"""
 
     try:
         with open(output_filepath, 'w', encoding='utf-8') as outfile:
-            outfile.write(html_content)
+            # Clean output, so GitHub will render it
+            text_to_file = re.sub(r'\s+', ' ', html_content.replace("\n",""))
+            text_to_file = text_to_file.replace("> <", "><")
+            outfile.write(text_to_file)
     except Exception as e:
         print(f"An error occurred while writing the file: {e}", file=sys.stderr)
 
