@@ -26,8 +26,10 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build jacocoTestCoverageVerification -PenableCodeCoverage=true
 
-    - name: Summarize tests results
-      uses: jeantessier/code-coverage-summary-action@v1
+    - name: Summarize results
+      run: |
+        python config/transformJacocoResult.py
+        cat build/reports/jacoco/test/output_table.html >> $GITHUB_STEP_SUMMARY
 
     - name: Upload coverage result
       if: always()
