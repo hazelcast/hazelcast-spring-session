@@ -44,6 +44,8 @@ sourceSets {
     })
 }
 
+val mainArtifactFile = configurations.getAt("archives").artifacts.files.singleFile
+
 val integrationTestImplementation by configurations.getting {
     extendsFrom(configurations.testImplementation.get())
 }
@@ -51,11 +53,35 @@ val integrationTestRuntimeOnly by configurations.getting {
     extendsFrom(configurations.testRuntimeOnly.get())
 }
 
+val copyHSSJar = tasks.register<Copy>("copyHSSJar") {
+    description = "Copies Hazelcast Spring Session Jar for usage in Docker tests"
+    group = "verification"
+
+    dependsOn(tasks.jar)
+
+    from(mainArtifactFile)
+    rename { "HSS.jar" }
+    destinationDir = file(layout.buildDirectory.file("forDocker"))
+}
+val copySpringJars = tasks.register<Copy>("copySpringJars") {
+    description = "Copies Spring Jars for usage in Docker tests"
+    group = "verification"
+
+    dependsOn(tasks.jar)
+
+    from(configurations.runtimeClasspath) {
+        // Optionally, filter files if needed
+        include("spring*.jar")
+    }
+    destinationDir = file(layout.buildDirectory.file("forDocker"))
+}
+
 val integrationTest = tasks.register<Test>("integrationTest") {
     description = "Runs integration tests."
     group = "verification"
     testClassesDirs = sourceSets["integrationTest"].output.classesDirs
-    classpath = sourceSets["integrationTest"].runtimeClasspath
+    classpath = sourceSets["integrationTest"].runtimeClasspath + files(layout.buildDirectory.dir("forDocker"))
+    dependsOn(copyHSSJar, copySpringJars)
     shouldRunAfter(tasks.test)
 
     useJUnitPlatform()
