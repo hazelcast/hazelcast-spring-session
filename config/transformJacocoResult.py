@@ -72,7 +72,7 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
     h1Style = "red" if totalCov < 0.5 else "darkgreen"
     html_content += f"""
     </tbody></table>
-    <h1 style="color: {h1Style};">Total Branch Coverage: {totalCov}</h1>
+    <h1 style="color: {h1Style};">Total Branch Coverage: {totalCov}%</h1>
     </body>
     </html>"""
 
