@@ -10,7 +10,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event.type != 'IssueCommentEvent' || (github.event.type == 'IssueCommentEvent' && contains(github.event.comment.html_url, '/pull/')  && contains(github.event.issue.comment.body, '/checkCoverage')) }}
+    if: ${{ github.event.type != 'IssueCommentEvent' || (github.event.type == 'IssueCommentEvent' 
+      && github.event.issue.pull_request  
+      && contains(github.event.issue.comment.body, '/checkCoverage')) }}
 
     name: Check test coverage
 
@@ -32,6 +34,12 @@ jobs:
       run: |
         python config/transformJacocoResult.py
         cat build/reports/jacoco/test/output_table.html >> $GITHUB_STEP_SUMMARY
+
+    - name: Comment
+      if: ${{ github.event.type == 'IssueCommentEvent' }}
+      run: |
+        content=$(cat build/reports/jacoco/test/output_table.html)
+        gh pr comment ${{ github.event.issue.number }} --body "$content"
 
     - name: Upload coverage result
       if: always()
