@@ -39,6 +39,7 @@ jobs:
       env:
         PR_NUMBER: ${{ github.event.comment.body }}
         EVENT_TYPE: ${{ github.event.type }}
+        GH_TOKEN: ${{ github.token }}
       run: |
         echo "$EVENT_TYPE"
         content=$(cat build/reports/jacoco/test/output_table.html)
