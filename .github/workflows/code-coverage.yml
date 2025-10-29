@@ -4,11 +4,13 @@ on:
   schedule:
     - cron: 0 3 * * *
   workflow_dispatch:
-  pull_request:
+  issue_comment:
+    types: [created]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: ${{ github.event.type != 'IssueCommentEvent' || (contains(github.event.comment.html_url, '/pull/')  && contains(github.event.issue.comment.body, '/checkCoverage')) }}
 
     name: Check test coverage
 
