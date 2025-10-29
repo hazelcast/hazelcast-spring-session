@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ github.event.type != 'IssueCommentEvent' || (contains(github.event.comment.html_url, '/pull/')  && contains(github.event.issue.comment.body, '/checkCoverage')) }}
+    if: ${{ github.event.type != 'IssueCommentEvent' || (github.event.type == 'IssueCommentEvent' && contains(github.event.comment.html_url, '/pull/')  && contains(github.event.issue.comment.body, '/checkCoverage')) }}
 
     name: Check test coverage
 
