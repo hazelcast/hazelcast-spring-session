@@ -13,8 +13,8 @@ jobs:
     steps:
       - run: echo "event name ${{github.event_name}}"
       - run: echo "event type ${{github.event_type}}"
-      - run: echo "Is PR ${{github.event.issue.pull_request}}"
-      - run: echo "Comment body ${{github.event.issue.comment.body}}"
+      - run: echo "Is PR ${{github.event.issue_comment.pull_request}}"
+      - run: echo "Comment body ${{github.event.issue_comment.comment.body}}"
 
   build:
     runs-on: ubuntu-latest
