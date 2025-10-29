@@ -36,10 +36,10 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
             <th {tableStyle}>Group</th>
             <th {tableStyle}>Package</th>
             <th {tableStyle}>Class</th>
-            <th {tableStyle}>Instructions</th>
+            <th {tableStyle}>Instructions (covered : missed)</th>
             <th {tableStyle}>Instructions Coverage</th>
-            <th {tableStyle}>Branch</th>
-            <th {tableStyle}>Branch Coverage</th>
+            <th {tableStyle}>Branches (covered : missed)</th>
+            <th {tableStyle}>Branches Coverage</th>
         </tr>
         </thead><tbody>"""
 
