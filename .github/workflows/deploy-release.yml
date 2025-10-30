@@ -58,6 +58,7 @@ jobs:
           append_body: true
           files: '**/build/libs/*.jar'
           name: "${{ env.RELEASED_VERSION }}"
+          tag_name: "v${{ env.RELEASED_VERSION }}"
           body: |
             ## Usage
 
