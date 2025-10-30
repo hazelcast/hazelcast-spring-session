@@ -1,4 +1,4 @@
-name: Deploy SNAPSHOT to Maven Central
+name: Deploy Snapshot
 
 on:
   push:

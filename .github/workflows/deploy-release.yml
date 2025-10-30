@@ -1,4 +1,4 @@
-name: Release to Maven Central
+name: Deploy Release
 
 on:
   workflow_dispatch:
