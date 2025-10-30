@@ -94,6 +94,7 @@ val integrationTest = tasks.register<Test>("integrationTest") {
 
 tasks.check {
     dependsOn(integrationTest)
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
 dependencies {
@@ -135,7 +136,6 @@ tasks.jacocoTestReport {
         xml.required.set(true)
         csv.required.set(true)
     }
-    dependsOn(tasks.test, integrationTest)
 }
 
 tasks.jacocoTestCoverageVerification {
@@ -147,8 +147,4 @@ tasks.jacocoTestCoverageVerification {
         }
     }
     dependsOn(tasks.jacocoTestReport)
-}
-
-tasks.build {
-    finalizedBy(tasks.jacocoTestCoverageVerification)
 }
