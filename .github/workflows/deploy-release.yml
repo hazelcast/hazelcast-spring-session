@@ -9,6 +9,11 @@ on:
       nextVersion:
         description: '(optional) Override next development version (e.g., 4.0.1-SNAPSHOT)'
         required: false
+      automaticPublishing:
+        description: '(optional) Enable automatic publishing to Maven Central'
+        type: boolean
+        default: false
+        required: false
 
 jobs:
   release:
@@ -46,6 +51,7 @@ jobs:
           
           ./gradlew --info --no-daemon release \
           -Prelease.useAutomaticVersion=true \
+          -PmavenCentralAutomaticPublishing=${{ github.event.inputs.automaticPublishing }} \
           ${releaseVersion:+-Prelease.releaseVersion="$releaseVersion"} \
           ${nextVersion:+-Prelease.newVersion="$nextVersion"}
           
