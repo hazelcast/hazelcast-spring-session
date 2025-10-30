@@ -49,8 +49,6 @@ jobs:
           
           RELEASED_VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
           echo "RELEASED_VERSION=$RELEASED_VERSION" >> $GITHUB_ENV
-          
-          echo "Version ${RELEASED_VERSION} is released :rocket: " >> $GITHUB_STEP_SUMMARY
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -74,3 +72,6 @@ jobs:
             ```kotlin
             implementation("com.hazelcast.spring:hazelcast-spring-session:${{ env.RELEASED_VERSION }}")
             ```
+      - name: Add summary
+        run: |
+          echo "Version ${RELEASED_VERSION} released :rocket: " >> $GITHUB_STEP_SUMMARY
