@@ -1,0 +1,22 @@
+name: Release to Maven Central
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: '(optional) Override release version (e.g., 4.0.0)'
+        required: false
+      nextVersion:
+        description: '(optional) Override next development version (e.g., 4.0.1-SNAPSHOT)'
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
