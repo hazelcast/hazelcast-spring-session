@@ -163,9 +163,9 @@ if (enableCodeCoverage.toBoolean()) {
 }
 
 release {
-    tagTemplate = "v${version}"
-    newVersionCommitMessage = "Start ${version} development"
-    tagCommitMessage = "Release ${version}"
+    tagTemplate = "v\${version}"
+    newVersionCommitMessage = "Start \${version} development"
+    tagCommitMessage = "Release \${version}"
     failOnSnapshotDependencies = true
     git {
         pushOptions.set(listOf("--dry-run"))
