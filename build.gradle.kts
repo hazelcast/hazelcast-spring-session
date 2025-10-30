@@ -164,8 +164,8 @@ if (enableCodeCoverage.toBoolean()) {
 
 release {
     tagTemplate = "v\${version}"
-    newVersionCommitMessage = "Start \${version} development"
-    tagCommitMessage = "Release \${version}"
+    newVersionCommitMessage = "Start development"
+    preTagCommitMessage = "Release"
     failOnSnapshotDependencies = true
     git {
         requireBranch = ""
