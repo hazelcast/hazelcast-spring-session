@@ -6,7 +6,6 @@ plugins {
 }
 
 group = "com.hazelcast.spring"
-version = "4.0.0-SNAPSHOT"
 
 java {
     toolchain {
