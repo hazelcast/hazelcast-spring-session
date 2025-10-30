@@ -22,7 +22,7 @@ jobs:
           cache: 'gradle'
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew -i build
 
       - name: Ensure version is SNAPSHOT
         shell: bash
@@ -40,4 +40,4 @@ jobs:
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_OSS_PASSWORD }}
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-        run: ./gradlew publishToMavenCentral
+        run: ./gradlew -i publishToMavenCentral
