@@ -40,10 +40,12 @@ jobs:
           ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
         run: |
+          set -euo pipefail ${RUNNER_DEBUG:+-x}
           releaseVersion="${{ github.event.inputs.releaseVersion }}"
           nextVersion="${{ github.event.inputs.nextVersion }}"
           
-          ./gradlew -i release -Prelease.useAutomaticVersion=true \
+          ./gradlew --info --no-daemon release \
+          -Prelease.useAutomaticVersion=true \
           ${releaseVersion:+-Prelease.releaseVersion=$releaseVersion} \
           ${nextVersion:+-Prelease.newVersion=$nextVersion}
           
