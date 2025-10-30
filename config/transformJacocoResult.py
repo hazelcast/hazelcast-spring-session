@@ -26,7 +26,7 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
         print(f"An error occurred while reading the CSV file: {e}", file=sys.stderr)
         return
 
-    tableStyle = "style=\"border: 1px solid black; border-collapse: collapse; padding: 5px;\""
+    tableStyle = "style=\"border: 1px solid black; border-collapse: collapse; padding: 3px;\""
     html_content = f"""
     <html>
     <body>
