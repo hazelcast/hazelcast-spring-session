@@ -2,6 +2,7 @@ plugins {
     `java-library`
     checkstyle
     id("com.vanniktech.maven.publish") version "0.34.0"
+    id("net.researchgate.release") version "3.1.0"
 }
 
 group = "com.hazelcast.spring"
@@ -159,6 +160,23 @@ if (enableCodeCoverage.toBoolean()) {
     }
     tasks.build {
         finalizedBy(jacocoTestCoverageVerify)
+    }
+}
+
+release {
+    tagTemplate = "v${version}"
+    newVersionCommitMessage = "Start ${version} development"
+    tagCommitMessage = "Release ${version}"
+    failOnSnapshotDependencies = true
+    git {
+        pushOptions.set(listOf("--dry-run"))
+        requireBranch = ""
+    }
+}
+
+tasks {
+    afterReleaseBuild {
+        dependsOn ("publishToMavenCentral")
     }
 }
 
