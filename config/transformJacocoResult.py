@@ -56,23 +56,24 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
         branchCovered = int(row[6])
         totalBranchCovered += branchCovered
         totalBranchMissed += branchMissed
-        html_content +=f"""
-                     <tr style="border: 1px solid black; border-collapse: collapse;">
-                        <td {tableStyle}>{group}</td>
-                        <td {tableStyle}>{package}</td>
-                        <td {tableStyle}>{clazz}</td>
-                        <td {tableStyle}>{instructionsCovered} : {instructionsMissed}</td>
-                        <td {tableStyle}>{round(instructionsCovered * 100 / (instructionsCovered+instructionsMissed), 2)}%</td>
-                        <td {tableStyle}>{branchCovered} : {branchMissed}</td>
-                        <td {tableStyle}>{round(branchCovered * 100 / (branchMissed+branchCovered), 2)}%</td>
-                      </tr>
-                    """
+        instructionPercent = round(instructionsCovered * 100 / (instructionsCovered + instructionsMissed), 2)
+        branchesPercent = round(branchCovered * 100 / (branchMissed + branchCovered), 2)
+        html_content += f"""
+             <tr style="border: 1px solid black; border-collapse: collapse;">
+                <td {tableStyle}>{group}</td>
+                <td {tableStyle}>{package}</td>
+                <td {tableStyle}>{clazz}</td>
+                <td {tableStyle}>{instructionsCovered} : {instructionsMissed}</td>
+                <td {tableStyle}><span style="color:{style_for_percent(instructionPercent)}">{instructionPercent}%</span></td>
+                <td {tableStyle}>{branchCovered} : {branchMissed}</td>
+                <td {tableStyle}><span style="color:{style_for_percent(branchesPercent)}">{branchesPercent}%</span></td>
+              </tr>
+              """
 
     totalCov = round(totalBranchCovered * 100 / (totalBranchCovered + totalBranchMissed), 2)
-    h1Style = "red" if totalCov < 0.5 else "green"
     html_content += f"""
     </tbody></table>
-    <h1 style="color: {h1Style};">Total Branch Coverage: {totalCov}%</h1>
+    <h1 style="color: {style_for_percent(totalCov)};">Total Branch Coverage: {totalCov}%</h1>
     </body>
     </html>"""
 
@@ -84,6 +85,10 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
             outfile.write(text_to_file)
     except Exception as e:
         print(f"An error occurred while writing the file: {e}", file=sys.stderr)
+
+
+def style_for_percent(percentage: float) -> str:
+    return "red" if percentage < 0.5 else "green"
 
 
 if __name__ == "__main__":
