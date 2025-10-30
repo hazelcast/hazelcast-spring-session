@@ -168,7 +168,6 @@ release {
     tagCommitMessage = "Release \${version}"
     failOnSnapshotDependencies = true
     git {
-        pushOptions.set(listOf("--dry-run"))
         requireBranch = ""
     }
 }
