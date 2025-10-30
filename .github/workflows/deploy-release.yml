@@ -46,8 +46,8 @@ jobs:
           
           ./gradlew --info --no-daemon release \
           -Prelease.useAutomaticVersion=true \
-          ${releaseVersion:+-Prelease.releaseVersion=$releaseVersion} \
-          ${nextVersion:+-Prelease.newVersion=$nextVersion}
+          ${releaseVersion:+-Prelease.releaseVersion="$releaseVersion"} \
+          ${nextVersion:+-Prelease.newVersion="$nextVersion"}
           
           RELEASED_VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
           echo "RELEASED_VERSION=$RELEASED_VERSION" >> $GITHUB_ENV
