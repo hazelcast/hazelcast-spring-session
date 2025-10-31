@@ -4,6 +4,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.34.0"
     id("net.researchgate.release") version "3.1.0"
     id("org.owasp.dependencycheck") version "12.1.3"
+    jacoco
 }
 
 group = "com.hazelcast.spring"
@@ -93,6 +94,7 @@ val integrationTest = tasks.register<Test>("integrationTest") {
 
 tasks.check {
     dependsOn(integrationTest)
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
 dependencies {
@@ -135,38 +137,22 @@ configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
     autoUpdate = false
 }
 
-val enableCodeCoverage: String by project;
-if (enableCodeCoverage.toBoolean()) {
-    println("Enabling code coverage checks")
-    apply(plugin = "jacoco")
-
-    val jacocoTestReport = tasks.withType(JacocoReport::class.java) {
-        reports {
-            xml.required.set(true)
-            csv.required.set(true)
-        }
-        dependsOn(tasks.test, integrationTest)
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)
+        csv.required.set(true)
     }
+}
 
-    val jacocoTestCoverageVerify = tasks.withType(JacocoCoverageVerification::class.java) {
-        violationRules {
-            rule {
-                limit {
-                    minimum = BigDecimal("0.5")
-                }
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = BigDecimal("0.5")
             }
         }
     }
-
-    tasks.test {
-        finalizedBy(jacocoTestReport)
-    }
-    integrationTest {
-        finalizedBy(jacocoTestReport)
-    }
-    tasks.build {
-        finalizedBy(jacocoTestCoverageVerify)
-    }
+    dependsOn(tasks.jacocoTestReport)
 }
 
 release {
