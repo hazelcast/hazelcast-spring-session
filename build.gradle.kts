@@ -3,6 +3,7 @@ plugins {
     checkstyle
     id("com.vanniktech.maven.publish") version "0.34.0"
     id("net.researchgate.release") version "3.1.0"
+    id("org.owasp.dependencycheck") version "12.1.3"
 }
 
 group = "com.hazelcast.spring"
@@ -103,6 +104,7 @@ dependencies {
     api("org.springframework:spring-context:$springFrameworkVersion")
     implementation("org.springframework:spring-beans:$springFrameworkVersion")
     implementation("org.springframework:spring-core:$springFrameworkVersion")
+//    compileOnly("org.owasp:dependency-check-gradle:10.0.3")
 
     // Test dependencies
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
@@ -126,6 +128,11 @@ tasks.test {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
+}
+
+configure<org.owasp.dependencycheck.gradle.extension.DependencyCheckExtension> {
+    format = org.owasp.dependencycheck.reporting.ReportGenerator.Format.ALL.toString()
+    autoUpdate = false
 }
 
 val enableCodeCoverage: String by project;
