@@ -1,17 +1,16 @@
 plugins {
     `java-library`
     checkstyle
+    id("com.vanniktech.maven.publish") version "0.34.0"
+    id("net.researchgate.release") version "3.1.0"
 }
 
 group = "com.hazelcast.spring"
-version = "4.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion = JavaLanguageVersion.of(17)
     }
-    withJavadocJar()
-    withSourcesJar()
 }
 
 repositories {
@@ -163,3 +162,54 @@ if (enableCodeCoverage.toBoolean()) {
     }
 }
 
+release {
+    tagTemplate = "v\${version}"
+    newVersionCommitMessage = "Start development"
+    preTagCommitMessage = "Release"
+    failOnSnapshotDependencies = true
+}
+
+tasks {
+    afterReleaseBuild {
+        dependsOn ("publishToMavenCentral")
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(automaticRelease = false)
+
+    signAllPublications()
+
+    pom {
+        name = "Hazelcast Spring Session"
+        description = "Spring Session implementation using Hazelcast"
+        url = "https://github.com/hazelcast/hazelcast-spring-session"
+
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+
+        developers {
+            developer {
+                id = "hazelcast"
+                name = "Hazelcast Inc."
+                email = "info@hazelcast.com"
+            }
+        }
+
+        scm {
+            connection = "scm:git:git://github.com/hazelcast/hazelcast-spring-session.git"
+            developerConnection = "scm:git:ssh://github.com:hazelcast/hazelcast-spring-session.git"
+            url = "https://github.com/hazelcast/hazelcast-spring-session"
+        }
+    }
+}
+
+tasks.register("printVersion") {
+    doLast {
+        print(project.version)
+    }
+}
