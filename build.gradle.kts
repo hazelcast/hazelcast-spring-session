@@ -167,9 +167,6 @@ release {
     newVersionCommitMessage = "Start development"
     preTagCommitMessage = "Release"
     failOnSnapshotDependencies = true
-    git {
-        requireBranch = ""
-    }
 }
 
 tasks {
