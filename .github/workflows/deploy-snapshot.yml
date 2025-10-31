@@ -1,4 +1,4 @@
-name: Deploy SNAPSHOT to Maven Central
+name: Deploy Snapshot
 
 on:
   push:
@@ -11,4 +11,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo "Empty job"
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build
+        run: ./gradlew -i build
+
+      - name: Ensure version is SNAPSHOT
+        shell: bash
+        run: |
+          VERSION=$(./gradlew -q printVersion)
+          echo "Project version: $VERSION"
+          if [[ "$VERSION" != *SNAPSHOT* ]]; then
+            echo "Release aborted: version is not a SNAPSHOT"
+            exit 1
+          fi
+
+      - name: Publish to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_OSS_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_OSS_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: ./gradlew -i publishToMavenCentral
