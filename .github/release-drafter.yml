@@ -1,0 +1,36 @@
+name-template: $NEXT_PATCH_VERSION
+tag-template: v$NEXT_PATCH_VERSION
+template: |
+  ## What’s Changed
+
+  $CHANGES
+
+  ## Contributors
+  $CONTRIBUTORS
+
+  Special thanks to all contributors! 👏
+  
+categories:
+  - title: Features & Enhancements
+    labels:
+      - 'feature'
+      - 'enhancement'
+  - title: Fixes
+    labels:
+      - 'fix'
+      - 'bugfix'
+      - 'bug'
+  - title: Dependencies
+    label: dependencies
+  - title: Documentation
+    label: documentation
+    
+exclude-labels:
+  - 'internal'
+
+exclude-contributors:
+  - 'dependabot[bot]'
+  - 'mend[bot]'
+  - 'renovate[bot]'
+  - 'dependabot'
+  - 'devOpsHazelcast'
