@@ -1,17 +1,16 @@
 plugins {
     `java-library`
     checkstyle
+    id("com.vanniktech.maven.publish") version "0.34.0"
+    id("net.researchgate.release") version "3.1.0"
 }
 
 group = "com.hazelcast.spring"
-version = "4.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion = JavaLanguageVersion.of(17)
     }
-    withJavadocJar()
-    withSourcesJar()
 }
 
 repositories {
@@ -44,6 +43,8 @@ sourceSets {
     })
 }
 
+val mainArtifactFile = configurations.getAt("archives").artifacts.files.singleFile
+
 val integrationTestImplementation by configurations.getting {
     extendsFrom(configurations.testImplementation.get())
 }
@@ -51,11 +52,35 @@ val integrationTestRuntimeOnly by configurations.getting {
     extendsFrom(configurations.testRuntimeOnly.get())
 }
 
+val copyHSSJar = tasks.register<Copy>("copyHSSJar") {
+    description = "Copies Hazelcast Spring Session Jar for usage in Docker tests"
+    group = "verification"
+
+    dependsOn(tasks.jar)
+
+    from(mainArtifactFile)
+    rename { "HSS.jar" }
+    destinationDir = file(layout.buildDirectory.file("forDocker"))
+}
+val copySpringJars = tasks.register<Copy>("copySpringJars") {
+    description = "Copies Spring Jars for usage in Docker tests"
+    group = "verification"
+
+    dependsOn(tasks.jar)
+
+    from(configurations.runtimeClasspath) {
+        // Optionally, filter files if needed
+        include("spring*.jar")
+    }
+    destinationDir = file(layout.buildDirectory.file("forDocker"))
+}
+
 val integrationTest = tasks.register<Test>("integrationTest") {
     description = "Runs integration tests."
     group = "verification"
     testClassesDirs = sourceSets["integrationTest"].output.classesDirs
-    classpath = sourceSets["integrationTest"].runtimeClasspath
+    classpath = sourceSets["integrationTest"].runtimeClasspath + files(layout.buildDirectory.dir("forDocker"))
+    dependsOn(copyHSSJar, copySpringJars)
     shouldRunAfter(tasks.test)
 
     useJUnitPlatform()
@@ -137,3 +162,54 @@ if (enableCodeCoverage.toBoolean()) {
     }
 }
 
+release {
+    tagTemplate = "v\${version}"
+    newVersionCommitMessage = "Start development"
+    preTagCommitMessage = "Release"
+    failOnSnapshotDependencies = true
+}
+
+tasks {
+    afterReleaseBuild {
+        dependsOn ("publishToMavenCentral")
+    }
+}
+
+mavenPublishing {
+    publishToMavenCentral(automaticRelease = false)
+
+    signAllPublications()
+
+    pom {
+        name = "Hazelcast Spring Session"
+        description = "Spring Session implementation using Hazelcast"
+        url = "https://github.com/hazelcast/hazelcast-spring-session"
+
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+
+        developers {
+            developer {
+                id = "hazelcast"
+                name = "Hazelcast Inc."
+                email = "info@hazelcast.com"
+            }
+        }
+
+        scm {
+            connection = "scm:git:git://github.com/hazelcast/hazelcast-spring-session.git"
+            developerConnection = "scm:git:ssh://github.com:hazelcast/hazelcast-spring-session.git"
+            url = "https://github.com/hazelcast/hazelcast-spring-session"
+        }
+    }
+}
+
+tasks.register("printVersion") {
+    doLast {
+        print(project.version)
+    }
+}
