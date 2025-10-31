@@ -38,7 +38,7 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: test-results-java-${{ matrix.java }}-hz-${{matrix.hazelcast}}-springSession-${{matrix.spring.springSession}}
         path: |
@@ -47,7 +47,7 @@ jobs:
 
     - name: Upload build artifacts
       if: success() && matrix.java == '17' && matrix.hazelcast == '5.6' && matrix.spring.springSession == '4.0.0-M2'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: build-artifacts
         path: build/libs/
