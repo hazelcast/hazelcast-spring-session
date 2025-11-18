@@ -21,7 +21,7 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
  * <p>Differs from {@link org.springframework.session.MapSession} in one detail - {@code principalName} is also a field.
  * This makes dealing with it easier, no need for extractors.
  */
-class ExtendedMapSession {
+class BackingMapSession {
 
     /**
      * Default {@link #setMaxInactiveInterval(Duration)} (30 minutes) in seconds.
@@ -38,7 +38,7 @@ class ExtendedMapSession {
 
     private final String originalId;
 
-    private final Map<String, Object> sessionAttrs = new HashMap<>();
+    private final Map<String, AttributeValue> sessionAttrs = new HashMap<>();
 
     private Instant creationTime = Instant.now();
 
@@ -56,7 +56,7 @@ class ExtendedMapSession {
     /**
      * Creates a new instance with a secure randomly generated identifier.
      */
-    ExtendedMapSession() {
+    BackingMapSession() {
         this(generateId());
     }
 
@@ -66,7 +66,7 @@ class ExtendedMapSession {
      * @param sessionIdGenerator the {@link SessionIdGenerator} to use.
      * @since 3.2
      */
-    ExtendedMapSession(SessionIdGenerator sessionIdGenerator) {
+    BackingMapSession(SessionIdGenerator sessionIdGenerator) {
         this(sessionIdGenerator.generate());
         this.sessionIdGenerator = sessionIdGenerator;
     }
@@ -77,7 +77,7 @@ class ExtendedMapSession {
      * which can be slow.
      * @param id the identifier to use
      */
-    ExtendedMapSession(String id) {
+    BackingMapSession(String id) {
         this.id = id;
         this.originalId = id;
     }
@@ -141,26 +141,25 @@ class ExtendedMapSession {
         return now.minus(this.maxInactiveInterval).compareTo(this.lastAccessedTime) >= 0;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T getAttribute(String attributeName) {
+    public AttributeValue getAttribute(String attributeName) {
         if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
-            return (T) AttributeValue.string(principalName);
+            return AttributeValue.string(principalName);
         }
         if (attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
-            return (T) AttributeValue.string(principalName);
+            return AttributeValue.string(principalName);
         }
-        return (T) this.sessionAttrs.get(attributeName);
+        return this.sessionAttrs.get(attributeName);
     }
 
     public Set<String> getAttributeNames() {
         return new HashSet<>(this.sessionAttrs.keySet());
     }
 
-    public void setAttribute(String attributeName, Object attributeValue) {
+    public void setAttribute(String attributeName, AttributeValue attributeValue) {
         if (attributeValue == null) {
             removeAttribute(attributeName);
         } else if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE) || attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
-            principalName = (String) ((AttributeValue) attributeValue).object();
+            principalName = (String) attributeValue.object();
             setPrincipalName(principalName);
         }
         else {
@@ -202,7 +201,7 @@ class ExtendedMapSession {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ExtendedMapSession that)) {
+        if (!(o instanceof BackingMapSession that)) {
             return false;
         }
         return Objects.equals(id, that.id)

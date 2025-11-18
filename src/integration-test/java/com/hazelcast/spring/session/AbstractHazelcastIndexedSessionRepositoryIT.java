@@ -57,7 +57,7 @@ abstract class AbstractHazelcastIndexedSessionRepositoryIT {
 		HazelcastSession sessionToSave = this.repository.createSession();
 		String sessionId = sessionToSave.getId();
 
-		IMap<String, ExtendedMapSession> hazelcastMap = this.hazelcastInstance
+		IMap<String, BackingMapSession> hazelcastMap = this.hazelcastInstance
 			.getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
 
 		this.repository.save(sessionToSave);

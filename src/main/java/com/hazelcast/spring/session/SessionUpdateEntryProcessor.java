@@ -44,7 +44,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
 
     private Duration maxInactiveInterval;
 
-    private Map<String, Object> delta;
+    private Map<String, AttributeValue> delta;
 
     public SessionUpdateEntryProcessor() {
     }
@@ -68,12 +68,12 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             // instances registered. In such cases, object will be represented as GenericRecord
             return processGenericRecord(entry, gr);
         }
-        ExtendedMapSession value = (ExtendedMapSession) entry.getValue();
+        BackingMapSession value = (BackingMapSession) entry.getValue();
         if (value == null) {
             return Boolean.FALSE;
         }
         processMapSession(value);
-        var extendedEntry = (ExtendedMapEntry<String, ExtendedMapSession>) entry;
+        var extendedEntry = (ExtendedMapEntry<String, BackingMapSession>) entry;
         extendedEntry.setValue(value, value.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
         return Boolean.TRUE;
     }
@@ -94,7 +94,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             List<String> attributeNames = toList(gr.getArrayOfString("attributeNames"));
             List<GenericRecord> attributeValues = toList(gr.getArrayOfGenericRecord("attributeValues"));
 
-            for (final Map.Entry<String, Object> attribute : this.delta.entrySet()) {
+            for (final Map.Entry<String, AttributeValue> attribute : this.delta.entrySet()) {
                 int index = findIndex(attribute.getKey(), attributeNames);
                 if (attribute.getValue() != null) {
                     GenericRecord valueAsRecord = AttributeValue.toGenericRecord(attribute.getValue());
@@ -133,7 +133,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
         return -1;
     }
 
-    void processMapSession(ExtendedMapSession value) {
+    void processMapSession(BackingMapSession value) {
         if (this.lastAccessedTime != null) {
             value.setLastAccessedTime(this.lastAccessedTime);
         }
@@ -141,7 +141,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             value.setMaxInactiveInterval(this.maxInactiveInterval);
         }
         if (this.delta != null) {
-            for (final Map.Entry<String, Object> attribute : this.delta.entrySet()) {
+            for (final Map.Entry<String, AttributeValue> attribute : this.delta.entrySet()) {
                 if (attribute.getValue() != null) {
                     value.setAttribute(attribute.getKey(), attribute.getValue());
                 } else {
@@ -159,7 +159,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
         this.maxInactiveInterval = maxInactiveInterval;
     }
 
-    void setDelta(Map<String, Object> delta) {
+    void setDelta(Map<String, AttributeValue> delta) {
         this.delta = delta;
     }
 }

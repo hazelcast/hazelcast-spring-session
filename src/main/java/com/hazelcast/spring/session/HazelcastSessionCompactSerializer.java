@@ -16,8 +16,6 @@
 
 package com.hazelcast.spring.session;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.nio.serialization.compact.CompactReader;
 import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
@@ -82,13 +80,13 @@ import java.util.List;
  *
  * @since 4.0.0
  */
-public class HazelcastSessionCompactSerializer implements CompactSerializer<ExtendedMapSession> {
+public class HazelcastSessionCompactSerializer implements CompactSerializer<BackingMapSession> {
 
     @Override
     @NonNull
-    public ExtendedMapSession read(CompactReader reader) {
+    public BackingMapSession read(CompactReader reader) {
         String originalId = reader.readString("originalId");
-        ExtendedMapSession cached = new ExtendedMapSession(originalId);
+        BackingMapSession cached = new BackingMapSession(originalId);
         cached.setId(reader.readString("id"));
         cached.setPrincipalName(reader.readString("principalName"));
         cached.setCreationTime(readInstant(reader, "creationTime"));
@@ -103,7 +101,7 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Exte
     }
 
     @Override
-    public void write(@NonNull CompactWriter writer, ExtendedMapSession session) {
+    public void write(@NonNull CompactWriter writer, BackingMapSession session) {
         writer.writeString("originalId", session.getOriginalId());
         writer.writeString("id", session.getId());
         writer.writeString("principalName", session.getPrincipalName());
@@ -129,8 +127,8 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Exte
 
     @Override
     @NonNull
-    public Class<ExtendedMapSession> getCompactClass() {
-        return ExtendedMapSession.class;
+    public Class<BackingMapSession> getCompactClass() {
+        return BackingMapSession.class;
     }
     private void writeInstant(CompactWriter writer, Instant instant, String prefix) {
         writer.writeInt64(prefix + "_seconds", instant.getEpochSecond());

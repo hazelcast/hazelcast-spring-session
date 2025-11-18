@@ -7,7 +7,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * Class used by {@link ExtendedMapSession} to store attribute values with its corresponding type.
+ * Class used by {@link BackingMapSession} to store attribute values with its corresponding type.
  * <p>
  * In client-server architecture we don't want to hold users' Java objects to avoid the need to upload user code to server.
  * However, for speed and simplicity, few types are stored as-is: String, Integer, Long.

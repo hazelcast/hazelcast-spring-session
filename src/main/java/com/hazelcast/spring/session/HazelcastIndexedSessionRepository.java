@@ -114,9 +114,9 @@ import org.springframework.util.Assert;
 @SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastIndexedSessionRepository
 		implements FindByIndexNameSessionRepository<HazelcastIndexedSessionRepository.HazelcastSession>,
-		EntryAddedListener<String, ExtendedMapSession>, EntryEvictedListener<String, ExtendedMapSession>,
-		EntryRemovedListener<String, ExtendedMapSession>, EntryExpiredListener<String, ExtendedMapSession>, InitializingBean,
-		DisposableBean {
+                   EntryAddedListener<String, BackingMapSession>, EntryEvictedListener<String, BackingMapSession>,
+                   EntryRemovedListener<String, BackingMapSession>, EntryExpiredListener<String, BackingMapSession>, InitializingBean,
+                   DisposableBean {
 
 	/**
 	 * The default name of map used by Spring Session to store sessions.
@@ -137,7 +137,7 @@ public class HazelcastIndexedSessionRepository
 	private ApplicationEventPublisher eventPublisher = (event) -> {
 	};
 
-	private Duration defaultMaxInactiveInterval = Duration.ofSeconds(ExtendedMapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
+	private Duration defaultMaxInactiveInterval = Duration.ofSeconds(BackingMapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
 
 	private IndexResolver<Session> indexResolver = new DelegatingIndexResolver<>(new PrincipalNameIndexResolver<>());
 
@@ -149,7 +149,7 @@ public class HazelcastIndexedSessionRepository
 
     private boolean jarOnEveryMember = true;
 
-	private IMap<String, ExtendedMapSession> sessions;
+	private IMap<String, BackingMapSession> sessions;
 
 	private UUID sessionListenerId;
 
@@ -271,7 +271,7 @@ public class HazelcastIndexedSessionRepository
 
     @Override
 	public HazelcastSession createSession() {
-		ExtendedMapSession cached = new ExtendedMapSession(this.sessionIdGenerator);
+		BackingMapSession cached = new BackingMapSession(this.sessionIdGenerator);
 		cached.setMaxInactiveInterval(this.defaultMaxInactiveInterval);
 		HazelcastSession session = new HazelcastSession(cached, true);
 		session.flushImmediateIfNecessary();
@@ -301,7 +301,7 @@ public class HazelcastIndexedSessionRepository
                 } else {
                     sessions.lock(sessionId);
                     try {
-                        ExtendedMapSession mapSession = sessions.get(sessionId);
+                        BackingMapSession mapSession = sessions.get(sessionId);
                         entryProcessor.processMapSession(mapSession);
                         sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
                     } finally {
@@ -315,7 +315,7 @@ public class HazelcastIndexedSessionRepository
 
     @Override
 	public HazelcastSession findById(String id) {
-		ExtendedMapSession saved = this.sessions.get(id);
+		BackingMapSession saved = this.sessions.get(id);
 		if (saved == null) {
 			return null;
 		}
@@ -336,17 +336,17 @@ public class HazelcastIndexedSessionRepository
 		if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
 			return Collections.emptyMap();
 		}
-		Collection<ExtendedMapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
+		Collection<BackingMapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
 		Map<String, HazelcastSession> sessionMap = new HashMap<>(sessions.size());
-		for (ExtendedMapSession session : sessions) {
+		for (BackingMapSession session : sessions) {
 			sessionMap.put(session.getId(), new HazelcastSession(session));
 		}
 		return sessionMap;
 	}
 
 	@Override
-	public void entryAdded(EntryEvent<String, ExtendedMapSession> event) {
-		ExtendedMapSession session = event.getValue();
+	public void entryAdded(EntryEvent<String, BackingMapSession> event) {
+		BackingMapSession session = event.getValue();
 		if (session.getId().equals(session.getOriginalId())) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Session created with id: " + session.getId());
@@ -356,7 +356,7 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	@Override
-	public void entryEvicted(EntryEvent<String, ExtendedMapSession> event) {
+	public void entryEvicted(EntryEvent<String, BackingMapSession> event) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Session expired with id: " + event.getOldValue().getId());
 		}
@@ -364,8 +364,8 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	@Override
-	public void entryRemoved(EntryEvent<String, ExtendedMapSession> event) {
-		ExtendedMapSession session = event.getOldValue();
+	public void entryRemoved(EntryEvent<String, BackingMapSession> event) {
+		BackingMapSession session = event.getOldValue();
 		if (session != null) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Session deleted with id: " + session.getId());
@@ -375,7 +375,7 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	@Override
-	public void entryExpired(EntryEvent<String, ExtendedMapSession> event) {
+	public void entryExpired(EntryEvent<String, BackingMapSession> event) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Session expired with id: " + event.getOldValue().getId());
 		}
@@ -393,14 +393,14 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	/**
-	 * A custom implementation of {@link Session} that uses a {@link ExtendedMapSession} as the
+	 * A custom implementation of {@link Session} that uses a {@link BackingMapSession} as the
 	 * basis for its mapping. It keeps track if changes have been made since last save.
 	 *
 	 * @author Aleksandar Stojsavljevic
 	 */
 	public final class HazelcastSession implements Session {
 
-		private final ExtendedMapSession delegate;
+		private final BackingMapSession delegate;
 
 		private boolean isNew;
 
@@ -414,7 +414,7 @@ public class HazelcastIndexedSessionRepository
 
 		final Map<String, AttributeValue> delta = new HashMap<>();
 
-		HazelcastSession(ExtendedMapSession cached, boolean isNew) {
+		HazelcastSession(BackingMapSession cached, boolean isNew) {
 			this.delegate = cached;
 			this.isNew = isNew;
 			this.originalId = cached.getId();
@@ -424,7 +424,7 @@ public class HazelcastIndexedSessionRepository
 			}
 		}
 
-		HazelcastSession(ExtendedMapSession cached) {
+		HazelcastSession(BackingMapSession cached) {
 			this(cached, false);
 		}
 
@@ -532,7 +532,7 @@ public class HazelcastIndexedSessionRepository
 			setAttribute(attributeName, null);
 		}
 
-		ExtendedMapSession getDelegate() {
+		BackingMapSession getDelegate() {
 			return this.delegate;
 		}
 
