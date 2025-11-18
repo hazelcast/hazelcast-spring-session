@@ -28,12 +28,17 @@ import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.internal.serialization.SerializationService;
+import com.hazelcast.internal.serialization.impl.DefaultSerializationServiceBuilder;
+import com.hazelcast.internal.serialization.impl.HeapData;
+import com.hazelcast.internal.serialization.impl.compact.schema.MemberSchemaService;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryEvictedListener;
 import com.hazelcast.map.listener.EntryExpiredListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.query.Predicates;
+import com.hazelcast.spi.impl.SerializationServiceSupport;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -44,7 +49,6 @@ import org.springframework.session.DelegatingIndexResolver;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.FlushMode;
 import org.springframework.session.IndexResolver;
-import org.springframework.session.MapSession;
 import org.springframework.session.PrincipalNameIndexResolver;
 import org.springframework.session.SaveMode;
 import org.springframework.session.Session;
@@ -116,8 +120,8 @@ import org.springframework.util.Assert;
  */
 public class HazelcastIndexedSessionRepository
 		implements FindByIndexNameSessionRepository<HazelcastIndexedSessionRepository.HazelcastSession>,
-		EntryAddedListener<String, MapSession>, EntryEvictedListener<String, MapSession>,
-		EntryRemovedListener<String, MapSession>, EntryExpiredListener<String, MapSession>, InitializingBean,
+		EntryAddedListener<String, ExtendedMapSession>, EntryEvictedListener<String, ExtendedMapSession>,
+		EntryRemovedListener<String, ExtendedMapSession>, EntryExpiredListener<String, ExtendedMapSession>, InitializingBean,
 		DisposableBean {
 
 	/**
@@ -139,7 +143,7 @@ public class HazelcastIndexedSessionRepository
 	private ApplicationEventPublisher eventPublisher = (event) -> {
 	};
 
-	private Duration defaultMaxInactiveInterval = Duration.ofSeconds(MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
+	private Duration defaultMaxInactiveInterval = Duration.ofSeconds(ExtendedMapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
 
 	private IndexResolver<Session> indexResolver = new DelegatingIndexResolver<>(new PrincipalNameIndexResolver<>());
 
@@ -149,9 +153,13 @@ public class HazelcastIndexedSessionRepository
 
 	private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
 
-	private IMap<String, MapSession> sessions;
+    private boolean jarOnEveryMember = true;
+
+	private IMap<String, ExtendedMapSession> sessions;
 
 	private UUID sessionListenerId;
+
+    private SerializationService serializationService;
 
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
@@ -162,6 +170,9 @@ public class HazelcastIndexedSessionRepository
 	public HazelcastIndexedSessionRepository(HazelcastInstance hazelcastInstance) {
 		Assert.notNull(hazelcastInstance, "HazelcastInstance must not be null");
 		this.hazelcastInstance = hazelcastInstance;
+        if (hazelcastInstance instanceof SerializationServiceSupport sss) {
+            this.serializationService = sss.getSerializationService();
+        }
 	}
 
 	@Override
@@ -175,7 +186,12 @@ public class HazelcastIndexedSessionRepository
 		this.sessions.removeEntryListener(this.sessionListenerId);
 	}
 
-	/**
+    HazelcastIndexedSessionRepository setSerializationService(SerializationService serializationService) {
+        this.serializationService = serializationService;
+        return this;
+    }
+
+    /**
 	 * Sets the {@link ApplicationEventPublisher} that is used to publish
 	 * {@link AbstractSessionEvent session events}. The default is to not publish session
 	 * events.
@@ -247,9 +263,13 @@ public class HazelcastIndexedSessionRepository
 		this.saveMode = saveMode;
 	}
 
-	@Override
+    public void setJarOnEveryMember(boolean jarOnEveryMember) {
+        this.jarOnEveryMember = jarOnEveryMember;
+    }
+
+    @Override
 	public HazelcastSession createSession() {
-		MapSession cached = new MapSession(this.sessionIdGenerator);
+		ExtendedMapSession cached = new ExtendedMapSession(this.sessionIdGenerator);
 		cached.setMaxInactiveInterval(this.defaultMaxInactiveInterval);
 		HazelcastSession session = new HazelcastSession(cached, true);
 		session.flushImmediateIfNecessary();
@@ -258,35 +278,42 @@ public class HazelcastIndexedSessionRepository
 
 	@Override
 	public void save(HazelcastSession session) {
+        final String sessionId = session.getId();
 		if (session.isNew) {
 			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
 					TimeUnit.SECONDS);
 		}
-		else if (session.sessionIdChanged) {
-			this.sessions.delete(session.originalId);
-			session.originalId = session.getId();
-			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
-					TimeUnit.SECONDS);
-		}
-		else if (session.hasChanges()) {
-			SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor();
-			if (session.lastAccessedTimeChanged) {
-				entryProcessor.setLastAccessedTime(session.getLastAccessedTime());
-			}
-			if (session.maxInactiveIntervalChanged) {
-				entryProcessor.setMaxInactiveInterval(session.getMaxInactiveInterval());
-			}
-			if (!session.delta.isEmpty()) {
-				entryProcessor.setDelta(new HashMap<>(session.delta));
-			}
-			this.sessions.executeOnKey(session.getId(), entryProcessor);
-		}
-		session.clearChangeFlags();
-	}
+		else {
+            if (session.sessionIdChanged) {
+                this.sessions.delete(session.originalId);
+                session.originalId = sessionId;
+                this.sessions.set(sessionId, session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
+                                  TimeUnit.SECONDS);
+            }
+            else if (session.hasChanges()) {
+                SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor(session);
 
-	@Override
+                if (jarOnEveryMember) {
+                    //noinspection unchecked
+                    this.sessions.executeOnKey(sessionId, entryProcessor);
+                } else {
+                    sessions.lock(sessionId);
+                    try {
+                        ExtendedMapSession mapSession = sessions.get(sessionId);
+                        entryProcessor.processInternal(mapSession);
+                        sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+                    } finally {
+                        sessions.unlock(sessionId);
+                    }
+                }
+            }
+        }
+        session.clearChangeFlags();
+    }
+
+    @Override
 	public HazelcastSession findById(String id) {
-		MapSession saved = this.sessions.get(id);
+		ExtendedMapSession saved = this.sessions.get(id);
 		if (saved == null) {
 			return null;
 		}
@@ -307,17 +334,17 @@ public class HazelcastIndexedSessionRepository
 		if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
 			return Collections.emptyMap();
 		}
-		Collection<MapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
+		Collection<ExtendedMapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
 		Map<String, HazelcastSession> sessionMap = new HashMap<>(sessions.size());
-		for (MapSession session : sessions) {
+		for (ExtendedMapSession session : sessions) {
 			sessionMap.put(session.getId(), new HazelcastSession(session, false));
 		}
 		return sessionMap;
 	}
 
 	@Override
-	public void entryAdded(EntryEvent<String, MapSession> event) {
-		MapSession session = event.getValue();
+	public void entryAdded(EntryEvent<String, ExtendedMapSession> event) {
+		ExtendedMapSession session = event.getValue();
 		if (session.getId().equals(session.getOriginalId())) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Session created with id: " + session.getId());
@@ -327,7 +354,7 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	@Override
-	public void entryEvicted(EntryEvent<String, MapSession> event) {
+	public void entryEvicted(EntryEvent<String, ExtendedMapSession> event) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Session expired with id: " + event.getOldValue().getId());
 		}
@@ -335,8 +362,8 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	@Override
-	public void entryRemoved(EntryEvent<String, MapSession> event) {
-		MapSession session = event.getOldValue();
+	public void entryRemoved(EntryEvent<String, ExtendedMapSession> event) {
+		ExtendedMapSession session = event.getOldValue();
 		if (session != null) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Session deleted with id: " + session.getId());
@@ -346,7 +373,7 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	@Override
-	public void entryExpired(EntryEvent<String, MapSession> event) {
+	public void entryExpired(EntryEvent<String, ExtendedMapSession> event) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Session expired with id: " + event.getOldValue().getId());
 		}
@@ -364,32 +391,32 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	/**
-	 * A custom implementation of {@link Session} that uses a {@link MapSession} as the
+	 * A custom implementation of {@link Session} that uses a {@link ExtendedMapSession} as the
 	 * basis for its mapping. It keeps track if changes have been made since last save.
 	 *
 	 * @author Aleksandar Stojsavljevic
 	 */
-	final class HazelcastSession implements Session {
+	public final class HazelcastSession implements Session {
 
-		private final MapSession delegate;
+		private final ExtendedMapSession delegate;
 
 		private boolean isNew;
 
-		private boolean sessionIdChanged;
+		boolean sessionIdChanged;
 
-		private boolean lastAccessedTimeChanged;
+		boolean lastAccessedTimeChanged;
 
-		private boolean maxInactiveIntervalChanged;
+		boolean maxInactiveIntervalChanged;
 
 		private String originalId;
 
-		private Map<String, Object> delta = new HashMap<>();
+		final Map<String, AttributeValue> delta = new HashMap<>();
 
-		HazelcastSession(MapSession cached, boolean isNew) {
+		HazelcastSession(ExtendedMapSession cached, boolean isNew) {
 			this.delegate = cached;
 			this.isNew = isNew;
 			this.originalId = cached.getId();
-			if (this.isNew || (HazelcastIndexedSessionRepository.this.saveMode == SaveMode.ALWAYS)) {
+			if (this.isNew || (saveMode == SaveMode.ALWAYS)) {
 				getAttributeNames()
 					.forEach((attributeName) -> this.delta.put(attributeName, cached.getAttribute(attributeName)));
 			}
@@ -419,7 +446,7 @@ public class HazelcastIndexedSessionRepository
 
 		@Override
 		public String changeSessionId() {
-			String newSessionId = HazelcastIndexedSessionRepository.this.sessionIdGenerator.generate();
+			String newSessionId = sessionIdGenerator.generate();
 			this.delegate.setId(newSessionId);
 			this.sessionIdChanged = true;
 			return newSessionId;
@@ -442,14 +469,14 @@ public class HazelcastIndexedSessionRepository
 			return this.delegate.getMaxInactiveInterval();
 		}
 
-		@Override
+        @Override
+		@SuppressWarnings("unchecked")
 		public <T> T getAttribute(String attributeName) {
-			T attributeValue = this.delegate.getAttribute(attributeName);
-			if (attributeValue != null
-					&& HazelcastIndexedSessionRepository.this.saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
+            AttributeValue attributeValue = this.delegate.getAttribute(attributeName);
+			if (attributeValue != null && saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
 				this.delta.put(attributeName, attributeValue);
 			}
-			return attributeValue;
+            return attributeValue == null ? null : (T) fromValue(attributeValue);
 		}
 
 		@Override
@@ -459,24 +486,49 @@ public class HazelcastIndexedSessionRepository
 
 		@Override
 		public void setAttribute(String attributeName, Object attributeValue) {
-			this.delegate.setAttribute(attributeName, attributeValue);
-			this.delta.put(attributeName, attributeValue);
+            AttributeValue value = toValue(attributeValue);
+
+            this.delegate.setAttribute(attributeName, value);
+			this.delta.put(attributeName, value);
 			if (SPRING_SECURITY_CONTEXT.equals(attributeName)) {
-				Map<String, String> indexes = HazelcastIndexedSessionRepository.this.indexResolver
-					.resolveIndexesFor(this);
+				Map<String, String> indexes = indexResolver.resolveIndexesFor(this);
 				String principal = (attributeValue != null) ? indexes.get(PRINCIPAL_NAME_INDEX_NAME) : null;
-				this.delegate.setAttribute(PRINCIPAL_NAME_INDEX_NAME, principal);
-				this.delta.put(PRINCIPAL_NAME_INDEX_NAME, principal);
+                AttributeValue val = toValue(principal);
+				this.delegate.setPrincipalName(principal);
+                this.delta.put(PRINCIPAL_NAME_INDEX_NAME, val);
 			}
 			flushImmediateIfNecessary();
 		}
 
-		@Override
+        private AttributeValue toValue(Object attributeValue) {
+            if (attributeValue == null) {
+                return null;
+            }
+            AttributeValue value;
+            if (attributeValue instanceof String s) {
+                value = new AttributeValue(s, AttributeValue.ValueForm.STRING);
+            } else {
+                byte[] serializedValue = serializationService.toData(attributeValue).toByteArray();
+                value = new AttributeValue(serializedValue, AttributeValue.ValueForm.DATA);
+            }
+            return value;
+        }
+
+        private Object fromValue(AttributeValue attributeValue) {
+            return switch (attributeValue.form()) {
+                case DATA ->  serializationService.toObject(new HeapData((byte[]) attributeValue.object()));
+                case STRING -> (String) attributeValue.object();
+                case LONG -> (Long) attributeValue.object();
+                case INTEGER -> (Integer) attributeValue.object();
+            };
+        }
+
+        @Override
 		public void removeAttribute(String attributeName) {
 			setAttribute(attributeName, null);
 		}
 
-		MapSession getDelegate() {
+		ExtendedMapSession getDelegate() {
 			return this.delegate;
 		}
 
@@ -497,7 +549,7 @@ public class HazelcastIndexedSessionRepository
 				HazelcastIndexedSessionRepository.this.save(this);
 			}
 		}
-
 	}
+
 
 }

@@ -34,10 +34,12 @@ public class PrincipalNameExtractor implements ValueExtractor<MapSession, String
 	@Override
 	@SuppressWarnings("unchecked")
 	public void extract(MapSession target, String argument, ValueCollector collector) {
-		String principalName = target.getAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME);
+		AttributeValue principalName = target.getAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME);
 		if (principalName != null) {
-			collector.addObject(principalName);
+            if (principalName.form() != AttributeValue.ValueForm.STRING) {
+                throw new IllegalArgumentException("Principal name must be a string");
+            }
+			collector.addObject(principalName.object());
 		}
 	}
-
 }

@@ -19,6 +19,7 @@ package com.hazelcast.spring.session;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.session.config.annotation.SpringSessionHazelcastInstance;
 import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
 
 import org.junit.jupiter.api.AfterAll;
@@ -54,14 +55,14 @@ import java.nio.file.Files;
 @ContextConfiguration
 @WebAppConfiguration
 @SuppressWarnings("resource")
-class ClientServerHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
+class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryITests {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientServerHazelcastIndexedSessionRepositoryITests.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientServerHazelcastIndexedSessionRepositoryIT.class);
 	private static GenericContainer<?> container;
 
 	@BeforeAll
 	static void setUpClass() throws IOException {
-        var jarResource = ClientServerHazelcastIndexedSessionRepositoryITests.class.getResource("../../../../HSS.jar");
+        var jarResource = ClientServerHazelcastIndexedSessionRepositoryIT.class.getResource("../../../../HSS.jar");
         assert jarResource != null;
         var path = new File(jarResource.getFile()).getParentFile();
 
@@ -81,14 +82,18 @@ class ClientServerHazelcastIndexedSessionRepositoryITests extends AbstractHazelc
 		container.stop();
 	}
 
-	@Configuration
 	@EnableHazelcastHttpSession
+	@Configuration(proxyBeanMethods = false)
 	static class HazelcastSessionConfig {
-		@Bean
+		@Bean @SpringSessionHazelcastInstance
 		HazelcastInstance hazelcastInstance() {
-			ClientConfig clientConfig = new ClientConfig();
-			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-			return HazelcastClient.newHazelcastClient(clientConfig);
+            ClientConfig clientConfig = new ClientConfig();
+            clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
+            clientConfig.getSerializationConfig().getCompactSerializationConfig()
+                        .addSerializer(new ValueCompactSerializer())
+                        .addSerializer(new HazelcastSessionCompactSerializer())
+            ;
+            return HazelcastClient.newHazelcastClient(clientConfig);
 		}
 	}
 

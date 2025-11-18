@@ -26,7 +26,7 @@ val springSecurityVersion: String by project
 val hazelcastVersion: String by project
 
 val jakartaServletVersion = "6.1.0"
-val junitVersion = "5.12.1"
+val junitVersion = "6.0.1"
 val mockitoVersion = "5.16.1"
 val assertjVersion = "3.27.3"
 val testcontainersVersion = "2.0.1"
@@ -110,6 +110,7 @@ dependencies {
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testImplementation("org.junit.platform:junit-platform-suite:${junitVersion}")
     testImplementation("org.mockito:mockito-core:$mockitoVersion")
     testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
     testImplementation("org.springframework.security:spring-security-core:$springSecurityVersion")
@@ -132,8 +133,8 @@ tasks.test {
 
 tasks.jacocoTestReport {
     reports {
-        xml.required.set(true)
-        csv.required.set(true)
+        xml.required = true
+        csv.required = true
     }
 }
 

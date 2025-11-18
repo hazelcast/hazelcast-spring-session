@@ -81,14 +81,15 @@ import org.springframework.session.MapSession;
  * @author Enes Ozcan
  * @since 2.4.0
  */
-public class HazelcastSessionSerializer implements StreamSerializer<MapSession> {
+public class HazelcastMapSessionSerializer implements StreamSerializer<ExtendedMapSession> {
 
 	private static final int SERIALIZER_TYPE_ID = 1453;
 
 	@Override
-	public void write(ObjectDataOutput out, MapSession session) throws IOException {
+	public void write(ObjectDataOutput out, ExtendedMapSession session) throws IOException {
 		out.writeString(session.getOriginalId());
 		out.writeString(session.getId());
+        out.writeString(session.getPrincipalName());
 		writeInstant(out, session.getCreationTime());
 		writeInstant(out, session.getLastAccessedTime());
 		writeDuration(out, session.getMaxInactiveInterval());
@@ -112,10 +113,11 @@ public class HazelcastSessionSerializer implements StreamSerializer<MapSession> 
 	}
 
 	@Override
-	public MapSession read(ObjectDataInput in) throws IOException {
+	public ExtendedMapSession read(ObjectDataInput in) throws IOException {
 		String originalId = in.readString();
-		MapSession cached = new MapSession(originalId);
+        ExtendedMapSession cached = new ExtendedMapSession(originalId);
 		cached.setId(in.readString());
+        cached.setPrincipalName(in.readString());
 		cached.setCreationTime(readInstant(in));
 		cached.setLastAccessedTime(readInstant(in));
 		cached.setMaxInactiveInterval(readDuration(in));
@@ -150,10 +152,6 @@ public class HazelcastSessionSerializer implements StreamSerializer<MapSession> 
 	@Override
 	public int getTypeId() {
 		return SERIALIZER_TYPE_ID;
-	}
-
-	@Override
-	public void destroy() {
 	}
 
 }

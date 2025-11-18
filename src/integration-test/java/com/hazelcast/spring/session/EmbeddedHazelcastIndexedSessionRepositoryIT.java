@@ -36,7 +36,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
 @WebAppConfiguration
-class EmbeddedHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
+class EmbeddedHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryITests {
 
 	@EnableHazelcastHttpSession
 	@Configuration

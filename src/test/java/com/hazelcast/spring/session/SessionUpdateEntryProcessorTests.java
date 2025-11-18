@@ -25,8 +25,6 @@ import com.hazelcast.map.ExtendedMapEntry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.springframework.session.MapSession;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -44,7 +42,7 @@ class SessionUpdateEntryProcessorTests {
 	@Test
 	void shouldReturnFalseIfNoSessionExistsInHazelcastMapEntry() {
 		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+		ExtendedMapEntry<String, ExtendedMapSession> mapEntry = mock(ExtendedMapEntry.class);
 
 		Object result = this.processor.process(mapEntry);
 
@@ -54,9 +52,9 @@ class SessionUpdateEntryProcessorTests {
 	@Test
 	void shouldUpdateMaxInactiveIntervalOnSessionAndSetMapEntryValueWithNewTimeToLive() {
 		Duration newMaxInactiveInterval = Duration.ofSeconds(123L);
-		MapSession mapSession = new MapSession();
+        ExtendedMapSession mapSession = new ExtendedMapSession();
 		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+		ExtendedMapEntry<String, ExtendedMapSession> mapEntry = mock(ExtendedMapEntry.class);
 		given(mapEntry.getValue()).willReturn(mapSession);
 
 		this.processor.setMaxInactiveInterval(newMaxInactiveInterval);
@@ -70,10 +68,10 @@ class SessionUpdateEntryProcessorTests {
 	@Test
 	void shouldSetMapEntryValueWithOldTimeToLiveIfNoChangeToMaxInactiveIntervalIsRegistered() {
 		Duration maxInactiveInterval = Duration.ofSeconds(123L);
-		MapSession mapSession = new MapSession();
+        ExtendedMapSession mapSession = new ExtendedMapSession();
 		mapSession.setMaxInactiveInterval(maxInactiveInterval);
 		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+		ExtendedMapEntry<String, ExtendedMapSession> mapEntry = mock(ExtendedMapEntry.class);
 		given(mapEntry.getValue()).willReturn(mapSession);
 
 		Object result = this.processor.process(mapEntry);
@@ -86,9 +84,9 @@ class SessionUpdateEntryProcessorTests {
 	@Test
 	void shouldUpdateLastAccessTimeOnSessionAndSetMapEntryValueWithOldTimeToLive() {
 		Instant lastAccessTime = Instant.ofEpochSecond(1234L);
-		MapSession mapSession = new MapSession();
+        ExtendedMapSession mapSession = new ExtendedMapSession();
 		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+		ExtendedMapEntry<String, ExtendedMapSession> mapEntry = mock(ExtendedMapEntry.class);
 		given(mapEntry.getValue()).willReturn(mapSession);
 
 		this.processor.setLastAccessedTime(lastAccessTime);
@@ -101,11 +99,11 @@ class SessionUpdateEntryProcessorTests {
 
 	@Test
 	void shouldUpdateSessionAttributesFromDeltaAndSetMapEntryValueWithOldTimeToLive() {
-		MapSession mapSession = new MapSession();
+        ExtendedMapSession mapSession = new ExtendedMapSession();
 		mapSession.setAttribute("changed", "oldValue");
 		mapSession.setAttribute("removed", "existingValue");
 		@SuppressWarnings("unchecked")
-		ExtendedMapEntry<String, MapSession> mapEntry = mock(ExtendedMapEntry.class);
+		ExtendedMapEntry<String, ExtendedMapSession> mapEntry = mock(ExtendedMapEntry.class);
 		given(mapEntry.getValue()).willReturn(mapSession);
 
 		HashMap<String, Object> delta = new HashMap<>();

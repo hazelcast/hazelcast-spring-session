@@ -20,11 +20,9 @@ import java.time.Duration;
 import java.time.Instant;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.instance.impl.HazelcastInstanceProxy;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
 
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +57,7 @@ abstract class AbstractHazelcastIndexedSessionRepositoryITests {
 		HazelcastSession sessionToSave = this.repository.createSession();
 		String sessionId = sessionToSave.getId();
 
-		IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
+		IMap<String, ExtendedMapSession> hazelcastMap = this.hazelcastInstance
 			.getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
 
 		this.repository.save(sessionToSave);
@@ -208,9 +206,6 @@ abstract class AbstractHazelcastIndexedSessionRepositoryITests {
 
 	@Test
 	void createSessionWithSecurityContextAndFindByPrincipal() {
-		Assumptions.assumeTrue(this.hazelcastInstance instanceof HazelcastInstanceProxy,
-				"Hazelcast runs in embedded server topology");
-
 		HazelcastSession session = this.repository.createSession();
 
 		String username = "saves-" + System.currentTimeMillis();
