@@ -29,9 +29,7 @@ import java.util.concurrent.TimeUnit;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.internal.serialization.SerializationService;
-import com.hazelcast.internal.serialization.impl.DefaultSerializationServiceBuilder;
 import com.hazelcast.internal.serialization.impl.HeapData;
-import com.hazelcast.internal.serialization.impl.compact.schema.MemberSchemaService;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryEvictedListener;
@@ -80,20 +78,15 @@ import org.springframework.util.Assert;
  *
  * In order to support finding sessions by principal name using
  * {@link #findByIndexNameAndIndexValue(String, String)} method, custom configuration of
- * {@code IMap} supplied to this implementation is required.
+ * {@code IMap} supplied to this implementation is recommended due to performance reasons.
  *
- * The following snippet demonstrates how to define required configuration using
+ * The following snippet demonstrates how to define recommended configuration using
  * programmatic Hazelcast Configuration:
  *
  * <pre class="code">
- * AttributeConfig attributeConfig = new AttributeConfig()
- *         .setName(HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE)
- *         .setExtractorClassName(rincipalNameExtractor.class.getName());
- *
  * Config config = new Config();
  *
  * config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME)
- *         .addAttributeConfig(attributeConfig)
  *         .addIndexConfig(new IndexConfig(
  *                 IndexType.HASH,
  *                 HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
@@ -118,6 +111,7 @@ import org.springframework.util.Assert;
  * @author Eleftheria Stein
  * @since 2.2.0
  */
+@SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastIndexedSessionRepository
 		implements FindByIndexNameSessionRepository<HazelcastIndexedSessionRepository.HazelcastSession>,
 		EntryAddedListener<String, ExtendedMapSession>, EntryEvictedListener<String, ExtendedMapSession>,
@@ -185,11 +179,6 @@ public class HazelcastIndexedSessionRepository
 	public void destroy() {
 		this.sessions.removeEntryListener(this.sessionListenerId);
 	}
-
-    HazelcastIndexedSessionRepository setSerializationService(SerializationService serializationService) {
-        this.serializationService = serializationService;
-        return this;
-    }
 
     /**
 	 * Sets the {@link ApplicationEventPublisher} that is used to publish
@@ -263,8 +252,21 @@ public class HazelcastIndexedSessionRepository
 		this.saveMode = saveMode;
 	}
 
+    /**
+     * If true, this repository will assume that class instances are present on all members and we can use faster
+     * {@link com.hazelcast.map.EntryProcessor} to process sessions in-place, instead of a combination of
+     * {@link IMap#get} + {@link IMap#set}.
+     */
     public void setJarOnEveryMember(boolean jarOnEveryMember) {
         this.jarOnEveryMember = jarOnEveryMember;
+    }
+
+    /**
+     * Replaces {@link SerializationService} that we got from {@link HazelcastInstance}.
+     */
+    void setSerializationService(SerializationService serializationService) {
+        Assert.notNull(serializationService, "serializationService must not be null");
+        this.serializationService = serializationService;
     }
 
     @Override
@@ -300,7 +302,7 @@ public class HazelcastIndexedSessionRepository
                     sessions.lock(sessionId);
                     try {
                         ExtendedMapSession mapSession = sessions.get(sessionId);
-                        entryProcessor.processInternal(mapSession);
+                        entryProcessor.processMapSession(mapSession);
                         sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
                     } finally {
                         sessions.unlock(sessionId);
@@ -321,7 +323,7 @@ public class HazelcastIndexedSessionRepository
 			deleteById(saved.getId());
 			return null;
 		}
-		return new HazelcastSession(saved, false);
+		return new HazelcastSession(saved);
 	}
 
 	@Override
@@ -337,7 +339,7 @@ public class HazelcastIndexedSessionRepository
 		Collection<ExtendedMapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
 		Map<String, HazelcastSession> sessionMap = new HashMap<>(sessions.size());
 		for (ExtendedMapSession session : sessions) {
-			sessionMap.put(session.getId(), new HazelcastSession(session, false));
+			sessionMap.put(session.getId(), new HazelcastSession(session));
 		}
 		return sessionMap;
 	}
@@ -349,7 +351,7 @@ public class HazelcastIndexedSessionRepository
 			if (logger.isDebugEnabled()) {
 				logger.debug("Session created with id: " + session.getId());
 			}
-			this.eventPublisher.publishEvent(new SessionCreatedEvent(this, session));
+			this.eventPublisher.publishEvent(new SessionCreatedEvent(this, new HazelcastSession(session)));
 		}
 	}
 
@@ -358,7 +360,7 @@ public class HazelcastIndexedSessionRepository
 		if (logger.isDebugEnabled()) {
 			logger.debug("Session expired with id: " + event.getOldValue().getId());
 		}
-		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
+		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
 
 	@Override
@@ -368,7 +370,7 @@ public class HazelcastIndexedSessionRepository
 			if (logger.isDebugEnabled()) {
 				logger.debug("Session deleted with id: " + session.getId());
 			}
-			this.eventPublisher.publishEvent(new SessionDeletedEvent(this, session));
+			this.eventPublisher.publishEvent(new SessionDeletedEvent(this, new HazelcastSession(session)));
 		}
 	}
 
@@ -377,7 +379,7 @@ public class HazelcastIndexedSessionRepository
 		if (logger.isDebugEnabled()) {
 			logger.debug("Session expired with id: " + event.getOldValue().getId());
 		}
-		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
+		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
 
 	/**
@@ -420,6 +422,10 @@ public class HazelcastIndexedSessionRepository
 				getAttributeNames()
 					.forEach((attributeName) -> this.delta.put(attributeName, cached.getAttribute(attributeName)));
 			}
+		}
+
+		HazelcastSession(ExtendedMapSession cached) {
+			this(cached, false);
 		}
 
 		@Override
@@ -505,15 +511,15 @@ public class HazelcastIndexedSessionRepository
                 return null;
             }
             if (attributeValue instanceof String s) {
-                return new AttributeValue(s, AttributeValue.ValueForm.STRING);
+                return new AttributeValue(s, AttributeValue.AttributeValueDataType.STRING);
             } else {
                 byte[] serializedValue = serializationService.toData(attributeValue).toByteArray();
-                return new AttributeValue(serializedValue, AttributeValue.ValueForm.DATA);
+                return new AttributeValue(serializedValue, AttributeValue.AttributeValueDataType.DATA);
             }
         }
 
         private Object fromValue(AttributeValue attributeValue) {
-            return switch (attributeValue.form()) {
+            return switch (attributeValue.dataType()) {
                 case DATA ->  serializationService.toObject(new HeapData((byte[]) attributeValue.object()));
                 case STRING -> (String) attributeValue.object();
                 case LONG -> (Long) attributeValue.object();

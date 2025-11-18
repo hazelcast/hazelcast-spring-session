@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,11 +17,11 @@ import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRI
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 
 /**
- * {@link Session} implementation holding basic session data and attributes in form of a {@link Map}.
+ * {@link Session} implementation holding basic session data and attributes in dataType of a {@link Map}.
  * <p>Differs from {@link org.springframework.session.MapSession} in one detail - {@code principalName} is also a field.
  * This makes dealing with it easier, no need for extractors.
  */
-public class ExtendedMapSession implements Session {
+class ExtendedMapSession {
 
     /**
      * Default {@link #setMaxInactiveInterval(Duration)} (30 minutes) in seconds.
@@ -37,7 +38,7 @@ public class ExtendedMapSession implements Session {
 
     private final String originalId;
 
-    private Map<String, Object> sessionAttrs = new HashMap<>();
+    private final Map<String, Object> sessionAttrs = new HashMap<>();
 
     private Instant creationTime = Instant.now();
 
@@ -55,7 +56,7 @@ public class ExtendedMapSession implements Session {
     /**
      * Creates a new instance with a secure randomly generated identifier.
      */
-    public ExtendedMapSession() {
+    ExtendedMapSession() {
         this(generateId());
     }
 
@@ -65,7 +66,7 @@ public class ExtendedMapSession implements Session {
      * @param sessionIdGenerator the {@link SessionIdGenerator} to use.
      * @since 3.2
      */
-    public ExtendedMapSession(SessionIdGenerator sessionIdGenerator) {
+    ExtendedMapSession(SessionIdGenerator sessionIdGenerator) {
         this(sessionIdGenerator.generate());
         this.sessionIdGenerator = sessionIdGenerator;
     }
@@ -76,12 +77,11 @@ public class ExtendedMapSession implements Session {
      * which can be slow.
      * @param id the identifier to use
      */
-    public ExtendedMapSession(String id) {
+    ExtendedMapSession(String id) {
         this.id = id;
         this.originalId = id;
     }
 
-    @Override
     public void setLastAccessedTime(Instant lastAccessedTime) {
         this.lastAccessedTime = lastAccessedTime;
     }
@@ -101,12 +101,10 @@ public class ExtendedMapSession implements Session {
         this.principalName = principalName;
     }
 
-    @Override
     public Instant getCreationTime() {
         return this.creationTime;
     }
 
-    @Override
     public String getId() {
         return this.id;
     }
@@ -114,35 +112,24 @@ public class ExtendedMapSession implements Session {
     /**
      * Get the original session id.
      * @return the original session id
-     * @see #changeSessionId()
+     * @see com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession#changeSessionId()
      */
     public String getOriginalId() {
         return this.originalId;
     }
 
-    @Override
-    public String changeSessionId() {
-        String changedId = this.sessionIdGenerator.generate();
-        setId(changedId);
-        return changedId;
-    }
-
-    @Override
     public Instant getLastAccessedTime() {
         return this.lastAccessedTime;
     }
 
-    @Override
     public void setMaxInactiveInterval(Duration interval) {
         this.maxInactiveInterval = interval;
     }
 
-    @Override
     public Duration getMaxInactiveInterval() {
         return this.maxInactiveInterval;
     }
 
-    @Override
     public boolean isExpired() {
         return isExpired(Instant.now());
     }
@@ -154,7 +141,6 @@ public class ExtendedMapSession implements Session {
         return now.minus(this.maxInactiveInterval).compareTo(this.lastAccessedTime) >= 0;
     }
 
-    @Override
     @SuppressWarnings("unchecked")
     public <T> T getAttribute(String attributeName) {
         if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
@@ -166,12 +152,10 @@ public class ExtendedMapSession implements Session {
         return (T) this.sessionAttrs.get(attributeName);
     }
 
-    @Override
     public Set<String> getAttributeNames() {
         return new HashSet<>(this.sessionAttrs.keySet());
     }
 
-    @Override
     public void setAttribute(String attributeName, Object attributeValue) {
         if (attributeValue == null) {
             removeAttribute(attributeName);
@@ -184,7 +168,6 @@ public class ExtendedMapSession implements Session {
         }
     }
 
-    @Override
     public void removeAttribute(String attributeName) {
         this.sessionAttrs.remove(attributeName);
         if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
@@ -213,27 +196,28 @@ public class ExtendedMapSession implements Session {
         this.id = id;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof Session && this.id.equals(((Session) obj).getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.id.hashCode();
-    }
-
     private static String generateId() {
         return UUID.randomUUID().toString();
     }
 
-    /**
-     * Sets the {@link SessionIdGenerator} to use when generating a new session id.
-     * @param sessionIdGenerator the {@link SessionIdGenerator} to use.
-     * @since 3.2
-     */
-    public void setSessionIdGenerator(SessionIdGenerator sessionIdGenerator) {
-        this.sessionIdGenerator = sessionIdGenerator;
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ExtendedMapSession that)) {
+            return false;
+        }
+        return Objects.equals(id, that.id)
+                && Objects.equals(originalId, that.originalId)
+                && Objects.equals(sessionAttrs, that.sessionAttrs)
+                && Objects.equals(creationTime,  that.creationTime)
+                && Objects.equals(lastAccessedTime, that.lastAccessedTime)
+                && Objects.equals(principalName, that.principalName)
+                && Objects.equals(maxInactiveInterval, that.maxInactiveInterval)
+                && Objects.equals( sessionIdGenerator, that.sessionIdGenerator);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, originalId, sessionAttrs, creationTime, lastAccessedTime, principalName, maxInactiveInterval,
+                            sessionIdGenerator);
+    }
 }

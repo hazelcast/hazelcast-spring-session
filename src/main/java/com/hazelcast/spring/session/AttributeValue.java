@@ -12,42 +12,43 @@ import java.io.Serializable;
  * In client-server architecture we don't want to hold users' Java objects to avoid the need to upload user code to server.
  * However, for speed and simplicity, few types are stored as-is: String, Integer, Long.
  */
-public record AttributeValue(Object object, ValueForm form) implements Serializable {
+record AttributeValue(Object object, AttributeValueDataType dataType) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public static GenericRecord toGenericRecord(Object value) {
+    static GenericRecord toGenericRecord(Object value) {
         if (value instanceof AttributeValue av) {
             var builder = GenericRecordBuilder.compact("AttributeValue");
             builder.setString("value", (String) av.object());
-            builder.setInt8("form", (byte) av.form.ordinal());
+            builder.setInt8("dataType", (byte) av.dataType.ordinal());
             return builder.build();
         }
         return null;
     }
 
-    public static AttributeValue string(Object value) {
-        return value == null ? null : new AttributeValue(value, ValueForm.STRING);
+    static AttributeValue string(Object value) {
+        return value == null ? null : new AttributeValue(value, AttributeValueDataType.STRING);
     }
 
-    public static AttributeValue data(Object value) {
-        return value == null ? null : new AttributeValue(value, ValueForm.DATA);
+    static AttributeValue data(Object value) {
+        return value == null ? null : new AttributeValue(value, AttributeValueDataType.DATA);
     }
 
-    public enum ValueForm implements Serializable {
+    enum AttributeValueDataType implements Serializable {
         STRING,
         INTEGER,
         LONG,
         DATA;
 
-        static ValueForm from(byte ord) {
-            for (ValueForm value : values()) {
-                if (value.ordinal() == ord) {
-                    return value;
-                }
-            }
-            throw new IllegalArgumentException();
+        static AttributeValueDataType from(byte ord) {
+            return switch(ord) {
+                case (byte) 0 -> STRING;
+                case (byte) 1 -> INTEGER;
+                case (byte) 2 -> LONG;
+                case (byte) 3 -> DATA;
+                default -> throw new IllegalArgumentException();
+            };
         }
     }
 }

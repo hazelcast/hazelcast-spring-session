@@ -10,8 +10,8 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
     @NonNull
     public AttributeValue read(CompactReader reader) {
         String value = reader.readString("value");
-        byte form = reader.readInt8("form");
-        AttributeValue.ValueForm formAsEnum = AttributeValue.ValueForm.from(form);
+        byte form = reader.readInt8("dataType");
+        AttributeValue.AttributeValueDataType formAsEnum = AttributeValue.AttributeValueDataType.from(form);
         if (value == null) {
             return new AttributeValue(null, formAsEnum);
         }
@@ -26,7 +26,7 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
 
     @Override
     public void write(@NonNull CompactWriter writer, @NonNull AttributeValue object) {
-        String finalValue = switch (object.form()) {
+        String finalValue = switch (object.dataType()) {
             case STRING -> (String) object.object();
             case DATA -> {
                 byte[] bytes = (byte[]) object.object();
@@ -35,7 +35,7 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
             case LONG, INTEGER ->  object.object().toString();
         };
         writer.writeString("value",  finalValue);
-        writer.writeInt8("form", (byte) object.form().ordinal());
+        writer.writeInt8("dataType", (byte) object.dataType().ordinal());
     }
 
     @Override

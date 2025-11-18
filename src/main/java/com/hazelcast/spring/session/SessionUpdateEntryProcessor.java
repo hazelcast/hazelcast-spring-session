@@ -64,13 +64,15 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
     @Override
     public Object process(Map.Entry entry) {
         if (entry.getValue() instanceof GenericRecord gr) {
+            // case where the schema of the object was registered by a client, but server does not have CompactSerializer
+            // instances registered. In such cases, object will be represented as GenericRecord
             return processGenericRecord(entry, gr);
         }
         ExtendedMapSession value = (ExtendedMapSession) entry.getValue();
         if (value == null) {
             return Boolean.FALSE;
         }
-        processInternal(value);
+        processMapSession(value);
         var extendedEntry = (ExtendedMapEntry<String, ExtendedMapSession>) entry;
         extendedEntry.setValue(value, value.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
         return Boolean.TRUE;
@@ -131,7 +133,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
         return -1;
     }
 
-    void processInternal(ExtendedMapSession value) {
+    void processMapSession(ExtendedMapSession value) {
         if (this.lastAccessedTime != null) {
             value.setLastAccessedTime(this.lastAccessedTime);
         }
