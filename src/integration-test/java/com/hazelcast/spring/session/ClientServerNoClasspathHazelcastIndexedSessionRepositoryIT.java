@@ -41,16 +41,13 @@ import org.testcontainers.utility.MountableFile;
 
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
- * topology.
- *
- * @author Vedran Pavic
- * @author Artem Bilan
+ * topology with no code deployed on server side.
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
 @WebAppConfiguration
 @SuppressWarnings("resource")
-class ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryITests {
+class ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
             ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT.class);
@@ -80,7 +77,7 @@ class ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT extends Abstrac
 			ClientConfig clientConfig = new ClientConfig();
 			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
             clientConfig.getSerializationConfig().getCompactSerializationConfig()
-                  .addSerializer(new ValueCompactSerializer())
+                  .addSerializer(new AttributeValueCompactSerializer())
                   .addSerializer(new HazelcastSessionCompactSerializer())
             ;
             return HazelcastClient.newHazelcastClient(clientConfig);

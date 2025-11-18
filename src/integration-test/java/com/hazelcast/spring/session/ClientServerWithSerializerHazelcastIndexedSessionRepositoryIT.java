@@ -21,20 +21,16 @@ import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.session.config.annotation.SpringSessionHazelcastInstance;
 import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
-
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.utility.DockerImageName;
@@ -55,20 +51,22 @@ import java.nio.file.Files;
 @ContextConfiguration
 @WebAppConfiguration
 @SuppressWarnings("resource")
-class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
+class ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientServerHazelcastIndexedSessionRepositoryIT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+            ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT.class);
 	private static GenericContainer<?> container;
 
 	@BeforeAll
 	static void setUpClass() throws IOException {
-        var jarResource = ClientServerHazelcastIndexedSessionRepositoryIT.class.getResource("../../../../HSS.jar");
+        var jarResource = ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT.class.getResource("../../../../HSS.jar");
         assert jarResource != null;
         var path = new File(jarResource.getFile()).getParentFile();
 
         container = new GenericContainer<>(DockerImageName.parse("hazelcast/hazelcast:5.6.0-slim"))
                 .withExposedPorts(5701)
-                .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server.xml"), "/opt/hazelcast/hazelcast.xml")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server-with-serializer.xml"),
+                                         "/opt/hazelcast/hazelcast.xml")
                 .withEnv("HAZELCAST_CONFIG", "hazelcast.xml")
                 .withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix("hz>"));
         Files.list(path.toPath()).forEach(file ->  container.withCopyFileToContainer(

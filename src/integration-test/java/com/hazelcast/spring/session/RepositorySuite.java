@@ -8,6 +8,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SuiteDisplayName("HazelcastIndexedSessionRepository ITs")
 @SelectClasses({
         ClientServerHazelcastIndexedSessionRepositoryIT.class,
+        ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT.class,
         ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT.class,
         EmbeddedHazelcastIndexedSessionRepositoryIT.class
 })

@@ -42,7 +42,7 @@ import org.springframework.session.SaveMode;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static com.hazelcast.spring.session.TestUtils.getSerializationService;
+import static com.hazelcast.spring.session.TestUtils.defaultSerializationService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
@@ -78,7 +78,7 @@ class HazelcastIndexedSessionRepositoryTests {
 	void setUp() {
 		given(this.hazelcastInstance.<String, ExtendedMapSession>getMap(anyString())).willReturn(this.sessions);
 		this.repository = new HazelcastIndexedSessionRepository(this.hazelcastInstance);
-        repository.setSerializationService(getSerializationService());
+        repository.setSerializationService(defaultSerializationService());
 		this.repository.afterPropertiesSet();
 	}
 
@@ -383,7 +383,7 @@ class HazelcastIndexedSessionRepositoryTests {
 				AuthorityUtils.createAuthorityList("ROLE_USER"));
 		List<ExtendedMapSession> saved = new ArrayList<>(2);
 		ExtendedMapSession saved1 = new ExtendedMapSession();
-        AttributeValue attributeValue = AttributeValue.data(getSerializationService().toData(authentication).toByteArray());
+        AttributeValue attributeValue = AttributeValue.data(defaultSerializationService().toData(authentication).toByteArray());
         saved1.setAttribute(SPRING_SECURITY_CONTEXT, attributeValue);
 		saved.add(saved1);
         ExtendedMapSession saved2 = new ExtendedMapSession();

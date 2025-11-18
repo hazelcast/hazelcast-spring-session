@@ -28,9 +28,9 @@ import com.hazelcast.core.HazelcastInstance;
  *
  * @author Vedran Pavic
  */
-final class HazelcastITestUtils {
+final class HazelcastITUtils {
 
-	private HazelcastITestUtils() {
+	private HazelcastITUtils() {
 	}
 
 	/**
@@ -47,7 +47,7 @@ final class HazelcastITestUtils {
 					new IndexConfig(IndexType.HASH, HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
         config.getSerializationConfig().getCompactSerializationConfig()
               .addSerializer(new HazelcastSessionCompactSerializer())
-              .addSerializer(new ValueCompactSerializer())
+              .addSerializer(new AttributeValueCompactSerializer())
         ;
 		return Hazelcast.newHazelcastInstance(config);
 	}

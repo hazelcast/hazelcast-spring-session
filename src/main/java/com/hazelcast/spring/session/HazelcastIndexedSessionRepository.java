@@ -504,14 +504,12 @@ public class HazelcastIndexedSessionRepository
             if (attributeValue == null) {
                 return null;
             }
-            AttributeValue value;
             if (attributeValue instanceof String s) {
-                value = new AttributeValue(s, AttributeValue.ValueForm.STRING);
+                return new AttributeValue(s, AttributeValue.ValueForm.STRING);
             } else {
                 byte[] serializedValue = serializationService.toData(attributeValue).toByteArray();
-                value = new AttributeValue(serializedValue, AttributeValue.ValueForm.DATA);
+                return new AttributeValue(serializedValue, AttributeValue.ValueForm.DATA);
             }
-            return value;
         }
 
         private Object fromValue(AttributeValue attributeValue) {

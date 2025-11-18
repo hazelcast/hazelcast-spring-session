@@ -3,16 +3,18 @@ package com.hazelcast.spring.session;
 import com.hazelcast.nio.serialization.compact.CompactReader;
 import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
+import org.jspecify.annotations.NonNull;
 
-public class ValueCompactSerializer implements CompactSerializer<AttributeValue> {
+public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
     @Override
+    @NonNull
     public AttributeValue read(CompactReader reader) {
         String value = reader.readString("value");
-        if (value == null) {
-            return null;
-        }
         byte form = reader.readInt8("form");
         AttributeValue.ValueForm formAsEnum = AttributeValue.ValueForm.from(form);
+        if (value == null) {
+            return new AttributeValue(null, formAsEnum);
+        }
         Object finalValue = switch (formAsEnum) {
             case STRING -> value;
             case DATA -> value.getBytes();
@@ -23,7 +25,7 @@ public class ValueCompactSerializer implements CompactSerializer<AttributeValue>
     }
 
     @Override
-    public void write(CompactWriter writer, AttributeValue object) {
+    public void write(@NonNull CompactWriter writer, @NonNull AttributeValue object) {
         String finalValue = switch (object.form()) {
             case STRING -> (String) object.object();
             case DATA -> {
@@ -37,11 +39,13 @@ public class ValueCompactSerializer implements CompactSerializer<AttributeValue>
     }
 
     @Override
+    @NonNull
     public String getTypeName() {
         return "AttributeValue";
     }
 
     @Override
+    @NonNull
     public Class<AttributeValue> getCompactClass() {
         return AttributeValue.class;
     }

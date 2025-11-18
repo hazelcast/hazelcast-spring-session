@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Tommy Ludwig
  * @author Vedran Pavic
  */
-abstract class AbstractHazelcastIndexedSessionRepositoryITests {
+abstract class AbstractHazelcastIndexedSessionRepositoryIT {
 
 	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
@@ -62,7 +62,7 @@ abstract class AbstractHazelcastIndexedSessionRepositoryITests {
 
 		this.repository.save(sessionToSave);
 
-		assertThat(hazelcastMap.get(sessionId)).isEqualTo(sessionToSave);
+		assertThat(hazelcastMap.get(sessionId)).isEqualTo(sessionToSave.getDelegate());
 
 		this.repository.deleteById(sessionId);
 

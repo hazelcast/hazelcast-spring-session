@@ -3,17 +3,19 @@ package com.hazelcast.spring.session;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.util.Objects;
 
-public final class AttributeValue implements Serializable {
-    private final Object object;
-    private final ValueForm form;
+/**
+ * Class used by {@link ExtendedMapSession} to store attribute values with its corresponding type.
+ * <p>
+ * In client-server architecture we don't want to hold users' Java objects to avoid the need to upload user code to server.
+ * However, for speed and simplicity, few types are stored as-is: String, Integer, Long.
+ */
+public record AttributeValue(Object object, ValueForm form) implements Serializable {
 
-    public AttributeValue(Object object, ValueForm form) {
-        this.object = object;
-        this.form = form;
-    }
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public static GenericRecord toGenericRecord(Object value) {
         if (value instanceof AttributeValue av) {
@@ -25,45 +27,12 @@ public final class AttributeValue implements Serializable {
         return null;
     }
 
-    public Object object() {
-        return object;
-    }
-
-    public ValueForm form() {
-        return form;
-    }
-
     public static AttributeValue string(Object value) {
         return value == null ? null : new AttributeValue(value, ValueForm.STRING);
     }
 
     public static AttributeValue data(Object value) {
         return value == null ? null : new AttributeValue(value, ValueForm.DATA);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj == null || obj.getClass() != this.getClass()) {
-            return false;
-        }
-        var that = (AttributeValue) obj;
-        return Objects.equals(this.object, that.object) &&
-                Objects.equals(this.form, that.form);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(object, form);
-    }
-
-    @Override
-    public String toString() {
-        return "AttributeValue[" +
-                "object=" + object + ", " +
-                "form=" + form + ']';
     }
 
     public enum ValueForm implements Serializable {
