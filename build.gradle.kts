@@ -105,6 +105,7 @@ dependencies {
     api("org.springframework:spring-context:$springFrameworkVersion")
     implementation("org.springframework:spring-beans:$springFrameworkVersion")
     implementation("org.springframework:spring-core:$springFrameworkVersion")
+    implementation("org.jspecify:jspecify:1.0.0")
 
     // Test dependencies
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
