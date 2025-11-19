@@ -20,8 +20,6 @@ import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.ExtendedMapEntry;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -44,8 +42,6 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class SessionUpdateEntryProcessor implements EntryProcessor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionUpdateEntryProcessor.class);
-
     private Instant lastAccessedTime;
 
     private Duration maxInactiveInterval;
@@ -132,10 +128,8 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
                           List<GenericRecord> attributeValues) {
         int index = findIndex(attributeName, attributeNames);
         if (index != -1) {
-            LOGGER.info("replaced attribute {}", attributeName);
             attributeValues.set(index, valueAsRecord);
         } else {
-            LOGGER.info("added attribute {}", attributeName);
             attributeNames.add(attributeName);
             attributeValues.add(valueAsRecord);
         }

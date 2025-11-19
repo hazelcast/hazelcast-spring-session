@@ -95,8 +95,10 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         cached.setMaxInactiveInterval(readDuration(reader, "maxInactiveInterval"));
         String[] attributeNames = reader.readArrayOfString("attributeNames");
         AttributeValue[] attributeValues = reader.readArrayOfCompact("attributeValues", AttributeValue.class);
-        for (int i = 0; i < attributeNames.length; i++) {
-            cached.setAttribute(attributeNames[i], attributeValues[i]);
+        if (attributeNames != null && attributeValues != null) {
+            for (int i = 0; i < attributeNames.length; i++) {
+                cached.setAttribute(attributeNames[i], attributeValues[i]);
+            }
         }
         return cached;
     }
