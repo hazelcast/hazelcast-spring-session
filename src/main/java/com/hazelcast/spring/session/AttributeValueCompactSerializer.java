@@ -21,36 +21,33 @@ import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import org.jspecify.annotations.NonNull;
 
-public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
+class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
     @Override
     @NonNull
     public AttributeValue read(CompactReader reader) {
-        String value = reader.readString("value");
+        byte[] value = reader.readArrayOfInt8("value");
         byte form = reader.readInt8("dataType");
         AttributeValue.AttributeValueDataType formAsEnum = AttributeValue.AttributeValueDataType.from(form);
         if (value == null) {
             return new AttributeValue(null, formAsEnum);
         }
         Object finalValue = switch (formAsEnum) {
-            case STRING -> value;
-            case DATA -> value.getBytes();
-            case LONG ->  Long.parseLong(value);
-            case INTEGER ->  Integer.parseInt(value);
+            case STRING -> new String(value);
+            case DATA -> value;
+            case LONG ->  Long.parseLong(new String(value));
+            case INTEGER ->  Integer.parseInt(new String(value));
         };
         return new AttributeValue(finalValue, formAsEnum);
     }
 
     @Override
     public void write(@NonNull CompactWriter writer, @NonNull AttributeValue object) {
-        String finalValue = switch (object.dataType()) {
-            case STRING -> (String) object.object();
-            case DATA -> {
-                byte[] bytes = (byte[]) object.object();
-                yield new String(bytes);
-            }
-            case LONG, INTEGER ->  object.object().toString();
+        byte[] finalValue = switch (object.dataType()) {
+            case STRING -> ((String) object.object()).getBytes();
+            case DATA -> (byte[]) object.object();
+            case LONG, INTEGER ->  object.object().toString().getBytes();
         };
-        writer.writeString("value",  finalValue);
+        writer.writeArrayOfInt8("value",  finalValue);
         writer.writeInt8("dataType", (byte) object.dataType().ordinal());
     }
 

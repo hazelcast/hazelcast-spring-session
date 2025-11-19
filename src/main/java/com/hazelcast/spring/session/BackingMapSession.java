@@ -179,8 +179,7 @@ class BackingMapSession {
         } else if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE) || attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
             principalName = (String) attributeValue.object();
             setPrincipalName(principalName);
-        }
-        else {
+        } else {
             this.sessionAttrs.put(attributeName, attributeValue);
         }
     }
