@@ -80,6 +80,7 @@ import java.util.List;
  *
  * @since 4.0.0
  */
+@SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastSessionCompactSerializer implements CompactSerializer<BackingMapSession> {
 
     @Override

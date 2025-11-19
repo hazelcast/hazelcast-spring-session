@@ -21,7 +21,8 @@ import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import org.jspecify.annotations.NonNull;
 
-class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
+@SuppressWarnings("ClassEscapesDefinedScope")
+public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
     @Override
     @NonNull
     public AttributeValue read(CompactReader reader) {
@@ -31,22 +32,13 @@ class AttributeValueCompactSerializer implements CompactSerializer<AttributeValu
         if (value == null) {
             return new AttributeValue(null, formAsEnum);
         }
-        Object finalValue = switch (formAsEnum) {
-            case STRING -> new String(value);
-            case DATA -> value;
-            case LONG ->  Long.parseLong(new String(value));
-            case INTEGER ->  Integer.parseInt(new String(value));
-        };
+        Object finalValue = AttributeValue.convertSerializedValueToObject(value, formAsEnum);
         return new AttributeValue(finalValue, formAsEnum);
     }
 
     @Override
     public void write(@NonNull CompactWriter writer, @NonNull AttributeValue object) {
-        byte[] finalValue = switch (object.dataType()) {
-            case STRING -> ((String) object.object()).getBytes();
-            case DATA -> (byte[]) object.object();
-            case LONG, INTEGER ->  object.object().toString().getBytes();
-        };
+        byte[] finalValue = object.convertObjectToValueBytes();
         writer.writeArrayOfInt8("value",  finalValue);
         writer.writeInt8("dataType", (byte) object.dataType().ordinal());
     }

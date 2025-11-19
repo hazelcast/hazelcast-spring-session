@@ -20,6 +20,8 @@ import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.ExtendedMapEntry;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +41,7 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class SessionUpdateEntryProcessor implements EntryProcessor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionUpdateEntryProcessor.class);
 
     private Instant lastAccessedTime;
 
@@ -109,6 +112,8 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
                     attributeValues.remove(index);
                 }
             }
+            builder.setArrayOfString("attributeNames", attributeNames.toArray(new String[0]));
+            builder.setArrayOfGenericRecord("attributeValues", attributeValues.toArray(new GenericRecord[0]));
         }
 
         ((ExtendedMapEntry) entry).setValue(builder.build(), ttl, TimeUnit.SECONDS);

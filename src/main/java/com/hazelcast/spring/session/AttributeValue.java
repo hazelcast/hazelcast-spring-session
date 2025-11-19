@@ -42,11 +42,11 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
     static GenericRecord toGenericRecord(Object value) {
         if (value instanceof AttributeValue av) {
             var builder = GenericRecordBuilder.compact("AttributeValue");
-            builder.setString("value", (String) av.object());
+            builder.setArrayOfInt8("value", av.convertObjectToValueBytes());
             builder.setInt8("dataType", (byte) av.dataType.ordinal());
             return builder.build();
         }
-        return null;
+        throw new IllegalArgumentException(value.getClass().getName());
     }
 
     public static AttributeValue toAttributeValue(Object rawValue, SerializationService serializationService) {
@@ -62,6 +62,23 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
             byte[] serializedValue = serializationService.toData(rawValue).toByteArray();
             return new AttributeValue(serializedValue, AttributeValue.AttributeValueDataType.DATA);
         }
+    }
+
+    static Object convertSerializedValueToObject(byte[] value, AttributeValueDataType formAsEnum) {
+        return switch (formAsEnum) {
+            case STRING -> new String(value);
+            case DATA -> value;
+            case LONG ->  Long.parseLong(new String(value));
+            case INTEGER ->  Integer.parseInt(new String(value));
+        };
+    }
+
+    byte[] convertObjectToValueBytes() {
+        return switch (dataType) {
+            case STRING -> ((String) object).getBytes();
+            case DATA -> (byte[]) object;
+            case LONG, INTEGER ->  object.toString().getBytes();
+        };
     }
 
     Object getDeserializedValue(SerializationService serializationService) {

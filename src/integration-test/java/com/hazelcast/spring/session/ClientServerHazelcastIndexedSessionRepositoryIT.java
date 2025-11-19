@@ -82,18 +82,14 @@ class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastI
 		container.stop();
 	}
 
+    @Configuration
 	@EnableHazelcastHttpSession
-	@Configuration(proxyBeanMethods = false)
 	static class HazelcastSessionConfig {
 		@Bean @SpringSessionHazelcastInstance
 		HazelcastInstance hazelcastInstance() {
             ClientConfig clientConfig = new ClientConfig();
             clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-            clientConfig.getSerializationConfig().getCompactSerializationConfig()
-                        .addSerializer(new AttributeValueCompactSerializer())
-                        .addSerializer(new HazelcastSessionCompactSerializer())
-            ;
-            return HazelcastClient.newHazelcastClient(clientConfig);
+            return HazelcastClient.newHazelcastClient(HazelcastSession.applySerializationConfig(clientConfig));
 		}
 	}
 
