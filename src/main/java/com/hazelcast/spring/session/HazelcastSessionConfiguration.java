@@ -24,7 +24,7 @@ import org.jspecify.annotations.NonNull;
  * Utility methods used to make configuration much easier.
  * @since 4.0.0
  */
-public final class HazelcastSession {
+public final class HazelcastSessionConfiguration {
 
     /**
      * Applies required serialization configuration,

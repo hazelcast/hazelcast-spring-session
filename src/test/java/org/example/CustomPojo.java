@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-package com.hazelcast.spring.session;
+package org.example;
 
-import org.junit.platform.suite.api.SelectClasses;
-import org.junit.platform.suite.api.Suite;
-import org.junit.platform.suite.api.SuiteDisplayName;
+import java.io.Serializable;
 
-@Suite
-@SuiteDisplayName("HazelcastIndexedSessionRepository ITs")
-@SelectClasses({
-        ClientServerHazelcastIndexedSessionRepositoryIT.class,
-        ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT.class,
-        ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT.class,
-        EmbeddedHazelcastIndexedSessionRepositoryIT.class
-})
-public class RepositorySuite {
+public record CustomPojo(int id, String name) implements Serializable {
 }

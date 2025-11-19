@@ -16,8 +16,11 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.config.CompactSerializationConfig;
+import com.hazelcast.config.SerializationConfig;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.DefaultSerializationServiceBuilder;
+import com.hazelcast.internal.serialization.impl.compact.InMemorySchemaService;
 import com.hazelcast.internal.serialization.impl.compact.schema.MemberSchemaService;
 
 final class TestUtils {
@@ -25,8 +28,12 @@ final class TestUtils {
     }
 
     static SerializationService defaultSerializationService() {
+        CompactSerializationConfig compactSerializationConfig = new CompactSerializationConfig();
+        compactSerializationConfig.addSerializer(new AttributeValueCompactSerializer());
+        compactSerializationConfig.addSerializer(new HazelcastSessionCompactSerializer());
         return new DefaultSerializationServiceBuilder()
-                .setSchemaService(new MemberSchemaService())
+                .setConfig(new SerializationConfig().setCompactSerializationConfig(compactSerializationConfig))
+                .setSchemaService(new InMemorySchemaService())
                 .build();
     }
 }

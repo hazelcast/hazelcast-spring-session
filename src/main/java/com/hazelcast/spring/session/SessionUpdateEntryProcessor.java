@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
+import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
+
 /**
  * Hazelcast {@link EntryProcessor} responsible for handling updates to session.
  *
@@ -98,18 +101,21 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             List<GenericRecord> attributeValues = toList(gr.getArrayOfGenericRecord("attributeValues"));
 
             for (final Map.Entry<String, AttributeValue> attribute : this.delta.entrySet()) {
-                int index = findIndex(attribute.getKey(), attributeNames);
                 if (attribute.getValue() != null) {
                     GenericRecord valueAsRecord = AttributeValue.toGenericRecord(attribute.getValue());
-                    if (index != -1) {
-                        attributeValues.set(index, valueAsRecord);
-                    } else {
-                        attributeNames.add(attribute.getKey());
-                        attributeValues.add(valueAsRecord);
+                    addValue(valueAsRecord, attribute.getKey(), attributeNames, attributeValues);
+                    if (attribute.getKey().equals(PRINCIPAL_NAME_ATTRIBUTE)
+                            || attribute.getKey().equals(PRINCIPAL_NAME_INDEX_NAME)) {
+                        addValue(valueAsRecord, PRINCIPAL_NAME_ATTRIBUTE, attributeNames, attributeValues);
+                        addValue(valueAsRecord, PRINCIPAL_NAME_INDEX_NAME, attributeNames, attributeValues);
+                        builder.setString("principalName", (String) attribute.getValue().object());
                     }
-                } else if (index != -1) {
-                    attributeNames.remove(index);
-                    attributeValues.remove(index);
+                } else {
+                    int index = findIndex(attribute.getKey(), attributeNames);
+                    if (index != -1) {
+                        attributeNames.remove(index);
+                        attributeValues.remove(index);
+                    }
                 }
             }
             builder.setArrayOfString("attributeNames", attributeNames.toArray(new String[0]));
@@ -118,6 +124,21 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
 
         ((ExtendedMapEntry) entry).setValue(builder.build(), ttl, TimeUnit.SECONDS);
         return Boolean.TRUE;
+    }
+
+    private void addValue(GenericRecord valueAsRecord,
+                          String attributeName,
+                          List<String> attributeNames,
+                          List<GenericRecord> attributeValues) {
+        int index = findIndex(attributeName, attributeNames);
+        if (index != -1) {
+            LOGGER.info("replaced attribute {}", attributeName);
+            attributeValues.set(index, valueAsRecord);
+        } else {
+            LOGGER.info("added attribute {}", attributeName);
+            attributeNames.add(attributeName);
+            attributeValues.add(valueAsRecord);
+        }
     }
 
     private <T> List<T> toList(T[] array) {
@@ -148,7 +169,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
         if (this.delta != null) {
             for (final Map.Entry<String, AttributeValue> attribute : this.delta.entrySet()) {
                 if (attribute.getValue() != null) {
-                    value.setAttribute(attribute.getKey(), attribute.getValue());
+                 value.setAttribute(attribute.getKey(), attribute.getValue());
                 } else {
                     value.removeAttribute(attribute.getKey());
                 }

@@ -23,6 +23,8 @@ import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Class used by {@link BackingMapSession} to store attribute values with its corresponding type.
@@ -92,7 +94,7 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
         return value == null ? null : new AttributeValue(value, AttributeValueDataType.STRING);
     }
 
-    static AttributeValue data(Object value) {
+    static AttributeValue data(byte[] value) {
         return value == null ? null : new AttributeValue(value, AttributeValueDataType.DATA);
     }
 
@@ -111,5 +113,24 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
                 default -> throw new IllegalArgumentException();
             };
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof AttributeValue that)) {
+            return false;
+        }
+        if (dataType != that.dataType) {
+            return false;
+        }
+        if (dataType == AttributeValue.AttributeValueDataType.DATA) {
+            return Arrays.equals((byte[]) object, (byte[]) that.object);
+        }
+        return Objects.equals(object, that.object);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(object, dataType);
     }
 }

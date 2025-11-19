@@ -45,7 +45,7 @@ final class HazelcastITUtils {
 		config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME)
 			.addIndexConfig(
 					new IndexConfig(IndexType.HASH, HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
-		return Hazelcast.newHazelcastInstance(HazelcastSession.applySerializationConfig(config));
+		return Hazelcast.newHazelcastInstance(HazelcastSessionConfiguration.applySerializationConfig(config));
 	}
 
 }

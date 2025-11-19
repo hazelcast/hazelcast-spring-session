@@ -52,8 +52,7 @@ import java.nio.file.Files;
  * @author Artem Bilan
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration
-@WebAppConfiguration
+@ContextConfiguration(classes =  ClientServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
 @SuppressWarnings("resource")
 class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
@@ -82,14 +81,15 @@ class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastI
 		container.stop();
 	}
 
-    @Configuration
+    @Configuration(proxyBeanMethods = false)
 	@EnableHazelcastHttpSession
+    @WebAppConfiguration
 	static class HazelcastSessionConfig {
 		@Bean @SpringSessionHazelcastInstance
 		HazelcastInstance hazelcastInstance() {
             ClientConfig clientConfig = new ClientConfig();
             clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-            return HazelcastClient.newHazelcastClient(HazelcastSession.applySerializationConfig(clientConfig));
+            return HazelcastClient.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig));
 		}
 	}
 

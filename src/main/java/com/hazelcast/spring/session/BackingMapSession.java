@@ -109,6 +109,7 @@ class BackingMapSession {
     }
 
     public void setPrincipalName(String principalName) {
+        this.principalName = principalName;
         if (principalName == null) {
             sessionAttrs.remove(PRINCIPAL_NAME_ATTRIBUTE);
             sessionAttrs.remove(PRINCIPAL_NAME_INDEX_NAME);
@@ -116,7 +117,6 @@ class BackingMapSession {
             this.sessionAttrs.put(PRINCIPAL_NAME_ATTRIBUTE, AttributeValue.string(principalName));
             this.sessionAttrs.put(PRINCIPAL_NAME_INDEX_NAME, AttributeValue.string(principalName));
         }
-        this.principalName = principalName;
     }
 
     public Instant getCreationTime() {
@@ -177,8 +177,7 @@ class BackingMapSession {
         if (attributeValue == null) {
             removeAttribute(attributeName);
         } else if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE) || attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
-            principalName = (String) attributeValue.object();
-            setPrincipalName(principalName);
+            setPrincipalName((String) attributeValue.object());
         } else {
             this.sessionAttrs.put(attributeName, attributeValue);
         }

@@ -93,7 +93,7 @@ val integrationTest = tasks.register<Test>("integrationTest") {
 
 tasks.check {
     dependsOn(integrationTest)
-    dependsOn(tasks.jacocoTestCoverageVerification)
+    finalizedBy(tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
 }
 
 dependencies {
@@ -115,12 +115,17 @@ dependencies {
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:${junitVersion}")
     testImplementation("org.junit.platform:junit-platform-suite:${junitVersion}")
     testImplementation("org.mockito:mockito-core:$mockitoVersion")
     testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
     testImplementation("org.springframework.security:spring-security-core:$springSecurityVersion")
     testImplementation("org.springframework:spring-test:$springFrameworkVersion")
     testImplementation("org.springframework:spring-web:$springFrameworkVersion")
+
+    testImplementation("com.hazelcast:hazelcast:$hazelcastVersion:tests")
+    // for hazelcast test network assertions
+    testImplementation("junit:junit:4.13.2")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -139,6 +144,18 @@ tasks.test {
 
 tasks.withType<Test>().configureEach {
     systemProperty("java.net.preferIPv4Stack", "true")
+    systemProperty("hazelcast.phone.home.enabled", "false")
+    jvmArgs(
+        "--add-exports", "java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+        "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED",
+        "--add-opens", "java.management/sun.management=ALL-UNNAMED",
+        "-Djava.net.preferIPv4Stack=true"
+    )
 }
 
 tasks.jacocoTestReport {
@@ -146,6 +163,7 @@ tasks.jacocoTestReport {
         xml.required = true
         csv.required = true
     }
+    dependsOn(tasks.test, integrationTest)
 }
 
 tasks.jacocoTestCoverageVerification {

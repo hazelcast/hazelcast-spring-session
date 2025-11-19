@@ -44,8 +44,7 @@ import org.testcontainers.utility.MountableFile;
  * topology with no code deployed on server side.
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration
-@WebAppConfiguration
+@ContextConfiguration(classes =  ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
 @SuppressWarnings("resource")
 class ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
@@ -69,14 +68,15 @@ class ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT extends Abstrac
 		container.stop();
 	}
 
-	@Configuration
+    @Configuration(proxyBeanMethods = false)
 	@EnableHazelcastHttpSession
+    @WebAppConfiguration
 	static class HazelcastSessionConfig {
 		@Bean @SpringSessionHazelcastInstance
 		HazelcastInstance hazelcastInstance() {
 			ClientConfig clientConfig = new ClientConfig();
 			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-            return HazelcastClient.newHazelcastClient(HazelcastSession.applySerializationConfig(clientConfig));
+            return HazelcastClient.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig));
 		}
 
         @Bean
