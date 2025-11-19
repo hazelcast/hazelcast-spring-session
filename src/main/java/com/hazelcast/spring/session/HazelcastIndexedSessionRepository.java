@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.internal.serialization.SerializationService;
-import com.hazelcast.internal.serialization.impl.HeapData;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryEvictedListener;
@@ -284,8 +283,7 @@ public class HazelcastIndexedSessionRepository
 		if (session.isNew) {
 			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
 					TimeUnit.SECONDS);
-		}
-		else {
+		} else {
             if (session.sessionIdChanged) {
                 this.sessions.delete(session.originalId);
                 session.originalId = sessionId;
@@ -482,7 +480,7 @@ public class HazelcastIndexedSessionRepository
 			if (attributeValue != null && saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
 				this.delta.put(attributeName, attributeValue);
 			}
-            return attributeValue == null ? null : (T) fromValue(attributeValue);
+            return attributeValue == null ? null : (T) attributeValue.getPureValue(serializationService);
 		}
 
 		@Override
@@ -492,40 +490,19 @@ public class HazelcastIndexedSessionRepository
 
 		@Override
 		public void setAttribute(String attributeName, Object attributeValue) {
-            AttributeValue value = toValue(attributeValue);
+            AttributeValue value = AttributeValue.toAttributeValue(attributeValue, serializationService);
 
             this.delegate.setAttribute(attributeName, value);
 			this.delta.put(attributeName, value);
 			if (SPRING_SECURITY_CONTEXT.equals(attributeName)) {
 				Map<String, String> indexes = indexResolver.resolveIndexesFor(this);
 				String principal = (attributeValue != null) ? indexes.get(PRINCIPAL_NAME_INDEX_NAME) : null;
-                AttributeValue val = toValue(principal);
+                AttributeValue val = AttributeValue.toAttributeValue(principal, serializationService);
 				this.delegate.setPrincipalName(principal);
                 this.delta.put(PRINCIPAL_NAME_INDEX_NAME, val);
 			}
 			flushImmediateIfNecessary();
 		}
-
-        private AttributeValue toValue(Object attributeValue) {
-            if (attributeValue == null) {
-                return null;
-            }
-            if (attributeValue instanceof String s) {
-                return new AttributeValue(s, AttributeValue.AttributeValueDataType.STRING);
-            } else {
-                byte[] serializedValue = serializationService.toData(attributeValue).toByteArray();
-                return new AttributeValue(serializedValue, AttributeValue.AttributeValueDataType.DATA);
-            }
-        }
-
-        private Object fromValue(AttributeValue attributeValue) {
-            return switch (attributeValue.dataType()) {
-                case DATA ->  serializationService.toObject(new HeapData((byte[]) attributeValue.object()));
-                case STRING -> (String) attributeValue.object();
-                case LONG -> (Long) attributeValue.object();
-                case INTEGER -> (Integer) attributeValue.object();
-            };
-        }
 
         @Override
 		public void removeAttribute(String attributeName) {
@@ -549,8 +526,8 @@ public class HazelcastIndexedSessionRepository
 		}
 
 		private void flushImmediateIfNecessary() {
-			if (HazelcastIndexedSessionRepository.this.flushMode == FlushMode.IMMEDIATE) {
-				HazelcastIndexedSessionRepository.this.save(this);
+			if (flushMode == FlushMode.IMMEDIATE) {
+				save(this);
 			}
 		}
 	}

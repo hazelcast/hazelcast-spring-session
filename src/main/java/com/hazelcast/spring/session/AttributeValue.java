@@ -16,6 +16,8 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.internal.serialization.SerializationService;
+import com.hazelcast.internal.serialization.impl.HeapData;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
 
@@ -27,6 +29,8 @@ import java.io.Serializable;
  * <p>
  * In client-server architecture we don't want to hold users' Java objects to avoid the need to upload user code to server.
  * However, for speed and simplicity, few types are stored as-is: String, Integer, Long.
+ *
+ * @param object actual value of the attribute. String, Integer, Long or any other data type serialized as {@code byte[]}.
  */
 record AttributeValue(Object object, AttributeValueDataType dataType) implements Serializable {
 
@@ -41,6 +45,28 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
             return builder.build();
         }
         return null;
+    }
+
+    public static AttributeValue toAttributeValue(Object rawValue, SerializationService serializationService) {
+        if (rawValue == null) {
+            return null;
+        } else if (rawValue instanceof String s) {
+            return new AttributeValue(s, AttributeValue.AttributeValueDataType.STRING);
+        } else if (rawValue instanceof Integer s) {
+            return new AttributeValue(s, AttributeValue.AttributeValueDataType.INTEGER);
+        } else if (rawValue instanceof Long s) {
+            return new AttributeValue(s, AttributeValue.AttributeValueDataType.LONG);
+        } else {
+            byte[] serializedValue = serializationService.toData(rawValue).toByteArray();
+            return new AttributeValue(serializedValue, AttributeValue.AttributeValueDataType.DATA);
+        }
+    }
+
+    Object getPureValue(SerializationService serializationService) {
+        return switch (dataType()) {
+            case DATA ->  serializationService.toObject(new HeapData((byte[]) object()));
+            case STRING, LONG, INTEGER -> object();
+        };
     }
 
     static AttributeValue string(Object value) {
