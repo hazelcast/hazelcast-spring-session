@@ -89,6 +89,7 @@ val integrationTest = tasks.register<Test>("integrationTest") {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
+    systemProperty("java.net.preferIPv4Stack", "true")
 }
 
 tasks.check {

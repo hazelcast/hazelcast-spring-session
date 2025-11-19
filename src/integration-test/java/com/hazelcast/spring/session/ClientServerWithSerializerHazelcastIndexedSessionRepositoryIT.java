@@ -43,9 +43,6 @@ import java.nio.file.Files;
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
  * topology.
- *
- * @author Vedran Pavic
- * @author Artem Bilan
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration
@@ -87,11 +84,7 @@ class ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT extends Abst
 		HazelcastInstance hazelcastInstance() {
             ClientConfig clientConfig = new ClientConfig();
             clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-            clientConfig.getSerializationConfig().getCompactSerializationConfig()
-                        .addSerializer(new AttributeValueCompactSerializer())
-                        .addSerializer(new HazelcastSessionCompactSerializer())
-            ;
-            return HazelcastClient.newHazelcastClient(clientConfig);
+            return HazelcastClient.newHazelcastClient(HazelcastSession.applySerializationConfig(clientConfig));
 		}
 	}
 
