@@ -31,6 +31,8 @@ import java.io.Serializable;
  * However, for speed and simplicity, few types are stored as-is: String, Integer, Long.
  *
  * @param object actual value of the attribute. String, Integer, Long or any other data type serialized as {@code byte[]}.
+ *
+ * @since 4.0.0
  */
 record AttributeValue(Object object, AttributeValueDataType dataType) implements Serializable {
 
@@ -62,7 +64,7 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
         }
     }
 
-    Object getPureValue(SerializationService serializationService) {
+    Object getDeserializedValue(SerializationService serializationService) {
         return switch (dataType()) {
             case DATA ->  serializationService.toObject(new HeapData((byte[]) object()));
             case STRING, LONG, INTEGER -> object();

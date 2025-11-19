@@ -76,11 +76,7 @@ class ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT extends Abstrac
 		HazelcastInstance hazelcastInstance() {
 			ClientConfig clientConfig = new ClientConfig();
 			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
-            clientConfig.getSerializationConfig().getCompactSerializationConfig()
-                  .addSerializer(new AttributeValueCompactSerializer())
-                  .addSerializer(new HazelcastSessionCompactSerializer())
-            ;
-            return HazelcastClient.newHazelcastClient(clientConfig);
+            return HazelcastClient.newHazelcastClient(HazelcastSession.applySerializationConfig(clientConfig));
 		}
 
         @Bean
@@ -92,5 +88,4 @@ class ClientServerNoClasspathHazelcastIndexedSessionRepositoryIT extends Abstrac
             };
         }
 	}
-
 }

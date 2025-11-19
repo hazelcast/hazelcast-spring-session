@@ -106,9 +106,13 @@ dependencies {
     api("org.springframework:spring-context:$springFrameworkVersion")
     implementation("org.springframework:spring-beans:$springFrameworkVersion")
     implementation("org.springframework:spring-core:$springFrameworkVersion")
+
+    // other
     implementation("org.jspecify:jspecify:1.0.0")
+    implementation("org.slf4j:slf4j-api:2.0.17")
 
     // Test dependencies
+    testImplementation("org.apache.logging.log4j:log4j-slf4j-impl:2.25.2")
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")

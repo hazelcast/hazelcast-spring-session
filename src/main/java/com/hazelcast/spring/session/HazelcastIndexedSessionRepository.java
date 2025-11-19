@@ -36,9 +36,9 @@ import com.hazelcast.map.listener.EntryExpiredListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.query.Predicates;
 import com.hazelcast.spi.impl.SerializationServiceSupport;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationEventPublisher;
@@ -117,6 +117,8 @@ public class HazelcastIndexedSessionRepository
                    EntryRemovedListener<String, BackingMapSession>, EntryExpiredListener<String, BackingMapSession>, InitializingBean,
                    DisposableBean {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastIndexedSessionRepository.class);
+
 	/**
 	 * The default name of map used by Spring Session to store sessions.
 	 */
@@ -128,8 +130,6 @@ public class HazelcastIndexedSessionRepository
 	public static final String PRINCIPAL_NAME_ATTRIBUTE = "principalName";
 
 	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
-
-	private static final Log logger = LogFactory.getLog(HazelcastIndexedSessionRepository.class);
 
 	private final HazelcastInstance hazelcastInstance;
 
@@ -164,11 +164,13 @@ public class HazelcastIndexedSessionRepository
 		Assert.notNull(hazelcastInstance, "HazelcastInstance must not be null");
 		this.hazelcastInstance = hazelcastInstance;
         if (hazelcastInstance instanceof SerializationServiceSupport sss) {
+            // can be a mock for tests
             this.serializationService = sss.getSerializationService();
         }
+        LOGGER.info("HazelcastIndexedSessionRepository initialized");
 	}
 
-	@Override
+    @Override
 	public void afterPropertiesSet() {
 		this.sessions = this.hazelcastInstance.getMap(this.sessionMapName);
 		this.sessionListenerId = this.sessions.addEntryListener(this, true);
@@ -346,8 +348,8 @@ public class HazelcastIndexedSessionRepository
 	public void entryAdded(EntryEvent<String, BackingMapSession> event) {
 		BackingMapSession session = event.getValue();
 		if (session.getId().equals(session.getOriginalId())) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Session created with id: " + session.getId());
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug("Session created with id: " + session.getId());
 			}
 			this.eventPublisher.publishEvent(new SessionCreatedEvent(this, new HazelcastSession(session)));
 		}
@@ -355,8 +357,8 @@ public class HazelcastIndexedSessionRepository
 
 	@Override
 	public void entryEvicted(EntryEvent<String, BackingMapSession> event) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Session expired with id: " + event.getOldValue().getId());
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Session expired with id: " + event.getOldValue().getId());
 		}
 		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
@@ -365,8 +367,8 @@ public class HazelcastIndexedSessionRepository
 	public void entryRemoved(EntryEvent<String, BackingMapSession> event) {
 		BackingMapSession session = event.getOldValue();
 		if (session != null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Session deleted with id: " + session.getId());
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug("Session deleted with id: " + session.getId());
 			}
 			this.eventPublisher.publishEvent(new SessionDeletedEvent(this, new HazelcastSession(session)));
 		}
@@ -374,8 +376,8 @@ public class HazelcastIndexedSessionRepository
 
 	@Override
 	public void entryExpired(EntryEvent<String, BackingMapSession> event) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Session expired with id: " + event.getOldValue().getId());
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Session expired with id: " + event.getOldValue().getId());
 		}
 		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
@@ -480,7 +482,7 @@ public class HazelcastIndexedSessionRepository
 			if (attributeValue != null && saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
 				this.delta.put(attributeName, attributeValue);
 			}
-            return attributeValue == null ? null : (T) attributeValue.getPureValue(serializationService);
+            return attributeValue == null ? null : (T) attributeValue.getDeserializedValue(serializationService);
 		}
 
 		@Override
