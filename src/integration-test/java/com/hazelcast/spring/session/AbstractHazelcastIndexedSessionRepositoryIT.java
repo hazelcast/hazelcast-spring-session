@@ -62,7 +62,7 @@ abstract class AbstractHazelcastIndexedSessionRepositoryIT {
 
 		this.repository.save(sessionToSave);
 
-		assertThat(hazelcastMap.get(sessionId)).isEqualTo(sessionToSave.getDelegate());
+		assertThat(hazelcastMap.get(sessionId).getId()).isEqualTo(sessionToSave.getDelegate().getId());
 
 		this.repository.deleteById(sessionId);
 

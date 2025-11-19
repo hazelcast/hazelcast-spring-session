@@ -220,19 +220,11 @@ class BackingMapSession {
         if (!(o instanceof BackingMapSession that)) {
             return false;
         }
-        return Objects.equals(id, that.id)
-                && Objects.equals(originalId, that.originalId)
-                && Objects.equals(sessionAttrs, that.sessionAttrs)
-                && Objects.equals(creationTime,  that.creationTime)
-                && Objects.equals(lastAccessedTime, that.lastAccessedTime)
-                && Objects.equals(principalName, that.principalName)
-                && Objects.equals(maxInactiveInterval, that.maxInactiveInterval)
-                && Objects.equals( sessionIdGenerator, that.sessionIdGenerator);
+        return Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, originalId, sessionAttrs, creationTime, lastAccessedTime, principalName, maxInactiveInterval,
-                            sessionIdGenerator);
+        return Objects.hash(id);
     }
 }
