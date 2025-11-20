@@ -21,17 +21,16 @@ import com.hazelcast.config.Config;
 import com.hazelcast.internal.serialization.Data;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.spi.impl.SerializationServiceSupport;
-import org.example.CustomPojo;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.time.Duration;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AttributeValueSerializerTest {
+public class BackingMapSessionSerializerTest {
 
     private static final TestHazelcastFactory FACTORY = new TestHazelcastFactory();
     private static SerializationService serializationService;
@@ -52,24 +51,21 @@ public class AttributeValueSerializerTest {
         FACTORY.terminateAll();
     }
 
-    @ParameterizedTest
-    @MethodSource("attributes")
-    void handleAttributeVariousTypes(AttributeValue attributeValue) {
-        Data data = serializationService.toData(attributeValue);
-        Object object = serializationService.toObject(data);
+    @Test
+    void basicSerialization() {
+        // given
+        BackingMapSession backingMapSession = new BackingMapSession("originalId");
+        backingMapSession.setId("test");
+        backingMapSession.setCreationTime(Instant.now());
+        backingMapSession.setLastAccessedTime(Instant.now());
+        backingMapSession.setMaxInactiveInterval(Duration.ofDays(1));
+        backingMapSession.setPrincipalName("principal");
 
-        assertThat(object)
-                .isNotNull()
-                .isInstanceOf(AttributeValue.class)
-                .isEqualTo(attributeValue);
-    }
+        // when
+        Data serialized = serializationService.toData(backingMapSession);
+        BackingMapSession deserializedBackingMapSession = serializationService.toObject(serialized);
 
-    static List<AttributeValue> attributes() {
-        return List.of(
-                AttributeValue.string("value1"),
-                new AttributeValue(1, AttributeValue.AttributeValueDataType.INTEGER),
-                new AttributeValue(1L, AttributeValue.AttributeValueDataType.LONG),
-                AttributeValue.data(serializationService.toData(new CustomPojo(1, "Luke")).toByteArray())
-                      );
+        // then
+        assertThat(deserializedBackingMapSession).isEqualTo(backingMapSession);
     }
 }
