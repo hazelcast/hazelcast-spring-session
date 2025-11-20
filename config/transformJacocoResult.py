@@ -56,14 +56,8 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
         branchCovered = int(row[6])
         totalBranchCovered += branchCovered
         totalBranchMissed += branchMissed
-        if instructionsCovered + instructionsMissed == 0:
-            instructionPercent = -100
-        else:
-            instructionPercent = round(instructionsCovered * 100 / (instructionsCovered + instructionsMissed), 2)
-        if branchMissed + branchCovered == 0:
-            branchPercent = -100
-        else:
-            branchesPercent = round(branchCovered * 100 / (branchMissed + branchCovered), 2)
+        instructionPercent = round(instructionsCovered * 100 / (instructionsCovered + instructionsMissed), 2)
+        branchesPercent = round(branchCovered * 100 / (branchMissed + branchCovered), 2)
         html_content += f"""
              <tr style="border: 1px solid black; border-collapse: collapse;">
                 <td {tableStyle}>{group}</td>
