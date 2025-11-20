@@ -82,7 +82,6 @@ class BackingMapSession {
      * Creates a new instance using the specified {@link SessionIdGenerator} to generate
      * the session id.
      * @param sessionIdGenerator the {@link SessionIdGenerator} to use.
-     * @since 3.2
      */
     BackingMapSession(SessionIdGenerator sessionIdGenerator) {
         this(sessionIdGenerator.generate());
