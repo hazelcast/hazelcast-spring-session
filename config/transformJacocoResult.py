@@ -61,7 +61,7 @@ def convert_csv_to_html(csv_filepath, output_filepath="output_table.html"):
         else:
             instructionPercent = round(instructionsCovered * 100 / (instructionsCovered + instructionsMissed), 2)
         if branchMissed + branchCovered == 0:
-            branchPercent = -100
+            branchesPercent = -100
         else:
             branchesPercent = round(branchCovered * 100 / (branchMissed + branchCovered), 2)
         html_content += f"""
