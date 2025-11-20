@@ -21,6 +21,37 @@ import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import org.jspecify.annotations.NonNull;
 
+/**
+ * A {@link com.hazelcast.nio.serialization.compact.CompactSerializer} implementation that handles the
+ * (de)serialization of {@link AttributeValue} stored on {@link com.hazelcast.map.IMap} as the wrapper for user session attributes.
+ *
+ * <p>
+ * The use of this serializer is <strong>mandatory</strong> on the instance(s) that will be used by {@link HazelcastIndexedSessionRepository}.
+ * <p>
+ * An example of how to register the serializer on instance can be seen below:
+ *
+ * <pre class="code">
+ * Config config = new Config();
+ *
+ * // ... other configurations for Hazelcast ...
+ * HazelcastSessionConfiguration.applySerializationConfig(config);
+ *
+ * HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+ * </pre>
+ *
+ * Below is the example of how to register the serializer on client instance:
+ *
+ * <pre class="code">
+ * ClientConfig clientConfig = new ClientConfig();
+ *
+ * // ... other configurations for Hazelcast Client ...
+ * HazelcastSessionConfiguration.applySerializationConfig(config);
+ *
+ * HazelcastInstance hazelcastClient = HazelcastClient.newHazelcastClient(clientConfig);
+ * </pre>
+ *
+ * @since 4.0.0
+ */
 @SuppressWarnings("ClassEscapesDefinedScope")
 public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
     @Override

@@ -68,6 +68,7 @@ import org.springframework.util.Assert;
  * Config config = new Config();
  *
  * // ... configure Hazelcast ...
+ * HazelcastSessionConfiguration.applySerializationConfig(config);
  *
  * HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
  *
