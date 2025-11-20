@@ -28,6 +28,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.session.FlushMode;
+import org.springframework.session.SaveMode;
+import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
@@ -36,38 +39,27 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
- * topology.
+ * topology with no code deployed on server side.
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes =  ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
+@ContextConfiguration(classes =  ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
 @SuppressWarnings("resource")
-class ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
+class ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(
-            ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT.class);
+            ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT.class);
 	private static GenericContainer<?> container;
 
 	@BeforeAll
-	static void setUpClass() throws IOException {
-        var jarResource = ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT.class.getResource("../../../../HSS.jar");
-        assert jarResource != null;
-        var path = new File(jarResource.getFile()).getParentFile();
-
+	static void setUpClass() {
         container = new GenericContainer<>(DockerImageName.parse("hazelcast/hazelcast:5.6.0-slim"))
                 .withExposedPorts(5701)
-                .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server-with-serializer.xml"),
+                .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server-plain.xml"),
                                          "/opt/hazelcast/hazelcast.xml")
                 .withEnv("HAZELCAST_CONFIG", "hazelcast.xml")
                 .withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix("hz>"));
-        Files.list(path.toPath()).forEach(file ->  container.withCopyFileToContainer(
-                MountableFile.forHostPath(file),
-                "/opt/hazelcast/lib/" + file.getFileName().toString()));
 		container.start();
 	}
 
@@ -76,16 +68,24 @@ class ClientServerWithSerializerHazelcastIndexedSessionRepositoryIT extends Abst
 		container.stop();
 	}
 
+    @Configuration(proxyBeanMethods = false)
 	@EnableHazelcastHttpSession
-	@Configuration(proxyBeanMethods = false)
     @WebAppConfiguration
 	static class HazelcastSessionConfig {
 		@Bean @SpringSessionHazelcastInstance
 		HazelcastInstance hazelcastInstance() {
-            ClientConfig clientConfig = new ClientConfig();
-            clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
+			ClientConfig clientConfig = new ClientConfig();
+			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
             return HazelcastClient.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig));
 		}
-	}
 
+        @Bean
+        public SessionRepositoryCustomizer<HazelcastIndexedSessionRepository> customizeSessionRepo() {
+            return (sessionRepository) -> {
+                sessionRepository.setFlushMode(FlushMode.IMMEDIATE);
+                sessionRepository.setSaveMode(SaveMode.ALWAYS);
+                sessionRepository.setJarOnEveryMember(false);
+            };
+        }
+	}
 }

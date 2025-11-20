@@ -46,7 +46,7 @@ import java.nio.file.Files;
 
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
- * topology.
+ * topology with code deployed on server side, but without serializer configuration there.
  *
  * @author Vedran Pavic
  * @author Artem Bilan
