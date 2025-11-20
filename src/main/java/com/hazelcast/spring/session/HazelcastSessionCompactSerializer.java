@@ -20,7 +20,6 @@ import com.hazelcast.nio.serialization.compact.CompactReader;
 import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import org.jspecify.annotations.NonNull;
-import org.springframework.session.MapSession;
 
 import java.time.Duration;
 import java.time.Instant;

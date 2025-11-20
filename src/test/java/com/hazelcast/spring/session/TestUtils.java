@@ -21,7 +21,6 @@ import com.hazelcast.config.SerializationConfig;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.DefaultSerializationServiceBuilder;
 import com.hazelcast.internal.serialization.impl.compact.InMemorySchemaService;
-import com.hazelcast.internal.serialization.impl.compact.schema.MemberSchemaService;
 
 final class TestUtils {
     private TestUtils() {
