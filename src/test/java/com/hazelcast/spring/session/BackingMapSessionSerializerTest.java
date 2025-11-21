@@ -16,12 +16,10 @@
 
 package com.hazelcast.spring.session;
 
-import com.hazelcast.client.test.TestHazelcastFactory;
 import com.hazelcast.config.Config;
 import com.hazelcast.internal.serialization.Data;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.spi.impl.SerializationServiceSupport;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +28,14 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BackingMapSessionSerializerTest extends  TestWithHazelcast {
+public class BackingMapSessionSerializerTest extends TestWithHazelcast {
+    private static SerializationService serializationService;
+
+    @BeforeAll
+    static void setup() {
+        var hz = FACTORY.newHazelcastInstance(HazelcastSessionConfiguration.applySerializationConfig(new Config()));
+        serializationService = ((SerializationServiceSupport) hz).getSerializationService();
+    }
 
     @Test
     void basicSerialization() {

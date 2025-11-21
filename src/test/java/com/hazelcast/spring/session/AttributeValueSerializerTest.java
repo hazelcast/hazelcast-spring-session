@@ -16,8 +16,12 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.internal.serialization.Data;
+import com.hazelcast.internal.serialization.SerializationService;
+import com.hazelcast.spi.impl.SerializationServiceSupport;
 import org.example.CustomPojo;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -25,7 +29,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AttributeValueSerializerTest extends  TestWithHazelcast{
+public class AttributeValueSerializerTest extends TestWithHazelcast {
+    private static SerializationService serializationService;
+
+    @BeforeAll
+    static void setup() {
+        var hz = FACTORY.newHazelcastInstance(HazelcastSessionConfiguration.applySerializationConfig(new Config()));
+        serializationService = ((SerializationServiceSupport) hz).getSerializationService();
+    }
 
     @ParameterizedTest
     @MethodSource("attributes")

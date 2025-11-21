@@ -502,7 +502,8 @@ public class HazelcastIndexedSessionRepository
 		@Override
 		public void setAttribute(@NonNull String attributeName, @Nullable Object attributeValue) {
             if (attributeValue == null) {
-                removeAttribute(attributeName);
+                this.delegate.removeAttribute(attributeName);
+                this.delta.put(attributeName, null);
             } else {
                 AttributeValue value = AttributeValue.toAttributeValue(attributeValue, serializationService);
 
