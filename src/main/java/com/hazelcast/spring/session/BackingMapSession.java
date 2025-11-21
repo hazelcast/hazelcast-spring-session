@@ -171,6 +171,7 @@ class BackingMapSession {
         return this.sessionAttrs.get(attributeName);
     }
 
+    @NonNull
     public Set<String> getAttributeNames() {
         return new HashSet<>(this.sessionAttrs.keySet());
     }
@@ -189,7 +190,6 @@ class BackingMapSession {
         this.sessionAttrs.remove(attributeName);
         if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
             principalName = null;
-            this.sessionAttrs.remove(PRINCIPAL_NAME_ATTRIBUTE);
             this.sessionAttrs.remove(PRINCIPAL_NAME_INDEX_NAME);
         }
     }
