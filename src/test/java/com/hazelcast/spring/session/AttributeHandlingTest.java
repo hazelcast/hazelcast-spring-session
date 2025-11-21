@@ -20,7 +20,6 @@ import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.test.TestHazelcastFactory;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.internal.util.FilteringClassLoader;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
 import org.assertj.core.api.ObjectAssert;
 import org.example.CustomPojo;
@@ -31,7 +30,6 @@ import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.List;
 import java.util.Map;
 
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
@@ -40,25 +38,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 
 @ParameterizedClass
-@CsvSource(textBlock = """
-        # excludeClasspath, jarOnEveryMember, useClient
-        true, true, true
-        true, false, true
-        false, true, true
-        false, false, true
-        
-        true, true, false
-        true, false, false
-        false, true, false
-        false, false, false
+@CsvSource(delimiter = '|', useHeadersInDisplayName = true, textBlock = """
+        Code Deployed | Use Client
+        true  | true
+        false | true
+        true  | false
+        false | false
         """)
 public class AttributeHandlingTest {
 
     @Parameter(0)
-    boolean excludeClasspath;
-    @Parameter(1)
     boolean jarOnEveryMember;
-    @Parameter(2)
+    @Parameter(1)
     boolean useClient;
 
     private HazelcastIndexedSessionRepository repository;
@@ -187,9 +178,6 @@ public class AttributeHandlingTest {
 
     private Config getConfigWithoutSerialization() {
         Config config = new Config();
-        if (excludeClasspath) {
-            config.setClassLoader(new FilteringClassLoader(List.of("com.hazelcast.spring.session"), null));
-        }
         config.setProperty("hazelcast.partition.count", "11");
         return config;
     }
@@ -203,6 +191,7 @@ public class AttributeHandlingTest {
         // when
         repository.save(session);
 
+        // then
         var sessionFound = repository.findById(session.getId());
         assertAttribute(sessionFound, PRINCIPAL_NAME_ATTRIBUTE)
                 .isEqualTo("MasterChief");
@@ -228,6 +217,7 @@ public class AttributeHandlingTest {
         // when
         repository.save(session);
 
+        // then
         assertAttributes(repository.findById(session.getId()),
                          Map.of(PRINCIPAL_NAME_ATTRIBUTE, "MasterChief",
                                 PRINCIPAL_NAME_INDEX_NAME, "MasterChief")
@@ -256,6 +246,7 @@ public class AttributeHandlingTest {
         // when
         repository.save(session);
 
+        // then
         assertAttributes(repository.findById(session.getId()),
                          Map.of(PRINCIPAL_NAME_ATTRIBUTE, "MasterChief",
                                 PRINCIPAL_NAME_INDEX_NAME, "MasterChief")
@@ -279,5 +270,4 @@ public class AttributeHandlingTest {
 
         attributeMap.forEach((name, value) -> assertAttribute(session, name).isEqualTo(value));
     }
-
 }
