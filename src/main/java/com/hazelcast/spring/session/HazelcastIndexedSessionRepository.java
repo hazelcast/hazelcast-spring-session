@@ -80,7 +80,7 @@ import org.springframework.util.Assert;
  *
  * In order to support finding sessions by principal name using
  * {@link #findByIndexNameAndIndexValue(String, String)} method, custom configuration of
- * {@code IMap} supplied to this implementation is recommended due to performance reasons.
+ * {@code IMap} supplied to this implementation is recommended for performance reasons.
  *
  * The following snippet demonstrates how to define recommended configuration using
  * programmatic Hazelcast Configuration:
@@ -139,7 +139,7 @@ public class HazelcastIndexedSessionRepository
 	private ApplicationEventPublisher eventPublisher = (event) -> {
 	};
 
-	private Duration defaultMaxInactiveInterval = Duration.ofSeconds(BackingMapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
+	private Duration defaultMaxInactiveInterval = BackingMapSession.DEFAULT_MAX_INACTIVE_INTERVAL;
 
 	private IndexResolver<Session> indexResolver = new DelegatingIndexResolver<>(new PrincipalNameIndexResolver<>());
 

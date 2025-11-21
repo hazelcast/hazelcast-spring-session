@@ -145,12 +145,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
     }
 
     private int findIndex(String key, List<String> attributeNames) {
-        for (int i = 0; i < attributeNames.size(); i++) {
-            if (attributeNames.get(i).equals(key)) {
-                return i;
-            }
-        }
-        return -1;
+        return attributeNames.indexOf(key);
     }
 
     void processMapSession(BackingMapSession value) {

@@ -266,8 +266,6 @@ public class AttributeHandlingTest {
     }
 
     private static void assertAttributes(HazelcastSession session,
-                                         Map<String, Object> attributeMap) {
-
         attributeMap.forEach((name, value) -> assertAttribute(session, name).isEqualTo(value));
     }
 }
