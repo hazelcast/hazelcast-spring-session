@@ -45,7 +45,7 @@ import java.nio.file.Files;
  * topology with code deployed on server node and serializers configured there.
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes =  ClientServerWithCodeAndSerializerOnServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
+@ContextConfiguration(classes = ClientServerWithCodeAndSerializerOnServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
 @SuppressWarnings("resource")
 class ClientServerWithCodeAndSerializerOnServerHazelcastIndexedSessionRepositoryIT
         extends AbstractHazelcastIndexedSessionRepositoryIT {

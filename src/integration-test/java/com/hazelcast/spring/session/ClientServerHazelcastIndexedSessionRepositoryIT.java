@@ -52,7 +52,7 @@ import java.nio.file.Files;
  * @author Artem Bilan
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes =  ClientServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
+@ContextConfiguration(classes = ClientServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
 @SuppressWarnings("resource")
 class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 

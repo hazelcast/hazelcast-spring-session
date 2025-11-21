@@ -44,7 +44,7 @@ import org.testcontainers.utility.MountableFile;
  * topology with no code deployed on server side.
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes =  ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
+@ContextConfiguration(classes = ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
 @SuppressWarnings("resource")
 class ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
