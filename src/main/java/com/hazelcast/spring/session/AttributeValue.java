@@ -143,6 +143,7 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
 
     @Override
     public int hashCode() {
-        return Objects.hash(object, dataType);
+        int objectHash = object instanceof byte[] ? Arrays.hashCode((byte[]) object) : object.hashCode();
+        return Objects.hash(objectHash, dataType);
     }
 }
