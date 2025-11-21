@@ -41,10 +41,10 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
 @ParameterizedClass
 @CsvSource(delimiter = '|', useHeadersInDisplayName = true, textBlock = """
         Code Deployed | Use Client
-        true  | true
-        false | true
-        true  | false
-        false | false
+        true          | true
+        false         | true
+        true          | false
+        false         | false
         """)
 public class AttributeHandlingTest extends TestWithHazelcast {
 
