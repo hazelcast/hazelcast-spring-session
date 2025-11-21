@@ -16,6 +16,8 @@
 
 package com.hazelcast.spring.session;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.session.Session;
 import org.springframework.session.SessionIdGenerator;
 import org.springframework.session.UuidSessionIdGenerator;
@@ -107,7 +109,7 @@ class BackingMapSession {
         return principalName;
     }
 
-    public void setPrincipalName(String principalName) {
+    public void setPrincipalName(@Nullable String principalName) {
         this.principalName = principalName;
         if (principalName == null) {
             sessionAttrs.remove(PRINCIPAL_NAME_ATTRIBUTE);
@@ -158,12 +160,13 @@ class BackingMapSession {
         return now.minus(this.maxInactiveInterval).compareTo(this.lastAccessedTime) >= 0;
     }
 
-    public AttributeValue getAttribute(String attributeName) {
+    @Nullable
+    public AttributeValue getAttribute(@NonNull String attributeName) {
         if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
-            return AttributeValue.string(principalName);
+            return principalName == null ? null : AttributeValue.string(principalName);
         }
         if (attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
-            return AttributeValue.string(principalName);
+            return principalName == null ? null : AttributeValue.string(principalName);
         }
         return this.sessionAttrs.get(attributeName);
     }
@@ -172,7 +175,7 @@ class BackingMapSession {
         return new HashSet<>(this.sessionAttrs.keySet());
     }
 
-    public void setAttribute(String attributeName, AttributeValue attributeValue) {
+    public void setAttribute(@NonNull String attributeName, @Nullable AttributeValue attributeValue) {
         if (attributeValue == null) {
             removeAttribute(attributeName);
         } else if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE) || attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
@@ -182,7 +185,7 @@ class BackingMapSession {
         }
     }
 
-    public void removeAttribute(String attributeName) {
+    public void removeAttribute(@NonNull String attributeName) {
         this.sessionAttrs.remove(attributeName);
         if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
             principalName = null;

@@ -60,9 +60,6 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
         byte[] value = reader.readArrayOfInt8("value");
         byte form = reader.readInt8("dataType");
         AttributeValue.AttributeValueDataType formAsEnum = AttributeValue.AttributeValueDataType.from(form);
-        if (value == null) {
-            return new AttributeValue(null, formAsEnum);
-        }
         Object finalValue = AttributeValue.convertSerializedValueToObject(value, formAsEnum);
         return new AttributeValue(finalValue, formAsEnum);
     }

@@ -20,6 +20,8 @@ import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.HeapData;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -36,12 +38,13 @@ import java.util.Objects;
  *
  * @since 4.0.0
  */
-record AttributeValue(Object object, AttributeValueDataType dataType) implements Serializable {
+record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType dataType) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    static GenericRecord toGenericRecord(Object value) {
+    @NonNull
+    static GenericRecord toGenericRecord(@NonNull Object value) {
         if (value instanceof AttributeValue av) {
             var builder = GenericRecordBuilder.compact("AttributeValue");
             builder.setArrayOfInt8("value", av.convertObjectToValueBytes());
@@ -51,7 +54,8 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
         throw new IllegalArgumentException(value.getClass().getName());
     }
 
-    public static AttributeValue toAttributeValue(Object rawValue, SerializationService serializationService) {
+    @Nullable
+    public static AttributeValue toAttributeValue(@Nullable Object rawValue, @NonNull SerializationService serializationService) {
         if (rawValue == null) {
             return null;
         } else if (rawValue instanceof String s) {
@@ -83,6 +87,7 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
         };
     }
 
+    @NonNull
     Object getDeserializedValue(SerializationService serializationService) {
         return switch (dataType()) {
             case DATA ->  serializationService.toObject(new HeapData((byte[]) object()));
@@ -90,10 +95,12 @@ record AttributeValue(Object object, AttributeValueDataType dataType) implements
         };
     }
 
+    @Nullable
     static AttributeValue string(Object value) {
         return value == null ? null : new AttributeValue(value, AttributeValueDataType.STRING);
     }
 
+    @Nullable
     static AttributeValue data(byte[] value) {
         return value == null ? null : new AttributeValue(value, AttributeValueDataType.DATA);
     }
