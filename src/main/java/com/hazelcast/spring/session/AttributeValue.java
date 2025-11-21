@@ -90,7 +90,7 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
     @NonNull
     Object getDeserializedValue(SerializationService serializationService) {
         return switch (dataType()) {
-            case DATA ->  serializationService.toObject(new HeapData((byte[]) object()));
+            case DATA -> serializationService.toObject(new HeapData((byte[]) object()));
             case STRING, LONG, INTEGER -> object();
         };
     }
@@ -111,6 +111,11 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
         LONG,
         DATA;
 
+        /**
+         * Gets {@link AttributeValueDataType} of given ordinal.
+         * <p>
+         * Uses switch instead of {@link AttributeValueDataType#values()} for better performance.
+         */
         static AttributeValueDataType from(byte ord) {
             return switch(ord) {
                 case (byte) 0 -> STRING;
