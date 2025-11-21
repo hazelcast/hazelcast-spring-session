@@ -30,26 +30,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BackingMapSessionSerializerTest {
-
-    private static final TestHazelcastFactory FACTORY = new TestHazelcastFactory();
-    private static SerializationService serializationService;
-
-    @BeforeAll
-    static void beforeAll() {
-        var conf = new Config();
-        conf.getSerializationConfig().getCompactSerializationConfig()
-            .addSerializer(new HazelcastSessionCompactSerializer())
-            .addSerializer(new AttributeValueCompactSerializer());
-
-        var hz = FACTORY.newHazelcastInstance(conf);
-        serializationService = ((SerializationServiceSupport) hz).getSerializationService();
-    }
-
-    @AfterAll
-    static void cleanup() {
-        FACTORY.terminateAll();
-    }
+public class BackingMapSessionSerializerTest extends  TestWithHazelcast {
 
     @Test
     void basicSerialization() {

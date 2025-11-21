@@ -17,7 +17,6 @@
 package com.hazelcast.spring.session;
 
 import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.test.TestHazelcastFactory;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
@@ -37,6 +36,8 @@ import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySe
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 
+// IDE doesn't catch that nullability is checked in sub methods
+@SuppressWarnings("DataFlowIssue")
 @ParameterizedClass
 @CsvSource(delimiter = '|', useHeadersInDisplayName = true, textBlock = """
         Code Deployed | Use Client
@@ -45,7 +46,7 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
         true  | false
         false | false
         """)
-public class AttributeHandlingTest {
+public class AttributeHandlingTest extends TestWithHazelcast {
 
     @Parameter(0)
     boolean jarOnEveryMember;
@@ -54,26 +55,25 @@ public class AttributeHandlingTest {
 
     private HazelcastIndexedSessionRepository repository;
     private HazelcastIndexedSessionRepository otherMemberRepository;
-    private final TestHazelcastFactory factory = new TestHazelcastFactory();
 
     @BeforeEach
     void setUp() {
         Config config = jarOnEveryMember ? getConfig() : getConfigWithoutSerialization();
 
-        factory.newHazelcastInstance(config);
-        factory.newHazelcastInstance(config);
+        FACTORY.newHazelcastInstance(config);
+        FACTORY.newHazelcastInstance(config);
 
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.setProperty("hazelcast.partition.count", "11");
         HazelcastInstance hazelcastInstance = useClient
-                ? factory.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig))
-                : factory.newHazelcastInstance(getConfig());
+                ? FACTORY.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig))
+                : FACTORY.newHazelcastInstance(getConfig());
 
         this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance);
         this.repository.setJarOnEveryMember(jarOnEveryMember);
         this.repository.afterPropertiesSet();
 
-        var newMember = factory.newHazelcastInstance(getConfig());
+        var newMember = FACTORY.newHazelcastInstance(getConfig());
         this.otherMemberRepository = new HazelcastIndexedSessionRepository(newMember);
         this.otherMemberRepository.setJarOnEveryMember(jarOnEveryMember);
         this.otherMemberRepository.afterPropertiesSet();
@@ -81,7 +81,7 @@ public class AttributeHandlingTest {
 
     @AfterEach
     void clean() {
-        factory.shutdownAll();
+        FACTORY.shutdownAll();
     }
 
     @Test
@@ -104,7 +104,7 @@ public class AttributeHandlingTest {
                 .isEqualTo(new CustomPojo(2, "2"));
 
 
-        var newMember = factory.newHazelcastInstance(getConfig());
+        var newMember = FACTORY.newHazelcastInstance(getConfig());
         var repository = new HazelcastIndexedSessionRepository(newMember);
         repository.afterPropertiesSet();
         HazelcastSession sessionFromSecondMember = repository.findById(session.getId());
@@ -129,7 +129,7 @@ public class AttributeHandlingTest {
         session.setAttribute("keyPojo", new CustomPojo(2, "2"));
         repository.save(session);
 
-        var newMember = factory.newHazelcastInstance(getConfig());
+        var newMember = FACTORY.newHazelcastInstance(getConfig());
         var repository = new HazelcastIndexedSessionRepository(newMember);
         repository.afterPropertiesSet();
         HazelcastSession sessionFromSecondMember = repository.findById(session.getId());
@@ -262,10 +262,14 @@ public class AttributeHandlingTest {
 
     private static ObjectAssert<Object> assertAttribute(HazelcastSession session,
                                                         String attributeName) {
+        assertThat(session).isNotNull();
         return assertThat((Object) session.getAttribute(attributeName));
     }
 
     private static void assertAttributes(HazelcastSession session,
+                                         Map<String, Object> attributeMap) {
+        assertThat(session).isNotNull();
+        assertThat(attributeMap).isNotNull();
         attributeMap.forEach((name, value) -> assertAttribute(session, name).isEqualTo(value));
     }
 }
