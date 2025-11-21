@@ -34,7 +34,7 @@ val testcontainersVersion = "2.0.1"
 sourceSets {
     create("integrationTest", Action<SourceSet> {
         java {
-            srcDir("src/integration-test/java")
+            srcDirs("src/integration-test/java", "build/generated-classes/java")
         }
         resources {
             srcDir("src/integration-test/resources")
@@ -43,6 +43,18 @@ sourceSets {
         runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
     })
 }
+
+val processBuildContext = tasks.register<ProcessResources>("processBuildContext") {
+    println("processing resources from " + project.projectDir.path + "/src/integration-test/resources/")
+    from(project.projectDir.path + "/src/integration-test/resources/")
+    into(project.projectDir.path + "/src/integration-test/java/com/hazelcast/spring/session/")
+    include("**BuildContext.java")
+    filesMatching("**BuildContext.java") {
+        expand(project.properties)
+    }
+}
+
+tasks.compileJava.get().dependsOn(processBuildContext)
 
 val mainArtifactFile = configurations.getAt("archives").artifacts.files.singleFile
 
