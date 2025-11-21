@@ -289,31 +289,29 @@ public class HazelcastIndexedSessionRepository
 		if (session.isNew) {
 			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
 					TimeUnit.SECONDS);
-		} else {
-            if (session.sessionIdChanged) {
-                this.sessions.delete(session.originalId);
-                session.originalId = sessionId;
-                this.sessions.set(sessionId, session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
-                                  TimeUnit.SECONDS);
-            }
-            else if (session.hasChanges()) {
-                SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor(session);
+        } else if (session.sessionIdChanged) {
+            this.sessions.delete(session.originalId);
+            session.originalId = sessionId;
+            this.sessions.set(sessionId, session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
+                              TimeUnit.SECONDS);
+        } else if (session.hasChanges()) {
+            SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor(session);
 
-                if (jarOnEveryMember) {
-                    //noinspection unchecked
-                    this.sessions.executeOnKey(sessionId, entryProcessor);
-                } else {
-                    sessions.lock(sessionId);
-                    try {
-                        BackingMapSession mapSession = sessions.get(sessionId);
-                        entryProcessor.processMapSession(mapSession);
-                        sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
-                    } finally {
-                        sessions.unlock(sessionId);
-                    }
+            if (jarOnEveryMember) {
+                //noinspection unchecked
+                this.sessions.executeOnKey(sessionId, entryProcessor);
+            } else {
+                sessions.lock(sessionId);
+                try {
+                    BackingMapSession mapSession = sessions.get(sessionId);
+                    entryProcessor.processMapSession(mapSession);
+                    sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+                } finally {
+                    sessions.unlock(sessionId);
                 }
             }
         }
+
         session.clearChangeFlags();
     }
 
