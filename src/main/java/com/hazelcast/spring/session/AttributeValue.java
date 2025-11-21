@@ -114,7 +114,8 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
         /**
          * Gets {@link AttributeValueDataType} of given ordinal.
          * <p>
-         * Uses switch instead of {@link AttributeValueDataType#values()} for better performance.
+         * Uses switch instead of {@link AttributeValueDataType#values()} for better performance - calling {@code values()}
+         * create new array each time, making a pressure on GC.
          */
         static AttributeValueDataType from(byte ord) {
             return switch(ord) {

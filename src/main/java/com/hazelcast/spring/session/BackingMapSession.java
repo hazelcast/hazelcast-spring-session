@@ -36,7 +36,8 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
 
 /**
  * {@link Session} implementation holding basic session data and attributes in dataType of a {@link Map}.
- * <p>Differs from {@link org.springframework.session.MapSession} in one detail - {@code principalName} is also a field.
+ * <p>
+ * Differs from {@link org.springframework.session.MapSession} in one detail - {@code principalName} is also a field.
  * This makes dealing with it easier, no need for extractors.
  *
  * @since 4.0.0
@@ -46,12 +47,12 @@ class BackingMapSession {
     /**
      * Default {@link #setMaxInactiveInterval(Duration)} (30 minutes) in seconds.
      */
-    public static final int DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS = 1800;
+    static final int DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS = 1800;
 
     /**
      * Default {@link #setMaxInactiveInterval(Duration)} (30 minutes).
      */
-    public static final Duration DEFAULT_MAX_INACTIVE_INTERVAL = Duration
+    static final Duration DEFAULT_MAX_INACTIVE_INTERVAL = Duration
             .ofSeconds(DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
 
     private String id;
