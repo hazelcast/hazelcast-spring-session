@@ -34,17 +34,17 @@ import org.springframework.test.context.web.WebAppConfiguration;
  * @author Vedran Pavic
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration
-@WebAppConfiguration
-class EmbeddedHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
+@ContextConfiguration(classes = EmbeddedHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
+class EmbeddedHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
 	@EnableHazelcastHttpSession
-	@Configuration
+    @Configuration(proxyBeanMethods = false)
+    @WebAppConfiguration
 	static class HazelcastSessionConfig {
 
 		@Bean
 		HazelcastInstance hazelcastInstance() {
-			return HazelcastITestUtils.embeddedHazelcastServer();
+			return HazelcastITUtils.embeddedHazelcastServer();
 		}
 
 	}

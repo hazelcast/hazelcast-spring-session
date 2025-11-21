@@ -55,7 +55,7 @@ import static org.mockito.Mockito.mock;
  * @author Vedran Pavic
  * @author Aleksandar Stojsavljevic
  */
-class HazelcastHttpSessionConfigurationTests {
+class HazelcastHttpSessionConfigurationTest {
 
 	private static final String MAP_NAME = "spring:test:sessions";
 
