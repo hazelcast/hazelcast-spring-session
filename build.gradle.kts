@@ -241,6 +241,7 @@ tasks.register("printVersion") {
     }
 }
 
+// used for easier process of assembly for IT re-testing
 tasks.register("prepareITs") {
     dependsOn(tasks.assemble, copyHSSJar, copySpringJars);
 }
