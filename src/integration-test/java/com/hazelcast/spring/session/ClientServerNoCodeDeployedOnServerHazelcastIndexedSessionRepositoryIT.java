@@ -73,11 +73,11 @@ class ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT exte
     @WebAppConfiguration
 	static class HazelcastSessionConfig {
 		@Bean @SpringSessionHazelcastInstance
-		HazelcastInstance hazelcastInstance() {
-			ClientConfig clientConfig = new ClientConfig();
-			clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
+        HazelcastInstance hazelcastInstance() {
+            ClientConfig clientConfig = new ClientConfig();
+            clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
             return HazelcastClient.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig));
-		}
+        }
 
         @Bean
         public SessionRepositoryCustomizer<HazelcastIndexedSessionRepository> customizeSessionRepo() {
@@ -87,5 +87,5 @@ class ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT exte
                 sessionRepository.setJarOnEveryMember(false);
             };
         }
-	}
+    }
 }

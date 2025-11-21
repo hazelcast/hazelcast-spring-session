@@ -86,11 +86,11 @@ class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastI
     @WebAppConfiguration
 	static class HazelcastSessionConfig {
 		@Bean @SpringSessionHazelcastInstance
-		HazelcastInstance hazelcastInstance() {
+        HazelcastInstance hazelcastInstance() {
             ClientConfig clientConfig = new ClientConfig();
             clientConfig.getNetworkConfig().addAddress(container.getHost() + ":" + container.getFirstMappedPort());
             return HazelcastClient.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig));
-		}
-	}
+        }
+    }
 
 }

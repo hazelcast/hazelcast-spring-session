@@ -42,7 +42,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Tommy Ludwig
  * @author Vedran Pavic
  */
-@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 abstract class AbstractHazelcastIndexedSessionRepositoryIT {
 
 	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
