@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A {@link com.hazelcast.nio.serialization.compact.CompactSerializer} implementation that handles the
@@ -89,12 +90,8 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         writeInstant(writer, session.getCreationTime(), "creationTime");
         writeInstant(writer, session.getLastAccessedTime(), "lastAccessedTime");
         writeDuration(writer, session.getMaxInactiveInterval(),  "maxInactiveInterval");
-        List<String> attributeNames = new ArrayList<>(session.getAttributeNames());
-        AttributeValue[] attributeValues = new AttributeValue[attributeNames.size()];
-        for (int i = 0; i < attributeNames.size(); i++) {
-            AttributeValue value = session.getAttribute(attributeNames.get(i));
-            attributeValues[i] = value;
-        }
+        Set<String> attributeNames = session.getAttributeNames();
+        AttributeValue[] attributeValues = attributeNames.stream().map(session::getAttribute).toArray(AttributeValue[]::new);
 
         writer.writeArrayOfString("attributeNames", attributeNames.toArray(new String[0]));
         writer.writeArrayOfCompact("attributeValues", attributeValues);

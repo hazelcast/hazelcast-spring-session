@@ -68,7 +68,7 @@ class BackingMapSession {
     private String principalName;
 
     /**
-     * Defaults to 30 minutes.
+     * Defaults to {@link #DEFAULT_MAX_INACTIVE_INTERVAL} minutes.
      */
     private Duration maxInactiveInterval = DEFAULT_MAX_INACTIVE_INTERVAL;
 
