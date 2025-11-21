@@ -26,3 +26,6 @@ Thumbs.db
 *.temp
 *.swp
 *~
+
+# Modified on each build
+src/integration-test/java/com/hazelcast/spring/session/BuildContext.java

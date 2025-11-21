@@ -33,12 +33,13 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+
+import static com.hazelcast.spring.session.BuildContext.HAZELCAST_DOCKER_VERSION;
 
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
@@ -60,7 +61,7 @@ class ClientServerWithCodeAndSerializerOnServerHazelcastIndexedSessionRepository
         assert jarResource != null;
         var path = new File(jarResource.getFile()).getParentFile();
 
-        container = new GenericContainer<>(DockerImageName.parse("hazelcast/hazelcast:5.6.0-slim"))
+        container = new GenericContainer<>(HAZELCAST_DOCKER_VERSION)
                 .withExposedPorts(5701)
                 .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server-with-serializer.xml"),
                                          "/opt/hazelcast/hazelcast.xml")

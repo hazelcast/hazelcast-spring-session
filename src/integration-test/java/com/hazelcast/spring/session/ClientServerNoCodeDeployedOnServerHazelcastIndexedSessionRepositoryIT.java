@@ -39,6 +39,8 @@ import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import static com.hazelcast.spring.session.BuildContext.HAZELCAST_DOCKER_VERSION;
+
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using client-server
  * topology with no code deployed on server side.
@@ -54,7 +56,7 @@ class ClientServerNoCodeDeployedOnServerHazelcastIndexedSessionRepositoryIT exte
 
 	@BeforeAll
 	static void setUpClass() {
-        container = new GenericContainer<>(DockerImageName.parse("hazelcast/hazelcast:5.6.0-slim"))
+        container = new GenericContainer<>(HAZELCAST_DOCKER_VERSION)
                 .withExposedPorts(5701)
                 .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server-plain.xml"),
                                          "/opt/hazelcast/hazelcast.xml")
