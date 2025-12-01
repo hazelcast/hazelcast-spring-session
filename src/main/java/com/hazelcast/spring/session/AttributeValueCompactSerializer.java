@@ -74,7 +74,7 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
     @Override
     @NonNull
     public String getTypeName() {
-        return "AttributeValue";
+        return AttributeValue.class.getName();
     }
 
     @Override
