@@ -23,7 +23,7 @@ import org.testcontainers.utility.DockerImageName;
  */
 public final class BuildContext {
 
-    static final String HAZELCAST_VERSION = "${hazelcastVersion}";
-    static DockerImageName HAZELCAST_DOCKER_VERSION =
+    public static final String HAZELCAST_VERSION = "${hazelcastVersion}";
+    public static DockerImageName HAZELCAST_DOCKER_VERSION =
             DockerImageName.parse("hazelcast/hazelcast:" + HAZELCAST_VERSION + "-slim");
 }

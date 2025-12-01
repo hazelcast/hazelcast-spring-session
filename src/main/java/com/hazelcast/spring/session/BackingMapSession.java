@@ -16,6 +16,7 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.spi.annotation.PrivateApi;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.session.Session;
@@ -42,6 +43,7 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
  *
  * @since 4.0.0
  */
+@PrivateApi
 class BackingMapSession {
 
     /**

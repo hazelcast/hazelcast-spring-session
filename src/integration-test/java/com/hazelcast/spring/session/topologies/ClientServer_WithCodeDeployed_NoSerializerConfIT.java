@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package com.hazelcast.spring.session;
+package com.hazelcast.spring.session.topologies;
 
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.session.AbstractHazelcastIndexedSessionRepositoryIT;
+import com.hazelcast.spring.session.HazelcastIndexedSessionRepository;
+import com.hazelcast.spring.session.HazelcastSessionConfiguration;
 import com.hazelcast.spring.session.config.annotation.SpringSessionHazelcastInstance;
 import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
 
@@ -37,7 +40,6 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 import java.io.File;
@@ -54,16 +56,16 @@ import static com.hazelcast.spring.session.BuildContext.HAZELCAST_DOCKER_VERSION
  * @author Artem Bilan
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = ClientServerHazelcastIndexedSessionRepositoryIT.HazelcastSessionConfig.class)
+@ContextConfiguration(classes = ClientServer_WithCodeDeployed_NoSerializerConfIT.HazelcastSessionConfig.class)
 @SuppressWarnings("resource")
-class ClientServerHazelcastIndexedSessionRepositoryIT extends AbstractHazelcastIndexedSessionRepositoryIT {
+class ClientServer_WithCodeDeployed_NoSerializerConfIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientServerHazelcastIndexedSessionRepositoryIT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientServer_WithCodeDeployed_NoSerializerConfIT.class);
 	private static GenericContainer<?> container;
 
 	@BeforeAll
 	static void setUpClass() throws IOException {
-        var jarResource = ClientServerHazelcastIndexedSessionRepositoryIT.class.getResource("../../../../HSS.jar");
+        var jarResource = ClientServer_WithCodeDeployed_NoSerializerConfIT.class.getResource("../../../../../HSS.jar");
         assert jarResource != null;
         var path = new File(jarResource.getFile()).getParentFile();
 

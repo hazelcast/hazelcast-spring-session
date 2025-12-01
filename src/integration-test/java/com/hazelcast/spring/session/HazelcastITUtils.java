@@ -28,7 +28,7 @@ import com.hazelcast.core.HazelcastInstance;
  *
  * @author Vedran Pavic
  */
-final class HazelcastITUtils {
+public final class HazelcastITUtils {
 
 	private HazelcastITUtils() {
 	}
@@ -37,7 +37,7 @@ final class HazelcastITUtils {
 	 * Creates {@link HazelcastInstance} for use in integration tests.
 	 * @return the Hazelcast instance
 	 */
-	static HazelcastInstance embeddedHazelcastServer() {
+	public static HazelcastInstance embeddedHazelcastServer() {
 		Config config = new Config();
 		NetworkConfig networkConfig = config.getNetworkConfig();
 		networkConfig.setPort(0);
