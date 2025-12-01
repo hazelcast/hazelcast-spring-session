@@ -100,7 +100,7 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
     @Override
     @NonNull
     public String getTypeName() {
-        return BackingMapSession.class.getName();
+        return "BackingMapSession";
     }
 
     @Override

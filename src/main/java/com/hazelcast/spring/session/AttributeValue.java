@@ -20,7 +20,6 @@ import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.HeapData;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
-import com.hazelcast.spi.annotation.PrivateApi;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -39,7 +38,6 @@ import java.util.Objects;
  *
  * @since 4.0.0
  */
-@PrivateApi
 record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType dataType) implements Serializable {
 
     @Serial
