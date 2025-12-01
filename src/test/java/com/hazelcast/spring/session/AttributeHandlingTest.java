@@ -33,6 +33,7 @@ import java.util.Map;
 
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
 import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySerializationConfig;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 
@@ -258,6 +259,16 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         var sessionFromSecondMember = otherMemberRepository.findById(session.getId());
         assertAttribute(sessionFromSecondMember, PRINCIPAL_NAME_ATTRIBUTE).isNull();
         assertAttribute(sessionFromSecondMember, PRINCIPAL_NAME_INDEX_NAME).isNull();
+
+        session.setAttribute(PRINCIPAL_NAME_ATTRIBUTE, "MasterChief");
+        repository.save(session);
+        assertAttributes(repository.findById(session.getId()),
+                         Map.of(PRINCIPAL_NAME_ATTRIBUTE, "MasterChief",
+                                PRINCIPAL_NAME_INDEX_NAME, "MasterChief")
+                        );
+        session.removeAttribute(PRINCIPAL_NAME_INDEX_NAME);
+        repository.save(session);
+        assertAttributes(repository.findById(session.getId()), emptyMap());
     }
 
     private static ObjectAssert<Object> assertAttribute(HazelcastSession session,
