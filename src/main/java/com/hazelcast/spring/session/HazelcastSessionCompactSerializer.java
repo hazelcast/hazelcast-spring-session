@@ -61,6 +61,9 @@ import java.util.Set;
 @SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastSessionCompactSerializer implements CompactSerializer<BackingMapSession> {
 
+    private static final String SECONDS = "_seconds";
+    private static final String NANOS = "_nanos";
+
     @Override
     @NonNull
     public BackingMapSession read(CompactReader reader) {
@@ -109,26 +112,26 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         return BackingMapSession.class;
     }
     private void writeInstant(CompactWriter writer, Instant instant, String prefix) {
-        writer.writeInt64(prefix + "_seconds", instant.getEpochSecond());
-        writer.writeInt32(prefix + "_nanos", instant.getNano());
+        writer.writeInt64(prefix + SECONDS, instant.getEpochSecond());
+        writer.writeInt32(prefix + NANOS, instant.getNano());
     }
 
     @SuppressWarnings("SameParameterValue")
     private void writeDuration(CompactWriter writer, Duration duration, String prefix) {
-        writer.writeInt64(prefix + "_seconds", duration.getSeconds());
-        writer.writeInt32(prefix + "_nanos", duration.getNano());
+        writer.writeInt64(prefix + SECONDS, duration.getSeconds());
+        writer.writeInt32(prefix + NANOS, duration.getNano());
     }
 
     private Instant readInstant(CompactReader reader, String prefix) {
-        long seconds = reader.readInt64(prefix + "_seconds");
-        int nanos = reader.readInt32(prefix + "_nanos");
+        long seconds = reader.readInt64(prefix + SECONDS);
+        int nanos = reader.readInt32(prefix + NANOS);
         return Instant.ofEpochSecond(seconds, nanos);
     }
 
     @SuppressWarnings("SameParameterValue")
     private Duration readDuration(CompactReader reader, String prefix) {
-        long seconds = reader.readInt64(prefix + "_seconds");
-        int nanos = reader.readInt32(prefix + "_nanos");
+        long seconds = reader.readInt64(prefix + SECONDS);
+        int nanos = reader.readInt32(prefix + NANOS);
         return Duration.ofSeconds(seconds, nanos);
     }
 }
