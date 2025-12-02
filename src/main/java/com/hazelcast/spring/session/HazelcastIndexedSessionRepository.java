@@ -66,7 +66,7 @@ import org.springframework.util.Assert;
  * <p>
  * An example of how to create a new instance can be seen below:
  *
- * <pre class="code">
+ * <pre>{@code
  * Config config = new Config();
  *
  * // ... configure Hazelcast ...
@@ -76,7 +76,7 @@ import org.springframework.util.Assert;
  *
  * HazelcastIndexedSessionRepository sessionRepository =
  *         new HazelcastIndexedSessionRepository(hazelcastInstance);
- * </pre>
+ * }</pre>
  *
  * In order to support finding sessions by principal name using
  * {@link #findByIndexNameAndIndexValue(String, String)} method, custom configuration of
@@ -85,7 +85,7 @@ import org.springframework.util.Assert;
  * The following snippet demonstrates how to define recommended configuration using
  * programmatic Hazelcast Configuration:
  *
- * <pre class="code">
+ * <pre>{@code
  * Config config = new Config();
  *
  * config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME)
@@ -94,7 +94,7 @@ import org.springframework.util.Assert;
  *                 HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
  *
  * Hazelcast.newHazelcastInstance(config);
- * </pre>
+ * }</pre>
  *
  * This implementation listens for events on the Hazelcast-backed SessionRepository and
  * translates those events into the corresponding Spring Session events. Publish the
