@@ -274,6 +274,7 @@ class HazelcastHttpSessionConfigurationTest {
                 .getBean(HazelcastIndexedSessionRepository.class);
         assertThat(sessionRepository).extracting("deployedOnAllMembers").isEqualTo(Boolean.FALSE);
     }
+
     @Test
     void registerWhenAutoConfDisabled() {
         registerAndRefresh(NoSessionMapIndexAutoConfiguration.class);
@@ -537,13 +538,14 @@ class HazelcastHttpSessionConfigurationTest {
 	}
 
     @Configuration(proxyBeanMethods = false)
-    @EnableHazelcastHttpSession(disableSessionMapAutoconfiguration = true)
-    static class NoSessionMapIndexAutoConfiguration extends BaseConfiguration {
-
-    }
-    @Configuration(proxyBeanMethods = false)
     @EnableHazelcastHttpSession(deployedOnAllMembers = false)
     static class NotDeployedOnAllMembers extends BaseConfiguration {
+
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableHazelcastHttpSession(disableSessionMapAutoconfiguration = true)
+    static class NoSessionMapIndexAutoConfiguration extends BaseConfiguration {
 
     }
 

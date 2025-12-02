@@ -81,6 +81,7 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
     private boolean deployedOnAllMembers;
+
     private boolean disableSessionMapAutoconfiguration;
 
     @Bean

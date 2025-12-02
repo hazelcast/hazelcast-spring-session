@@ -189,9 +189,8 @@ class BackingMapSession {
 
     public void removeAttribute(@NonNull String attributeName) {
         this.sessionAttrs.remove(attributeName);
-        if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
-            principalName = null;
-            this.sessionAttrs.remove(PRINCIPAL_NAME_INDEX_NAME);
+        if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE) || attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
+            setPrincipalName(null);
         }
     }
 

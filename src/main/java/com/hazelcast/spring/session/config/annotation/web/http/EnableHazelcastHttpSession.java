@@ -105,16 +105,16 @@ public @interface EnableHazelcastHttpSession {
 	SaveMode saveMode() default SaveMode.ON_SET_ATTRIBUTE;
 
     /**
-     * Disables index autoconfiguration of {@link #sessionMapName()} {@link IMap}.
-     * @since 4.0.0
-     */
-    boolean disableSessionMapAutoconfiguration() default false;
-
-    /**
      * If true, Hazelcast Spring Session should be deployed on all nodes in the cluster.
      *
      * @since 4.0.0
      */
     boolean deployedOnAllMembers() default true;
+
+    /**
+     * Disables index autoconfiguration of {@link #sessionMapName()} {@link IMap}.
+     * @since 4.0.0
+     */
+    boolean disableSessionMapAutoconfiguration() default false;
 
 }

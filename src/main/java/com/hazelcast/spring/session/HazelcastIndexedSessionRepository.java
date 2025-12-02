@@ -316,11 +316,9 @@ public class HazelcastIndexedSessionRepository
      * If true, this repository will assume that class instances are present on all members and we can use faster
      * {@link com.hazelcast.map.EntryProcessor} to process sessions in-place, instead of a combination of
      * {@link IMap#get} + {@link IMap#set}.
-     *
-     * @return this for fluent API
      */
-    public HazelcastIndexedSessionRepository setDeployedOnAllMembers(boolean deployedOnEveryMember) {
-        this.deployedOnAllMembers = deployedOnEveryMember;
+    public HazelcastIndexedSessionRepository setDeployedOnAllMembers(boolean deployedOnAllMembers) {
+        this.deployedOnAllMembers = deployedOnAllMembers;
         return this;
     }
 
