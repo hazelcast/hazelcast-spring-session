@@ -301,6 +301,8 @@ public class HazelcastIndexedSessionRepository
                 //noinspection unchecked
                 this.sessions.executeOnKey(sessionId, entryProcessor);
             } else {
+                // Path for the case where no code is deployed on server in client-server architecture
+                // so we cannot send EntryProcessor
                 sessions.lock(sessionId);
                 try {
                     BackingMapSession mapSession = sessions.get(sessionId);
