@@ -149,7 +149,7 @@ public class HazelcastIndexedSessionRepository
 
 	private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
 
-    private boolean jarOnEveryMember = true;
+    private boolean deployedOnAllMembers = true;
 
 	private IMap<String, BackingMapSession> sessions;
 
@@ -261,8 +261,8 @@ public class HazelcastIndexedSessionRepository
      * {@link com.hazelcast.map.EntryProcessor} to process sessions in-place, instead of a combination of
      * {@link IMap#get} + {@link IMap#set}.
      */
-    public void setJarOnEveryMember(boolean jarOnEveryMember) {
-        this.jarOnEveryMember = jarOnEveryMember;
+    public void setDeployedOnAllMembers(boolean deployedOnAllMembers) {
+        this.deployedOnAllMembers = deployedOnAllMembers;
     }
 
     /**
@@ -297,7 +297,7 @@ public class HazelcastIndexedSessionRepository
         } else if (session.hasChanges()) {
             SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor(session);
 
-            if (jarOnEveryMember) {
+            if (deployedOnAllMembers) {
                 //noinspection unchecked
                 this.sessions.executeOnKey(sessionId, entryProcessor);
             } else {

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -79,7 +80,11 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
-	@Bean
+    private boolean deployedOnAllMembers;
+
+    private boolean disableSessionMapAutoconfiguration;
+
+    @Bean
 	public FindByIndexNameSessionRepository<?> sessionRepository() {
 		return createHazelcastIndexedSessionRepository();
 	}
@@ -107,8 +112,8 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
 	@Autowired
 	public void setHazelcastInstance(
-			@SpringSessionHazelcastInstance ObjectProvider<HazelcastInstance> springSessionHazelcastInstance,
-			ObjectProvider<HazelcastInstance> hazelcastInstance) {
+			@SpringSessionHazelcastInstance ObjectProvider<@NonNull HazelcastInstance> springSessionHazelcastInstance,
+			ObjectProvider<@NonNull HazelcastInstance> hazelcastInstance) {
 		HazelcastInstance hazelcastInstanceToUse = springSessionHazelcastInstance.getIfAvailable();
 		if (hazelcastInstanceToUse == null) {
 			hazelcastInstanceToUse = hazelcastInstance.getObject();
@@ -128,7 +133,7 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
 	@Autowired(required = false)
 	public void setSessionRepositoryCustomizer(
-			ObjectProvider<SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers) {
+			ObjectProvider<@NonNull SessionRepositoryCustomizer<HazelcastIndexedSessionRepository>> sessionRepositoryCustomizers) {
 		this.sessionRepositoryCustomizers = sessionRepositoryCustomizers.orderedStream().collect(Collectors.toList());
 	}
 
@@ -147,6 +152,8 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		}
 		this.flushMode = attributes.getEnum("flushMode");
 		this.saveMode = attributes.getEnum("saveMode");
+        this.deployedOnAllMembers = attributes.getBoolean("deployedOnAllMembers");
+        this.disableSessionMapAutoconfiguration = attributes.getBoolean("disableSessionMapAutoconfiguration");
 	}
 
 	private HazelcastIndexedSessionRepository createHazelcastIndexedSessionRepository() {
@@ -162,7 +169,9 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		sessionRepository.setDefaultMaxInactiveInterval(this.maxInactiveInterval);
 		sessionRepository.setFlushMode(this.flushMode);
 		sessionRepository.setSaveMode(this.saveMode);
-		sessionRepository.setSessionIdGenerator(this.sessionIdGenerator);
+        sessionRepository.setSessionIdGenerator(this.sessionIdGenerator);
+        sessionRepository.setDeployedOnAllMembers(deployedOnAllMembers);
+
 		this.sessionRepositoryCustomizers
 			.forEach((sessionRepositoryCustomizer) -> sessionRepositoryCustomizer.customize(sessionRepository));
 		return sessionRepository;

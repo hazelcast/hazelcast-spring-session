@@ -18,9 +18,12 @@ package com.hazelcast.spring.session.config.annotation.web.http;
 
 import java.time.Duration;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.BeanCreationException;
@@ -61,13 +64,18 @@ class HazelcastHttpSessionConfigurationTest {
 
 	private static final int MAX_INACTIVE_INTERVAL_IN_SECONDS = 600;
 
-	private AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+	private AnnotationConfigApplicationContext context;
+
+    @BeforeEach
+    void setUp() {
+        context = new AnnotationConfigApplicationContext();
+    }
 
 	@AfterEach
 	void closeContext() {
-		if (this.context != null) {
-			this.context.close();
-		}
+        if (context != null) {
+            context.close();
+        }
 	}
 
 	@Test
@@ -259,6 +267,14 @@ class HazelcastHttpSessionConfigurationTest {
 		assertThat(sessionRepository).extracting("sessionIdGenerator").isInstanceOf(UuidSessionIdGenerator.class);
 	}
 
+    @Test
+    void registerWhenNotDeployedOnAllMembers() {
+        registerAndRefresh(NotDeployedOnAllMembers.class);
+        HazelcastIndexedSessionRepository sessionRepository = this.context
+                .getBean(HazelcastIndexedSessionRepository.class);
+        assertThat(sessionRepository).extracting("deployedOnAllMembers").isEqualTo(Boolean.FALSE);
+    }
+
 	private void registerAndRefresh(Class<?>... annotatedClasses) {
 		this.context.register(annotatedClasses);
 		this.context.refresh();
@@ -279,6 +295,7 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance defaultHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(defaultHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -362,6 +379,7 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance qualifiedHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(qualifiedHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -379,6 +397,7 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance primaryHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(primaryHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -399,6 +418,7 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance qualifiedHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(qualifiedHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -407,6 +427,7 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance primaryHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(primaryHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -499,11 +520,18 @@ class HazelcastHttpSessionConfigurationTest {
 
 	static class TestSessionIdGenerator implements SessionIdGenerator {
 
+        @NonNull
 		@Override
 		public String generate() {
 			return "test";
 		}
 
 	}
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableHazelcastHttpSession(deployedOnAllMembers = false)
+    static class NotDeployedOnAllMembers extends BaseConfiguration {
+
+    }
 
 }

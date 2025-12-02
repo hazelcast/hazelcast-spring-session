@@ -33,7 +33,6 @@ import java.util.Map;
 
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
 import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySerializationConfig;
-import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 
@@ -71,12 +70,12 @@ public class AttributeHandlingTest extends TestWithHazelcast {
                 : FACTORY.newHazelcastInstance(getConfig());
 
         this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance);
-        this.repository.setJarOnEveryMember(jarOnEveryMember);
+        this.repository.setDeployedOnAllMembers(jarOnEveryMember);
         this.repository.afterPropertiesSet();
 
         var newMember = FACTORY.newHazelcastInstance(getConfig());
         this.otherMemberRepository = new HazelcastIndexedSessionRepository(newMember);
-        this.otherMemberRepository.setJarOnEveryMember(jarOnEveryMember);
+        this.otherMemberRepository.setDeployedOnAllMembers(jarOnEveryMember);
         this.otherMemberRepository.afterPropertiesSet();
     }
 

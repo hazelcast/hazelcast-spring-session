@@ -88,7 +88,7 @@ class ClientServer_NoCodeDeployedIT extends AbstractHazelcastIndexedSessionRepos
             return (sessionRepository) -> {
                 sessionRepository.setFlushMode(FlushMode.IMMEDIATE);
                 sessionRepository.setSaveMode(SaveMode.ALWAYS);
-                sessionRepository.setJarOnEveryMember(false);
+                sessionRepository.setDeployedOnAllMembers(false);
             };
         }
     }
