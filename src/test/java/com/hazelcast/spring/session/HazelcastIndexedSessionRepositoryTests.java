@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.IMap;
@@ -77,6 +78,7 @@ class HazelcastIndexedSessionRepositoryTests {
 	@BeforeEach
 	void setUp() {
 		given(this.hazelcastInstance.<String, BackingMapSession>getMap(anyString())).willReturn(this.sessions);
+		given(this.hazelcastInstance.getConfig()).willReturn(new Config());
 		this.repository = new HazelcastIndexedSessionRepository(this.hazelcastInstance);
         repository.setSerializationService(defaultSerializationService());
 		this.repository.afterPropertiesSet();
