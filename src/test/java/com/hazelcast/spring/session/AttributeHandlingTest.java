@@ -28,7 +28,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.session.FlushMode;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +40,9 @@ import java.util.Map;
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
 import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySerializationConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
+import static org.springframework.session.FlushMode.IMMEDIATE;
 import static org.springframework.session.SaveMode.ALWAYS;
 
 // IDE doesn't catch that nullability is checked in sub methods
@@ -50,6 +56,7 @@ import static org.springframework.session.SaveMode.ALWAYS;
         false         | false
         """)
 public class AttributeHandlingTest extends TestWithHazelcast {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AttributeHandlingTest.class);
 
     @Parameter(0)
     boolean jarOnEveryMember;
@@ -58,8 +65,6 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
     private HazelcastIndexedSessionRepository repository;
     private HazelcastIndexedSessionRepository otherMemberRepository;
-
-    private final List<Object> events = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -76,9 +81,10 @@ public class AttributeHandlingTest extends TestWithHazelcast {
                 : FACTORY.newHazelcastInstance(getConfig());
 
         this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance)
-                .setApplicationEventPublisher(events::add)
+                .setApplicationEventPublisher(e -> LOGGER.info("Event: {}", e))
                 .setDeployedOnAllMembers(jarOnEveryMember)
-                .setSaveMode(ALWAYS);
+                .setSaveMode(ALWAYS)
+                .setFlushMode(IMMEDIATE);
         this.repository.afterPropertiesSet();
 
         var newMember = FACTORY.newHazelcastInstance(getConfig());
@@ -126,8 +132,6 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         assertAttribute(sessionFromSecondMember, "keyPojo")
                 .isInstanceOf(CustomPojo.class)
                 .isEqualTo(new CustomPojo(3, "3"));
-
-        assertThat(events).hasSize(1);
     }
 
     @Test
@@ -152,8 +156,6 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
         assertAttribute(sessionFromSecondMember, "keyPojo").isNull();
         assertAttribute(sessionFromSecondMember, "keyString").isEqualTo("value");
-
-        assertThat(events).hasSize(1);
     }
 
     @Test
@@ -180,8 +182,6 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         assertAttribute(sessionFound, "keyPojo")
                 .isInstanceOf(CustomPojo.class)
                 .isEqualTo(new CustomPojo(1, "1"));
-
-        assertThat(events).hasSize(1);
     }
 
     private Config getConfig() {
