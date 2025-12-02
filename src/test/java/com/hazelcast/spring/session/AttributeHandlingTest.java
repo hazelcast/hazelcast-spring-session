@@ -268,7 +268,7 @@ public class AttributeHandlingTest extends TestWithHazelcast {
                         );
         session.removeAttribute(PRINCIPAL_NAME_INDEX_NAME);
         repository.save(session);
-        assertAttributes(repository.findById(session.getId()), emptyMap());
+        assertThat(repository.findById(session.getId()).getAttributeNames()).isEmpty();
     }
 
     private static ObjectAssert<Object> assertAttribute(HazelcastSession session,
