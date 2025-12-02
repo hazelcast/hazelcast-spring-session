@@ -29,6 +29,8 @@ import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
@@ -57,8 +59,11 @@ public class AttributeHandlingTest extends TestWithHazelcast {
     private HazelcastIndexedSessionRepository repository;
     private HazelcastIndexedSessionRepository otherMemberRepository;
 
+    private final List<Object> events = new ArrayList<>();
+
     @BeforeEach
     void setUp() {
+        events.clear();
         Config config = jarOnEveryMember ? getConfig() : getConfigWithoutSerialization();
 
         FACTORY.newHazelcastInstance(config);
@@ -71,12 +76,14 @@ public class AttributeHandlingTest extends TestWithHazelcast {
                 : FACTORY.newHazelcastInstance(getConfig());
 
         this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance);
-        this.repository.setJarOnEveryMember(jarOnEveryMember);
+        this.repository
+                .setDeployedOnAllMembers(jarOnEveryMember)
+                .setApplicationEventPublisher(events::add);
         this.repository.afterPropertiesSet();
 
         var newMember = FACTORY.newHazelcastInstance(getConfig());
         this.otherMemberRepository = new HazelcastIndexedSessionRepository(newMember);
-        this.otherMemberRepository.setJarOnEveryMember(jarOnEveryMember);
+        this.otherMemberRepository.setDeployedOnAllMembers(jarOnEveryMember);
         this.otherMemberRepository.afterPropertiesSet();
     }
 
@@ -119,6 +126,8 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         assertAttribute(sessionFromSecondMember, "keyPojo")
                 .isInstanceOf(CustomPojo.class)
                 .isEqualTo(new CustomPojo(3, "3"));
+
+        assertThat(events).hasSize(1);
     }
 
     @Test
@@ -143,6 +152,8 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
         assertAttribute(sessionFromSecondMember, "keyPojo").isNull();
         assertAttribute(sessionFromSecondMember, "keyString").isEqualTo("value");
+
+        assertThat(events).hasSize(1);
     }
 
     @Test
@@ -169,6 +180,8 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         assertAttribute(sessionFound, "keyPojo")
                 .isInstanceOf(CustomPojo.class)
                 .isEqualTo(new CustomPojo(1, "1"));
+
+        assertThat(events).hasSize(1);
     }
 
     private Config getConfig() {
