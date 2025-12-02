@@ -82,6 +82,8 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
     private boolean deployedOnAllMembers;
 
+    private boolean disableSessionMapAutoconfiguration;
+
     @Bean
 	public FindByIndexNameSessionRepository<?> sessionRepository() {
 		return createHazelcastIndexedSessionRepository();
@@ -151,6 +153,7 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		this.flushMode = attributes.getEnum("flushMode");
 		this.saveMode = attributes.getEnum("saveMode");
         this.deployedOnAllMembers = attributes.getBoolean("deployedOnAllMembers");
+        this.disableSessionMapAutoconfiguration = attributes.getBoolean("disableSessionMapAutoconfiguration");
    	}
 
 	private HazelcastIndexedSessionRepository createHazelcastIndexedSessionRepository() {
