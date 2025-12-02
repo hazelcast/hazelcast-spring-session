@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: main
+    branches: [ 'main' ]
   pull_request:
-    branches: main
+    branches: [ 'main' ]
 
 jobs:
   build:
@@ -35,20 +35,15 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
 
-    - name: Summarize results
-      if: matrix.java == '17'
-      run: |
-        python config/transformJacocoResult.py
-        cat build/reports/jacoco/test/output_table.html >> $GITHUB_STEP_SUMMARY
-
-    - name: Comment
-      if: ${{ github.event_name == 'pull_request' && matrix.java == '17' }}
-      env:
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        content=$(cat build/reports/jacoco/test/output_table.html)
-        gh pr comment $PR_NUMBER --body "$content"
+    - name: Add coverage to PR
+      uses: madrapps/jacoco-report@v1.7.2
+      with:
+        title: 'Code Coverage'
+        comment-type: both
+        paths: |
+          ${{ github.workspace }}/**/build/reports/jacoco/**/jacocoTestReport.xml
+        token: ${{ secrets.GITHUB_TOKEN }}
+        min-coverage-overall: 60
 
     - name: Upload test results
       if: always()
