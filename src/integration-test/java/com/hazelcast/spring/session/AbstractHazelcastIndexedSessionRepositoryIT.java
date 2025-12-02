@@ -32,6 +32,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.FlushMode;
 import org.springframework.session.MapSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -269,6 +270,19 @@ public abstract class AbstractHazelcastIndexedSessionRepositoryIT {
 		session = this.repository.findById(sessionId);
 		assertThat(session.getMaxInactiveInterval()).isEqualTo(individualSessionTimeout);
 		assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(individualSessionTimeout.toMillis());
+	}
+
+	@Test
+	void createSessionAndUpdateAttribute() {
+        repository.setFlushMode(FlushMode.IMMEDIATE);
+		HazelcastSession session = this.repository.createSession();
+		String sessionId = session.getId();
+		session.setAttribute("attribute", "value");
+        session.setAttribute("attribute", "value2");
+
+		var foundSession = this.repository.findById(sessionId);
+        assertThat(foundSession).isNotNull();
+        assertThat(foundSession.<String>getAttribute("attribute")).isEqualTo("value2");
 	}
 
 }
