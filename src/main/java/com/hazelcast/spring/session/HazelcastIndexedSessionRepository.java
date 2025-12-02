@@ -27,12 +27,14 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.config.IndexConfig;
-import com.hazelcast.config.IndexType;
 import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.function.ConsumerEx;
+import com.hazelcast.instance.impl.BootstrappedInstanceProxy;
+import com.hazelcast.instance.impl.HazelcastInstanceImpl;
+import com.hazelcast.instance.impl.HazelcastInstanceProxy;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
@@ -63,6 +65,8 @@ import org.springframework.session.events.SessionCreatedEvent;
 import org.springframework.session.events.SessionDeletedEvent;
 import org.springframework.session.events.SessionExpiredEvent;
 import org.springframework.util.Assert;
+
+import static com.hazelcast.config.IndexType.HASH;
 
 /**
  * A {@link org.springframework.session.SessionRepository} implementation that stores
@@ -185,18 +189,35 @@ public class HazelcastIndexedSessionRepository
 	}
 
     private void configureSessionMap(@NonNull HazelcastInstance hazelcastInstance) {
-        if (sessionMapConfigCustomizer == null) {
+        var customizer = sessionMapConfigCustomizer;
+        if (customizer == null) {
             LOGGER.debug("Not configuring session map {} per configuration", sessionMapName);
             return;
         }
+        // client's dynamic configuration won't allow override of configuration
+        // but full instances can do it.
+        if (notAClient(hazelcastInstance)) {
+            MapConfig existingConfig = hazelcastInstance.getConfig().getMapConfigOrNull(sessionMapName);
+            if (existingConfig != null) {
+                LOGGER.info("Unable to automatically configure session map {}, it was configured earlier", sessionMapName);
+                return;
+            }
+        }
         var mapConfig = new MapConfig(sessionMapName);
-        mapConfig.getIndexConfigs().add(new IndexConfig(IndexType.HASH, PRINCIPAL_NAME_ATTRIBUTE));
-        sessionMapConfigCustomizer.accept(mapConfig);
+        mapConfig.getIndexConfigs().add(new IndexConfig(HASH, PRINCIPAL_NAME_ATTRIBUTE));
+        customizer.accept(mapConfig);
+
         try {
             hazelcastInstance.getConfig().addMapConfig(mapConfig);
         } catch (InvalidConfigurationException ice) {
             LOGGER.info("Unable to automatically configure session map {}, probably configured earlier", sessionMapName);
         }
+    }
+
+    private boolean notAClient(@NonNull HazelcastInstance hazelcastInstance) {
+        return hazelcastInstance instanceof HazelcastInstanceImpl
+                || hazelcastInstance instanceof HazelcastInstanceProxy
+                || hazelcastInstance instanceof BootstrappedInstanceProxy;
     }
 
     @Override
@@ -302,10 +323,6 @@ public class HazelcastIndexedSessionRepository
         this.deployedOnAllMembers = deployedOnEveryMember;
         return this;
     }
-//
-//    public boolean isDeployedOnEveryMember() {
-//        return deployedOnEveryMember;
-//    }
 
     /**
      * Allows customization of {@link IMap} storing session information.

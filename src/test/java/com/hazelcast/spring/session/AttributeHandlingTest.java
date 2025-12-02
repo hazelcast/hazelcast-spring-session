@@ -38,6 +38,7 @@ import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySe
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
+import static org.springframework.session.SaveMode.ALWAYS;
 
 // IDE doesn't catch that nullability is checked in sub methods
 @SuppressWarnings("DataFlowIssue")
@@ -75,10 +76,10 @@ public class AttributeHandlingTest extends TestWithHazelcast {
                 ? FACTORY.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig))
                 : FACTORY.newHazelcastInstance(getConfig());
 
-        this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance);
-        this.repository
+        this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance)
+                .setApplicationEventPublisher(events::add)
                 .setDeployedOnAllMembers(jarOnEveryMember)
-                .setApplicationEventPublisher(events::add);
+                .setSaveMode(ALWAYS);
         this.repository.afterPropertiesSet();
 
         var newMember = FACTORY.newHazelcastInstance(getConfig());
