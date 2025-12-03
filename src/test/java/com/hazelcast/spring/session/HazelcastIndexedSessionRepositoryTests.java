@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.IMap;
@@ -42,6 +43,7 @@ import org.springframework.session.SaveMode;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import static com.hazelcast.spring.session.TestUtils.defaultSerializationService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,14 +71,16 @@ class HazelcastIndexedSessionRepositoryTests {
 	private final HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 
 	@SuppressWarnings("unchecked")
-	private final IMap<String, MapSession> sessions = mock(IMap.class);
+	private final IMap<String, BackingMapSession> sessions = mock(IMap.class);
 
 	private HazelcastIndexedSessionRepository repository;
 
 	@BeforeEach
 	void setUp() {
-		given(this.hazelcastInstance.<String, MapSession>getMap(anyString())).willReturn(this.sessions);
+		given(this.hazelcastInstance.<String, BackingMapSession>getMap(anyString())).willReturn(this.sessions);
+		given(this.hazelcastInstance.getConfig()).willReturn(new Config());
 		this.repository = new HazelcastIndexedSessionRepository(this.hazelcastInstance);
+        repository.setSerializationService(defaultSerializationService());
 		this.repository.afterPropertiesSet();
 	}
 
@@ -305,7 +309,7 @@ class HazelcastIndexedSessionRepositoryTests {
 	void getSessionExpired() {
 		verify(this.sessions, times(1)).addEntryListener(any(MapListener.class), anyBoolean());
 
-		MapSession expired = new MapSession();
+        BackingMapSession expired = new BackingMapSession();
 		expired.setLastAccessedTime(Instant.now().minusSeconds(MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS + 1));
 		given(this.sessions.get(eq(expired.getId()))).willReturn(expired);
 
@@ -321,8 +325,8 @@ class HazelcastIndexedSessionRepositoryTests {
 	void getSessionFound() {
 		verify(this.sessions, times(1)).addEntryListener(any(MapListener.class), anyBoolean());
 
-		MapSession saved = new MapSession();
-		saved.setAttribute("savedName", "savedValue");
+        BackingMapSession saved = new BackingMapSession();
+		saved.setAttribute("savedName", AttributeValue.string("savedValue"));
 		given(this.sessions.get(eq(saved.getId()))).willReturn(saved);
 
 		HazelcastSession session = this.repository.findById(saved.getId());
@@ -379,12 +383,13 @@ class HazelcastIndexedSessionRepositoryTests {
 		String principal = "username";
 		Authentication authentication = new UsernamePasswordAuthenticationToken(principal, "notused",
 				AuthorityUtils.createAuthorityList("ROLE_USER"));
-		List<MapSession> saved = new ArrayList<>(2);
-		MapSession saved1 = new MapSession();
-		saved1.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
+		List<BackingMapSession> saved = new ArrayList<>(2);
+		BackingMapSession saved1 = new BackingMapSession();
+        AttributeValue attributeValue = AttributeValue.data(defaultSerializationService().toData(authentication).toByteArray());
+        saved1.setAttribute(SPRING_SECURITY_CONTEXT, attributeValue);
 		saved.add(saved1);
-		MapSession saved2 = new MapSession();
-		saved2.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
+        BackingMapSession saved2 = new BackingMapSession();
+		saved2.setAttribute(SPRING_SECURITY_CONTEXT, attributeValue);
 		saved.add(saved2);
 		given(this.sessions.values(isA(EqualPredicate.class))).willReturn(saved);
 
@@ -414,13 +419,13 @@ class HazelcastIndexedSessionRepositoryTests {
 	void saveWithSaveModeOnSetAttribute() {
 		verify(this.sessions).addEntryListener(any(MapListener.class), anyBoolean());
 		this.repository.setSaveMode(SaveMode.ON_SET_ATTRIBUTE);
-		MapSession delegate = new MapSession();
-		delegate.setAttribute("attribute1", "value1");
-		delegate.setAttribute("attribute2", "value2");
-		delegate.setAttribute("attribute3", "value3");
+        BackingMapSession delegate = new BackingMapSession();
+		delegate.setAttribute("attribute1", AttributeValue.string("value1"));
+		delegate.setAttribute("attribute2", AttributeValue.string("value2"));
+		delegate.setAttribute("attribute3", AttributeValue.string("value3"));
 		HazelcastSession session = this.repository.new HazelcastSession(delegate, false);
 		session.getAttribute("attribute2");
-		session.setAttribute("attribute3", "value4");
+		session.setAttribute("attribute3", AttributeValue.string("value4"));
 		this.repository.save(session);
 		ArgumentCaptor<SessionUpdateEntryProcessor> captor = ArgumentCaptor.forClass(SessionUpdateEntryProcessor.class);
 		verify(this.sessions).executeOnKey(eq(session.getId()), captor.capture());
@@ -433,10 +438,10 @@ class HazelcastIndexedSessionRepositoryTests {
 	void saveWithSaveModeOnGetAttribute() {
 		verify(this.sessions).addEntryListener(any(MapListener.class), anyBoolean());
 		this.repository.setSaveMode(SaveMode.ON_GET_ATTRIBUTE);
-		MapSession delegate = new MapSession();
-		delegate.setAttribute("attribute1", "value1");
-		delegate.setAttribute("attribute2", "value2");
-		delegate.setAttribute("attribute3", "value3");
+        BackingMapSession delegate = new BackingMapSession();
+		delegate.setAttribute("attribute1", AttributeValue.string("value1"));
+		delegate.setAttribute("attribute2", AttributeValue.string("value2"));
+		delegate.setAttribute("attribute3", AttributeValue.string("value3"));
 		HazelcastSession session = this.repository.new HazelcastSession(delegate, false);
 		session.getAttribute("attribute2");
 		session.setAttribute("attribute3", "value4");
@@ -452,10 +457,10 @@ class HazelcastIndexedSessionRepositoryTests {
 	void saveWithSaveModeAlways() {
 		verify(this.sessions).addEntryListener(any(MapListener.class), anyBoolean());
 		this.repository.setSaveMode(SaveMode.ALWAYS);
-		MapSession delegate = new MapSession();
-		delegate.setAttribute("attribute1", "value1");
-		delegate.setAttribute("attribute2", "value2");
-		delegate.setAttribute("attribute3", "value3");
+        BackingMapSession delegate = new BackingMapSession();
+		delegate.setAttribute("attribute1", AttributeValue.string("value1"));
+		delegate.setAttribute("attribute2", AttributeValue.string("value2"));
+		delegate.setAttribute("attribute3", AttributeValue.string("value3"));
 		HazelcastSession session = this.repository.new HazelcastSession(delegate, false);
 		session.getAttribute("attribute2");
 		session.setAttribute("attribute3", "value4");
@@ -483,8 +488,8 @@ class HazelcastIndexedSessionRepositoryTests {
 	@Test
 	void findByIdWhenChangeSessionIdThenUsesSessionIdGenerator() {
 		this.repository.setSessionIdGenerator(() -> "test");
-		MapSession saved = new MapSession("original");
-		saved.setAttribute("savedName", "savedValue");
+        BackingMapSession saved = new BackingMapSession("original");
+		saved.setAttribute("savedName", AttributeValue.string("savedValue"));
 		given(this.sessions.get(eq(saved.getId()))).willReturn(saved);
 
 		HazelcastSession session = this.repository.findById(saved.getId());

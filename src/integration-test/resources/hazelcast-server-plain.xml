@@ -8,16 +8,5 @@
 			<auto-detection enabled="false"/>
 		</join>
 	</network>
-    
-    <map name="spring:session:sessions">
-        <in-memory-format>BINARY</in-memory-format>
-        <indexes>
-            <index>
-                <attributes>
-                    <attribute>principalName</attribute>
-                </attributes>
-            </index>
-        </indexes>
-    </map>
 
 </hazelcast>

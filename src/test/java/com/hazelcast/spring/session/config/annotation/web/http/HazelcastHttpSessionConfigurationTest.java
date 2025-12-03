@@ -18,9 +18,12 @@ package com.hazelcast.spring.session.config.annotation.web.http;
 
 import java.time.Duration;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.BeanCreationException;
@@ -55,19 +58,24 @@ import static org.mockito.Mockito.mock;
  * @author Vedran Pavic
  * @author Aleksandar Stojsavljevic
  */
-class HazelcastHttpSessionConfigurationTests {
+class HazelcastHttpSessionConfigurationTest {
 
 	private static final String MAP_NAME = "spring:test:sessions";
 
 	private static final int MAX_INACTIVE_INTERVAL_IN_SECONDS = 600;
 
-	private AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+	private AnnotationConfigApplicationContext context;
+
+    @BeforeEach
+    void setUp() {
+        context = new AnnotationConfigApplicationContext();
+    }
 
 	@AfterEach
 	void closeContext() {
-		if (this.context != null) {
-			this.context.close();
-		}
+        if (context != null) {
+            context.close();
+        }
 	}
 
 	@Test
@@ -259,6 +267,22 @@ class HazelcastHttpSessionConfigurationTests {
 		assertThat(sessionRepository).extracting("sessionIdGenerator").isInstanceOf(UuidSessionIdGenerator.class);
 	}
 
+    @Test
+    void registerWhenNotDeployedOnAllMembers() {
+        registerAndRefresh(NotDeployedOnAllMembers.class);
+        HazelcastIndexedSessionRepository sessionRepository = this.context
+                .getBean(HazelcastIndexedSessionRepository.class);
+        assertThat(sessionRepository).extracting("deployedOnAllMembers").isEqualTo(Boolean.FALSE);
+    }
+
+    @Test
+    void registerWhenAutoConfDisabled() {
+        registerAndRefresh(NoSessionMapIndexAutoConfiguration.class);
+        HazelcastIndexedSessionRepository sessionRepository = this.context
+                .getBean(HazelcastIndexedSessionRepository.class);
+        assertThat(sessionRepository).extracting("sessionMapConfigCustomizer").isNull();
+    }
+
 	private void registerAndRefresh(Class<?>... annotatedClasses) {
 		this.context.register(annotatedClasses);
 		this.context.refresh();
@@ -279,6 +303,7 @@ class HazelcastHttpSessionConfigurationTests {
 		HazelcastInstance defaultHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(defaultHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -362,6 +387,7 @@ class HazelcastHttpSessionConfigurationTests {
 		HazelcastInstance qualifiedHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(qualifiedHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -379,6 +405,7 @@ class HazelcastHttpSessionConfigurationTests {
 		HazelcastInstance primaryHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(primaryHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -399,6 +426,7 @@ class HazelcastHttpSessionConfigurationTests {
 		HazelcastInstance qualifiedHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(qualifiedHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -407,6 +435,7 @@ class HazelcastHttpSessionConfigurationTests {
 		HazelcastInstance primaryHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(primaryHazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -424,6 +453,7 @@ class HazelcastHttpSessionConfigurationTests {
 		HazelcastInstance hazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(hazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -499,11 +529,24 @@ class HazelcastHttpSessionConfigurationTests {
 
 	static class TestSessionIdGenerator implements SessionIdGenerator {
 
+        @NonNull
 		@Override
 		public String generate() {
 			return "test";
 		}
 
 	}
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableHazelcastHttpSession(deployedOnAllMembers = false)
+    static class NotDeployedOnAllMembers extends BaseConfiguration {
+
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableHazelcastHttpSession(disableSessionMapAutoconfiguration = true)
+    static class NoSessionMapIndexAutoConfiguration extends BaseConfiguration {
+
+    }
 
 }
