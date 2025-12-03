@@ -8,6 +8,15 @@
 			<auto-detection enabled="false"/>
 		</join>
 	</network>
+
+    <serialization>
+        <compact-serialization>
+            <serializers>
+                <serializer>com.hazelcast.spring.session.HazelcastSessionCompactSerializer</serializer>
+                <serializer>com.hazelcast.spring.session.AttributeValueCompactSerializer</serializer>
+            </serializers>
+        </compact-serialization>
+    </serialization>
     
     <map name="spring:session:sessions">
         <in-memory-format>BINARY</in-memory-format>

@@ -20,11 +20,9 @@ import java.time.Duration;
 import java.time.Instant;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.instance.impl.HazelcastInstanceProxy;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
 
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +32,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.FlushMode;
 import org.springframework.session.MapSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Tommy Ludwig
  * @author Vedran Pavic
  */
-abstract class AbstractHazelcastIndexedSessionRepositoryITests {
+public abstract class AbstractHazelcastIndexedSessionRepositoryIT {
 
 	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
@@ -59,12 +58,12 @@ abstract class AbstractHazelcastIndexedSessionRepositoryITests {
 		HazelcastSession sessionToSave = this.repository.createSession();
 		String sessionId = sessionToSave.getId();
 
-		IMap<String, MapSession> hazelcastMap = this.hazelcastInstance
+		IMap<String, BackingMapSession> hazelcastMap = this.hazelcastInstance
 			.getMap(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME);
 
 		this.repository.save(sessionToSave);
 
-		assertThat(hazelcastMap.get(sessionId)).isEqualTo(sessionToSave);
+		assertThat(hazelcastMap.get(sessionId).getId()).isEqualTo(sessionToSave.getDelegate().getId());
 
 		this.repository.deleteById(sessionId);
 
@@ -208,9 +207,6 @@ abstract class AbstractHazelcastIndexedSessionRepositoryITests {
 
 	@Test
 	void createSessionWithSecurityContextAndFindByPrincipal() {
-		Assumptions.assumeTrue(this.hazelcastInstance instanceof HazelcastInstanceProxy,
-				"Hazelcast runs in embedded server topology");
-
 		HazelcastSession session = this.repository.createSession();
 
 		String username = "saves-" + System.currentTimeMillis();
@@ -274,6 +270,19 @@ abstract class AbstractHazelcastIndexedSessionRepositoryITests {
 		session = this.repository.findById(sessionId);
 		assertThat(session.getMaxInactiveInterval()).isEqualTo(individualSessionTimeout);
 		assertThat(hazelcastMap.getEntryView(sessionId).getTtl()).isEqualTo(individualSessionTimeout.toMillis());
+	}
+
+	@Test
+	void createSessionAndUpdateAttribute() {
+        repository.setFlushMode(FlushMode.IMMEDIATE);
+		HazelcastSession session = this.repository.createSession();
+		String sessionId = session.getId();
+		session.setAttribute("attribute", "value");
+        session.setAttribute("attribute", "value2");
+
+		var foundSession = this.repository.findById(sessionId);
+        assertThat(foundSession).isNotNull();
+        assertThat(foundSession.<String>getAttribute("attribute")).isEqualTo("value2");
 	}
 
 }

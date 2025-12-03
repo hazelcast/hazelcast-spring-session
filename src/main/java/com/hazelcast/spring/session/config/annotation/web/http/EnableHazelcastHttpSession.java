@@ -103,4 +103,11 @@ public @interface EnableHazelcastHttpSession {
 	 */
 	SaveMode saveMode() default SaveMode.ON_SET_ATTRIBUTE;
 
+    /**
+     * If true, Hazelcast Spring Session should be deployed on all nodes in the cluster.
+     *
+     * @since 4.0.0
+     */
+    boolean deployedOnAllMembers() default true;
+
 }

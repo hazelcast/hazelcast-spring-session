@@ -34,7 +34,7 @@ val testcontainersVersion = "2.0.1"
 sourceSets {
     create("integrationTest", Action<SourceSet> {
         java {
-            srcDir("src/integration-test/java")
+            srcDirs("src/integration-test/java", "build/generated-classes/java")
         }
         resources {
             srcDir("src/integration-test/resources")
@@ -43,6 +43,18 @@ sourceSets {
         runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
     })
 }
+
+val processBuildContext = tasks.register<ProcessResources>("processBuildContext") {
+    println("processing resources from " + project.projectDir.path + "/src/integration-test/resources/")
+    from(project.projectDir.path + "/src/integration-test/resources/")
+    into(project.projectDir.path + "/src/integration-test/java/com/hazelcast/spring/session/")
+    include("**BuildContext.java")
+    filesMatching("**BuildContext.java") {
+        expand(project.properties)
+    }
+}
+
+tasks.compileJava.get().dependsOn(processBuildContext)
 
 val mainArtifactFile = configurations.getAt("archives").artifacts.files.singleFile
 
@@ -115,11 +127,17 @@ dependencies {
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:${junitVersion}")
+    testImplementation("org.junit.platform:junit-platform-suite:${junitVersion}")
     testImplementation("org.mockito:mockito-core:$mockitoVersion")
     testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
     testImplementation("org.springframework.security:spring-security-core:$springSecurityVersion")
     testImplementation("org.springframework:spring-test:$springFrameworkVersion")
     testImplementation("org.springframework:spring-web:$springFrameworkVersion")
+
+    testImplementation("com.hazelcast:hazelcast:$hazelcastVersion:tests")
+    // for hazelcast test network assertions
+    testImplementation("junit:junit:4.13.2")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -134,6 +152,7 @@ tasks.test {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
+    enableAssertions = true
 }
 
 tasks.withType<Test>().configureEach {

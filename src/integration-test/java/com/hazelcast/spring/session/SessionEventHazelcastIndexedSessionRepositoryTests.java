@@ -206,7 +206,7 @@ class SessionEventHazelcastIndexedSessionRepositoryTests<S extends Session> {
 
 		@Bean
 		HazelcastInstance embeddedHazelcast() {
-			return HazelcastITestUtils.embeddedHazelcastServer();
+			return HazelcastITUtils.embeddedHazelcastServer();
 		}
 
 		@Bean
