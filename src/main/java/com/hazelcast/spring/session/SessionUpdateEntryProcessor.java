@@ -51,7 +51,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
     public SessionUpdateEntryProcessor() {
     }
 
-    public  SessionUpdateEntryProcessor(HazelcastIndexedSessionRepository.HazelcastSession session) {
+    public SessionUpdateEntryProcessor(HazelcastIndexedSessionRepository.HazelcastSession session) {
         if (session.lastAccessedTimeChanged) {
             setLastAccessedTime(session.getLastAccessedTime());
         }
