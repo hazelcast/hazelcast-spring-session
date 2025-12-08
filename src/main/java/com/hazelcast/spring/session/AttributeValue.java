@@ -23,7 +23,6 @@ import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
@@ -38,11 +37,7 @@ import java.util.Objects;
  *
  * @since 4.0.0
  */
-record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType dataType) implements Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
+record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType dataType) {
     @NonNull
     static GenericRecord toGenericRecord(@NonNull Object value) {
         if (value instanceof AttributeValue av) {
