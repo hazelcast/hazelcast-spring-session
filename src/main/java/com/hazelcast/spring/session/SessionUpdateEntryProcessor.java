@@ -42,19 +42,13 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class SessionUpdateEntryProcessor implements EntryProcessor {
-    Instant lastAccessedTime;
+    private Instant lastAccessedTime;
 
-    Duration maxInactiveInterval;
+    private Duration maxInactiveInterval;
 
-    Map<String, AttributeValue> delta;
+    private Map<String, AttributeValue> delta;
 
     public SessionUpdateEntryProcessor() {
-    }
-
-    SessionUpdateEntryProcessor(Instant lastAccessedTime, Duration maxInactiveInterval, Map<String, AttributeValue> delta) {
-        this.lastAccessedTime = lastAccessedTime;
-        this.maxInactiveInterval = maxInactiveInterval;
-        this.delta = delta;
     }
 
     public SessionUpdateEntryProcessor(HazelcastIndexedSessionRepository.HazelcastSession session) {
