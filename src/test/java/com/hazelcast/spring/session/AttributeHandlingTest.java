@@ -49,7 +49,7 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
 public class AttributeHandlingTest extends TestWithHazelcast {
 
     @Parameter(0)
-    boolean jarOnEveryMember;
+    boolean codeDeployed;
     @Parameter(1)
     boolean useClient;
 
@@ -58,7 +58,7 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
     @BeforeEach
     void setUp() {
-        Config config = jarOnEveryMember ? getConfig() : getConfigWithoutSerialization();
+        Config config = codeDeployed ? getConfig() : getConfigWithoutSerialization();
 
         FACTORY.newHazelcastInstance(config);
         FACTORY.newHazelcastInstance(config);
@@ -70,12 +70,12 @@ public class AttributeHandlingTest extends TestWithHazelcast {
                 : FACTORY.newHazelcastInstance(getConfig());
 
         this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance);
-        this.repository.setDeployedOnAllMembers(jarOnEveryMember);
+        this.repository.setDeployedOnAllMembers(codeDeployed);
         this.repository.afterPropertiesSet();
 
         var newMember = FACTORY.newHazelcastInstance(getConfig());
         this.otherMemberRepository = new HazelcastIndexedSessionRepository(newMember);
-        this.otherMemberRepository.setDeployedOnAllMembers(jarOnEveryMember);
+        this.otherMemberRepository.setDeployedOnAllMembers(codeDeployed);
         this.otherMemberRepository.afterPropertiesSet();
     }
 
@@ -106,6 +106,7 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
         var newMember = FACTORY.newHazelcastInstance(getConfig());
         var repository = new HazelcastIndexedSessionRepository(newMember);
+        repository.setDeployedOnAllMembers(codeDeployed);
         repository.afterPropertiesSet();
         HazelcastSession sessionFromSecondMember = repository.findById(session.getId());
         assertAttribute(sessionFromSecondMember, "keyPojo")

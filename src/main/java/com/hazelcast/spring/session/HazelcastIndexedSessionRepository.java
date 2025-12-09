@@ -149,7 +149,7 @@ public class HazelcastIndexedSessionRepository
 
 	private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
 
-    private boolean deployedOnAllMembers = true;
+    private boolean deployedOnAllMembers;
 
 	private IMap<String, BackingMapSession> sessions;
 
@@ -170,6 +170,7 @@ public class HazelcastIndexedSessionRepository
             // can be a mock for tests
             this.serializationService = sss.getSerializationService();
         }
+        deployedOnAllMembers = true;
         LOGGER.info("HazelcastIndexedSessionRepository initialized");
 	}
 
