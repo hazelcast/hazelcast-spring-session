@@ -149,6 +149,25 @@ public class HazelcastIndexedSessionRepository
 
 	private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
 
+    /**
+     * If false, the {@link #save(HazelcastSession)} will fall back to simple algorithm:
+     * <ol>
+     *     <li> lock entry with session
+     *     <li> get current value from cluster
+     *     <li> process changes
+     *     <li> {@link IMap#set} the value
+     *     <li> unlock entry
+     * </ol>
+     * In this case {@link SessionUpdateEntryProcessor} will never be serialized and sent. We still need to serialize/deserialize
+     * user objects, but since processing is done on client and client is required to register serializers, we have no problem with this.
+     * <p>
+     * If the value is true, the {@link SessionUpdateEntryProcessor} will be sent to a cluster to process the changes. Processor
+     * must be present on all members, will be serialized using custom serializer, that will register itself automatically via ServiceLoader.
+     *
+     * User data will be handled in {@link SessionUpdateEntryProcessor} as pure Java objects <strong>if</strong> CompactSerializers
+     * were configured on the server side or as {@link com.hazelcast.nio.serialization.genericrecord.GenericRecord} if serializers
+     * were configured only on clients.
+     */
     private boolean deployedOnAllMembers;
 
 	private IMap<String, BackingMapSession> sessions;
