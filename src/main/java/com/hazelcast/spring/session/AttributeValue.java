@@ -16,6 +16,7 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.internal.serialization.Data;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.HeapData;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
@@ -30,8 +31,12 @@ import java.util.Objects;
 /**
  * Class used by {@link BackingMapSession} to store attribute values with its corresponding type.
  * <p>
- * In client-server architecture we don't want to hold users' Java objects to avoid the need to upload user code to server.
- * However, for speed and simplicity, few types are stored as-is: String, Integer, Long.
+ * In client-server architecture we don't want to hold users' Java objects as pure, deserialized objects to avoid the need
+ * to upload user code to server. Therefore, most of the user objects will be first serialized to
+ * {@link Data} and kept in {@link AttributeValue} as a {@link Data#toByteArray() byte array representation}.
+ * The {@link #dataType()} will provide context if deserialization via {@link Data} abstraction is needed.
+ * <p>
+ * For speed and simplicity, few types are stored as-is: String, Integer, Long.
  *
  * @param object actual value of the attribute. String, Integer, Long or any other data type serialized as {@code byte[]}.
  *
