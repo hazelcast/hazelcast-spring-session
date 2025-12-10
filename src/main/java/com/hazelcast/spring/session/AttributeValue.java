@@ -24,7 +24,6 @@ import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -105,7 +104,7 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
         return value == null ? null : new AttributeValue(value, AttributeValueDataType.DATA);
     }
 
-    enum AttributeValueDataType implements Serializable {
+    enum AttributeValueDataType {
         STRING,
         INTEGER,
         LONG,
