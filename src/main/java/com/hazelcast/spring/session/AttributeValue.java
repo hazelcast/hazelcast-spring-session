@@ -35,7 +35,8 @@ import java.util.Objects;
  * {@link Data} and kept in {@link AttributeValue} as a {@link Data#toByteArray() byte array representation}.
  * The {@link #dataType()} will provide context if deserialization via {@link Data} abstraction is needed.
  * <p>
- * For speed and simplicity, few types are stored as-is: String, Integer, Long.
+ * For speed and simplicity, few types are stored as-is: String, Integer, Long. Those types are Java standard types, so there is no
+ * risk of not having them on server JVM.
  *
  * @param object actual value of the attribute. String, Integer, Long or any other data type serialized as {@code byte[]}.
  *
