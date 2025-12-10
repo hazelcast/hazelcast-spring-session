@@ -30,6 +30,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Serializer used to serialize {@link SessionUpdateEntryProcessor}.
+ * Since the processor will be used only when the Hazelcast Spring Session's code is deployed on server, we can safely use
+ * {@link StreamSerializer} plus {@link com.hazelcast.nio.serialization.SerializerHook}.
+ */
 public class SessionUpdateEntryProcessorSerializer implements StreamSerializer<SessionUpdateEntryProcessor> {
 
     public void write(@NonNull ObjectDataOutput out, @NonNull SessionUpdateEntryProcessor object) throws IOException {
@@ -74,6 +79,8 @@ public class SessionUpdateEntryProcessorSerializer implements StreamSerializer<S
         if (o instanceof AttributeValue av) {
             return  av;
         }
+        // client-server with no serializer configured on server side - in this case object in the map will be deserialized
+        // as GenericRecord, schema will be taken from clients who distribute it automatically.
         if (o instanceof GenericRecord gr) {
             var dataType = AttributeValue.AttributeValueDataType.from(gr.getInt8("dataType"));
             byte[] values = gr.getArrayOfInt8("value");
@@ -124,7 +131,7 @@ public class SessionUpdateEntryProcessorSerializer implements StreamSerializer<S
         return Duration.ofSeconds(seconds, nanos);
     }
 
-    public static class SerializerHook implements com.hazelcast.nio.serialization.SerializerHook<SessionUpdateEntryProcessor> {
+    public static class HzSSSerializerHook implements com.hazelcast.nio.serialization.SerializerHook<SessionUpdateEntryProcessor> {
 
         @Override
         public Class<SessionUpdateEntryProcessor> getSerializationType() {
@@ -135,7 +142,6 @@ public class SessionUpdateEntryProcessorSerializer implements StreamSerializer<S
         public Serializer createSerializer() {
             return new SessionUpdateEntryProcessorSerializer();
         }
-
 
         @Override
         public boolean isOverwritable() {

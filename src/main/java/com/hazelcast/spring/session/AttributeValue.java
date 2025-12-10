@@ -123,7 +123,7 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
                 case (byte) 1 -> INTEGER;
                 case (byte) 2 -> LONG;
                 case (byte) 3 -> DATA;
-                default -> throw new IllegalArgumentException();
+                default -> throw new IllegalArgumentException("Unknown AttributeValueDataType identifier " + ord);
             };
         }
     }
@@ -144,7 +144,7 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
 
     @Override
     public int hashCode() {
-        int objectHash = object instanceof byte[] ? Arrays.hashCode((byte[]) object) : object.hashCode();
+        int objectHash = object instanceof byte[] bytes ? Arrays.hashCode(bytes) : object.hashCode();
         return Objects.hash(objectHash, dataType);
     }
 }
