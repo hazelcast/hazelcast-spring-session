@@ -46,15 +46,18 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
 
     Duration maxInactiveInterval;
 
-    Map<String, AttributeValue> delta;
+    Map<String, byte[]> delta;
+
+    String principalName;
 
     public SessionUpdateEntryProcessor() {
     }
 
-    SessionUpdateEntryProcessor(Instant lastAccessedTime, Duration maxInactiveInterval, Map<String, AttributeValue> delta) {
+    SessionUpdateEntryProcessor(Instant lastAccessedTime, Duration maxInactiveInterval, Map<String, byte[]> delta, String principalName) {
         this.lastAccessedTime = lastAccessedTime;
         this.maxInactiveInterval = maxInactiveInterval;
         this.delta = delta;
+        this.principalName = principalName;
     }
 
     public SessionUpdateEntryProcessor(HazelcastIndexedSessionRepository.HazelcastSession session) {
@@ -65,7 +68,17 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             setMaxInactiveInterval(session.getMaxInactiveInterval());
         }
         if (!session.delta.isEmpty()) {
-            setDelta(new HashMap<>(session.delta));
+            delta = new HashMap<>();
+            session.delta.forEach((k, v) -> {
+                if (v == null) {
+                    delta.put(k, null);
+                } else {
+                    delta.put(k, v.objectBytes());
+                }
+            });
+        }
+        if (session.principalNameChanged()) {
+            this.principalName = session.getDelegate().getPrincipalName();
         }
     }
 
@@ -102,15 +115,16 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             List<String> attributeNames = toList(gr.getArrayOfString("attributeNames"));
             List<GenericRecord> attributeValues = toList(gr.getArrayOfGenericRecord("attributeValues"));
 
-            for (final Map.Entry<String, AttributeValue> attribute : this.delta.entrySet()) {
+            for (final Map.Entry<String, byte[]> attribute : this.delta.entrySet()) {
+                byte[] value = attribute.getValue();
                 if (attribute.getValue() != null) {
-                    GenericRecord valueAsRecord = AttributeValue.toGenericRecord(attribute.getValue());
-                    addValue(valueAsRecord, attribute.getKey(), attributeNames, attributeValues);
+                    addValue(value, attribute.getKey(), attributeNames, attributeValues);
                     if (attribute.getKey().equals(PRINCIPAL_NAME_ATTRIBUTE)
                             || attribute.getKey().equals(PRINCIPAL_NAME_INDEX_NAME)) {
-                        addValue(valueAsRecord, PRINCIPAL_NAME_ATTRIBUTE, attributeNames, attributeValues);
-                        addValue(valueAsRecord, PRINCIPAL_NAME_INDEX_NAME, attributeNames, attributeValues);
-                        builder.setString("principalName", (String) attribute.getValue().object());
+                        addValue(value, PRINCIPAL_NAME_ATTRIBUTE, attributeNames, attributeValues);
+                        addValue(value, PRINCIPAL_NAME_INDEX_NAME, attributeNames, attributeValues);
+
+                        builder.setString("principalName", principalName);
                     }
                 } else {
                     int index = findIndex(attribute.getKey(), attributeNames);
@@ -128,16 +142,16 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
         return Boolean.TRUE;
     }
 
-    private void addValue(GenericRecord valueAsRecord,
+    private void addValue(byte[] valueBytes,
                           String attributeName,
                           List<String> attributeNames,
                           List<GenericRecord> attributeValues) {
         int index = findIndex(attributeName, attributeNames);
         if (index != -1) {
-            attributeValues.set(index, valueAsRecord);
+            attributeValues.set(index, AttributeValue.serializedGenericRecord(valueBytes));
         } else {
             attributeNames.add(attributeName);
-            attributeValues.add(valueAsRecord);
+            attributeValues.add(AttributeValue.serializedGenericRecord(valueBytes));
         }
     }
 
@@ -162,13 +176,16 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             value.setMaxInactiveInterval(this.maxInactiveInterval);
         }
         if (this.delta != null) {
-            for (final Map.Entry<String, AttributeValue> attribute : this.delta.entrySet()) {
+            for (final Map.Entry<String, byte[]> attribute : this.delta.entrySet()) {
                 if (attribute.getValue() != null) {
-                    value.setAttribute(attribute.getKey(), attribute.getValue());
+                    value.setSerializedAttribute(attribute.getKey(), AttributeValue.serialized(attribute.getValue()));
                 } else {
                     value.removeAttribute(attribute.getKey());
                 }
             }
+        }
+        if (principalName != null) {
+            value.setPrincipalName(principalName);
         }
     }
 
@@ -181,6 +198,11 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
     }
 
     void setDelta(Map<String, AttributeValue> delta) {
-        this.delta = delta;
+        Map<String, byte[]> onlyByte = new HashMap<>(delta.size());
+        for (Map.Entry<String, AttributeValue> entry : delta.entrySet()) {
+            AttributeValue value = entry.getValue();
+            onlyByte.put(entry.getKey(), value == null ? null : value.objectBytes());
+        }
+        this.delta = onlyByte;
     }
 }

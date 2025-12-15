@@ -16,6 +16,7 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.internal.serialization.SerializationService;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.session.Session;
@@ -43,6 +44,7 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
  * @since 4.0.0
  */
 class BackingMapSession {
+    static final Set<String> PRINCIPAL_NAME_ATTRIBUTES = Set.of(PRINCIPAL_NAME_ATTRIBUTE, PRINCIPAL_NAME_INDEX_NAME);
 
     /**
      * Default {@link #setMaxInactiveInterval(Duration)} (30 minutes) in seconds.
@@ -112,13 +114,6 @@ class BackingMapSession {
 
     public void setPrincipalName(@Nullable String principalName) {
         this.principalName = principalName;
-        if (principalName == null) {
-            sessionAttrs.remove(PRINCIPAL_NAME_ATTRIBUTE);
-            sessionAttrs.remove(PRINCIPAL_NAME_INDEX_NAME);
-        } else {
-            this.sessionAttrs.put(PRINCIPAL_NAME_ATTRIBUTE, AttributeValue.string(principalName));
-            this.sessionAttrs.put(PRINCIPAL_NAME_INDEX_NAME, AttributeValue.string(principalName));
-        }
     }
 
     public Instant getCreationTime() {
@@ -163,27 +158,44 @@ class BackingMapSession {
 
     @Nullable
     public AttributeValue getAttribute(@NonNull String attributeName) {
-        if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE)) {
-            return principalName == null ? null : AttributeValue.string(principalName);
-        }
-        if (attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
-            return principalName == null ? null : AttributeValue.string(principalName);
+        if (PRINCIPAL_NAME_ATTRIBUTES.contains(attributeName)) {
+            return AttributeValue.deserialized(principalName);
         }
         return this.sessionAttrs.get(attributeName);
     }
 
     @NonNull
     public Set<String> getAttributeNames() {
-        return new HashSet<>(this.sessionAttrs.keySet());
+        HashSet<String> keys = new HashSet<>(this.sessionAttrs.keySet());
+        if (principalName != null) {
+            keys.add(PRINCIPAL_NAME_ATTRIBUTE);
+            keys.add(PRINCIPAL_NAME_INDEX_NAME);
+        }
+        return keys;
+    }
+    @NonNull
+    Set<String> getAttributeNameWithoutPrincipal() {
+        return sessionAttrs.keySet();
     }
 
     public void setAttribute(@NonNull String attributeName, @Nullable AttributeValue attributeValue) {
         if (attributeValue == null) {
             removeAttribute(attributeName);
-        } else if (attributeName.equals(PRINCIPAL_NAME_ATTRIBUTE) || attributeName.equals(PRINCIPAL_NAME_INDEX_NAME)) {
+        } else if (PRINCIPAL_NAME_ATTRIBUTES.contains(attributeName)) {
+            attributeValue.assertDeserialized();
             setPrincipalName((String) attributeValue.object());
         } else {
             this.sessionAttrs.put(attributeName, attributeValue);
+        }
+    }
+
+    void setSerializedAttribute(@NonNull String attributeName, @Nullable AttributeValue attributeValue) {
+        if (attributeValue == null) {
+            removeAttribute(attributeName);
+        } else if (!PRINCIPAL_NAME_ATTRIBUTES.contains(attributeName)) {
+            this.sessionAttrs.put(attributeName, attributeValue);
+        } else {
+            throw new UnsupportedOperationException("Setting serialized form of principal name is not supported");
         }
     }
 
@@ -236,5 +248,11 @@ class BackingMapSession {
     public int hashCode() {
         return Objects.hash(id, originalId, sessionAttrs, creationTime, lastAccessedTime, principalName, maxInactiveInterval,
                             sessionIdGenerator);
+    }
+
+    public void prepareAttributesSerializedForm(SerializationService serializationService) {
+        for (AttributeValue value : sessionAttrs.values()) {
+            value.serialize(serializationService);
+        }
     }
 }

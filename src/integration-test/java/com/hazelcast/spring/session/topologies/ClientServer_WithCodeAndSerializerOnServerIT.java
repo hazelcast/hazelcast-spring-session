@@ -60,7 +60,7 @@ class ClientServer_WithCodeAndSerializerOnServerIT
 
 	@BeforeAll
 	static void setUpClass() throws IOException {
-        var jarResource = ClientServer_WithCodeAndSerializerOnServerIT.class.getResource("../../../../../HSS.jar");
+        var jarResource = ClientServer_WithCodeAndSerializerOnServerIT.class.getResource("../../../../../../forDocker/HSS.jar");
         assert jarResource != null;
         var path = new File(jarResource.getFile()).getParentFile();
 

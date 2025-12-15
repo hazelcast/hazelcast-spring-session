@@ -57,18 +57,15 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
     @Override
     @NonNull
     public AttributeValue read(CompactReader reader) {
-        byte[] value = reader.readArrayOfInt8("value");
-        byte form = reader.readInt8("dataType");
-        AttributeValue.AttributeValueDataType formAsEnum = AttributeValue.AttributeValueDataType.from(form);
-        Object finalValue = AttributeValue.convertSerializedValueToObject(value, formAsEnum);
-        return new AttributeValue(finalValue, formAsEnum);
+        byte[] value = reader.readArrayOfInt8("objectBytes");
+        AttributeValue serialized = AttributeValue.serialized(value);
+        assert serialized != null;
+        return serialized;
     }
 
     @Override
     public void write(@NonNull CompactWriter writer, @NonNull AttributeValue object) {
-        byte[] finalValue = object.convertObjectToValueBytes();
-        writer.writeArrayOfInt8("value",  finalValue);
-        writer.writeInt8("dataType", (byte) object.dataType().ordinal());
+        writer.writeArrayOfInt8("objectBytes", object.objectBytes());
     }
 
     @Override

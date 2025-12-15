@@ -46,16 +46,21 @@ public class AttributeValueSerializerTest extends TestWithHazelcast {
 
         assertThat(object)
                 .isNotNull()
-                .isInstanceOf(AttributeValue.class)
-                .isEqualTo(attributeValue);
+                .isInstanceOf(AttributeValue.class);
+
+        var av = (AttributeValue) object;
+        av.deserialize(serializationService);
+        assertThat(av).isEqualTo(attributeValue);
     }
 
     static List<AttributeValue> attributes() {
-        return List.of(
+        List<AttributeValue> list = List.of(
                 AttributeValue.string("value1"),
-                new AttributeValue(1, AttributeValue.AttributeValueDataType.INTEGER),
-                new AttributeValue(1L, AttributeValue.AttributeValueDataType.LONG),
-                AttributeValue.data(serializationService.toData(new CustomPojo(1, "Luke")).toByteArray())
-                      );
+                AttributeValue.deserialized(1),
+                AttributeValue.deserialized(1L),
+                AttributeValue.deserialized(new CustomPojo(1, "Luke"))
+                                             );
+        list.forEach(av -> av.serialize(serializationService));
+        return list;
     }
 }

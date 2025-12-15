@@ -65,7 +65,7 @@ class ClientServer_WithCodeDeployed_NoSerializerConfIT extends AbstractHazelcast
 
 	@BeforeAll
 	static void setUpClass() throws IOException {
-        var jarResource = ClientServer_WithCodeDeployed_NoSerializerConfIT.class.getResource("../../../../../HSS.jar");
+        var jarResource = ClientServer_WithCodeAndSerializerOnServerIT.class.getResource("../../../../../../forDocker/HSS.jar");
         assert jarResource != null;
         var path = new File(jarResource.getFile()).getParentFile();
 

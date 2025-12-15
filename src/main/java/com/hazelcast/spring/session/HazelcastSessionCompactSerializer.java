@@ -23,8 +23,6 @@ import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -80,7 +78,7 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         assert attributeNames != null : "Attribute names should not be null";
         assert attributeValues != null : "Attribute values should not be null";
         for (int i = 0; i < attributeNames.length; i++) {
-            cached.setAttribute(attributeNames[i], attributeValues[i]);
+            cached.setSerializedAttribute(attributeNames[i], attributeValues[i]);
         }
         return cached;
     }
@@ -93,7 +91,7 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         writeInstant(writer, session.getCreationTime(), "creationTime");
         writeInstant(writer, session.getLastAccessedTime(), "lastAccessedTime");
         writeDuration(writer, session.getMaxInactiveInterval(),  "maxInactiveInterval");
-        Set<String> attributeNames = session.getAttributeNames();
+        Set<String> attributeNames = session.getAttributeNameWithoutPrincipal();
         AttributeValue[] attributeValues = attributeNames.stream().map(session::getAttribute).toArray(AttributeValue[]::new);
 
         writer.writeArrayOfString("attributeNames", attributeNames.toArray(new String[0]));

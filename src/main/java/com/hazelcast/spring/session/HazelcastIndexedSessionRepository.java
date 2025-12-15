@@ -59,6 +59,8 @@ import org.springframework.session.events.SessionDeletedEvent;
 import org.springframework.session.events.SessionExpiredEvent;
 import org.springframework.util.Assert;
 
+import static com.hazelcast.spring.session.BackingMapSession.PRINCIPAL_NAME_ATTRIBUTES;
+
 /**
  * A {@link org.springframework.session.SessionRepository} implementation that stores
  * sessions in Hazelcast's distributed {@link IMap}.
@@ -306,6 +308,7 @@ public class HazelcastIndexedSessionRepository
 	@Override
 	public void save(@NonNull HazelcastSession session) {
         final String sessionId = session.getId();
+        session.prepareAttributesSerializedForm(serializationService);
 		if (session.isNew) {
 			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
 					TimeUnit.SECONDS);
@@ -437,16 +440,29 @@ public class HazelcastIndexedSessionRepository
 		private String originalId;
 
 		final Map<String, AttributeValue> delta = new HashMap<>();
+        boolean principalNameChanged;
 
 		HazelcastSession(@NonNull BackingMapSession cached, boolean isNew) {
 			this.delegate = cached;
 			this.isNew = isNew;
 			this.originalId = cached.getId();
 			if (this.isNew || (saveMode == SaveMode.ALWAYS)) {
-				getAttributeNames()
-					.forEach((attributeName) -> this.delta.put(attributeName, cached.getAttribute(attributeName)));
+				delegate.getAttributeNames()
+					.forEach((attributeName) -> registerDelta(attributeName, cached.getAttribute(attributeName)));
 			}
 		}
+
+        private void registerDelta(String attributeName, @Nullable AttributeValue attribute) {
+            if (PRINCIPAL_NAME_ATTRIBUTES.contains(attributeName)) {
+                principalNameChanged = true;
+                return;
+            }
+            this.delta.put(attributeName, attribute);
+        }
+
+        boolean principalNameChanged() {
+            return principalNameChanged;
+        }
 
 		HazelcastSession(@NonNull BackingMapSession cached) {
 			this(cached, false);
@@ -505,10 +521,14 @@ public class HazelcastIndexedSessionRepository
         @Nullable
 		public <T> T getAttribute(String attributeName) {
             AttributeValue attributeValue = this.delegate.getAttribute(attributeName);
-			if (attributeValue != null && saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
-				this.delta.put(attributeName, attributeValue);
+			if (attributeValue == null) {
+                return null;
+            }
+            attributeValue.deserialize(serializationService);
+            if (saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
+                registerDelta(attributeName, attributeValue);
 			}
-            return attributeValue == null ? null : (T) attributeValue.getDeserializedValue(serializationService);
+            return (T) attributeValue.deserialize(serializationService);
 		}
 
 		@Override
@@ -523,20 +543,28 @@ public class HazelcastIndexedSessionRepository
                 this.delegate.removeAttribute(attributeName);
                 this.delta.put(attributeName, null);
             } else {
-                AttributeValue value = AttributeValue.toAttributeValue(attributeValue, serializationService);
+                AttributeValue value = AttributeValue.deserialized(attributeValue);
 
                 this.delegate.setAttribute(attributeName, value);
-                this.delta.put(attributeName, value);
+                registerDelta(attributeName, value);
             }
 			if (SPRING_SECURITY_CONTEXT.equals(attributeName)) {
 				Map<String, String> indexes = indexResolver.resolveIndexesFor(this);
 				String principal = (attributeValue != null) ? indexes.get(PRINCIPAL_NAME_INDEX_NAME) : null;
-                AttributeValue val = AttributeValue.toAttributeValue(principal, serializationService);
 				this.delegate.setPrincipalName(principal);
-                this.delta.put(PRINCIPAL_NAME_INDEX_NAME, val);
+                this.principalNameChanged = true;
 			}
 			flushImmediateIfNecessary();
 		}
+
+        void prepareAttributesSerializedForm(SerializationService serializationService) {
+            this.delegate.prepareAttributesSerializedForm(serializationService);
+            delta.forEach((attributeName, attributeValue) -> {
+                if (attributeValue != null) {
+                    attributeValue.serialize(serializationService);
+                }
+            });
+        }
 
         @Override
 		public void removeAttribute(@NonNull String attributeName) {
@@ -548,7 +576,7 @@ public class HazelcastIndexedSessionRepository
 		}
 
 		boolean hasChanges() {
-			return (this.lastAccessedTimeChanged || this.maxInactiveIntervalChanged || !this.delta.isEmpty());
+			return (this.lastAccessedTimeChanged || this.maxInactiveIntervalChanged || !this.delta.isEmpty() || principalNameChanged);
 		}
 
 		void clearChangeFlags() {

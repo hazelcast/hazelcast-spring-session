@@ -22,9 +22,11 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.map.ExtendedMapEntry;
+import org.assertj.core.api.ObjectAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.hazelcast.spring.session.TestUtils.defaultSerializationService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -97,7 +99,8 @@ class SessionUpdateEntryProcessorTests {
 		verify(mapEntry).setValue(mapSession, mapSession.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
 	}
 
-	@Test
+    @Test
+	@SuppressWarnings("DataFlowIssue")
 	void shouldUpdateSessionAttributesFromDeltaAndSetMapEntryValueWithOldTimeToLive() {
         BackingMapSession mapSession = new BackingMapSession();
 		mapSession.setAttribute("changed", AttributeValue.string("oldValue"));
@@ -107,18 +110,27 @@ class SessionUpdateEntryProcessorTests {
 		given(mapEntry.getValue()).willReturn(mapSession);
 
 		HashMap<String, AttributeValue> delta = new HashMap<>();
-		delta.put("added", AttributeValue.string("addedValue"));
-		delta.put("changed", AttributeValue.string("newValue"));
+		delta.put("added", AttributeValue.string("addedValue").serialize(defaultSerializationService()));
+		delta.put("changed", AttributeValue.string("newValue").serialize(defaultSerializationService()));
 		delta.put("removed", null);
 		this.processor.setDelta(delta);
 
 		Object result = this.processor.process(mapEntry);
 
+        mapSession.prepareAttributesSerializedForm(defaultSerializationService());
 		assertThat(result).isEqualTo(Boolean.TRUE);
-		assertThat(mapSession.getAttribute("added").object()).isEqualTo("addedValue");
-		assertThat(mapSession.getAttribute("changed").object()).isEqualTo("newValue");
-		assertThat(mapSession.getAttribute("removed")).isNull();
+        assertAttribute(mapSession, "added").extracting(AttributeValue::object).isEqualTo("addedValue");
+        assertAttribute(mapSession, "changed").extracting(AttributeValue::object).isEqualTo("newValue");
+        assertAttribute(mapSession, "removed").isNull();
 		verify(mapEntry).setValue(mapSession, mapSession.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
 	}
+
+    public static ObjectAssert<AttributeValue> assertAttribute(BackingMapSession mapSession, String attributeName) {
+        AttributeValue attribute = mapSession.getAttribute(attributeName);
+        if (attribute != null) {
+            attribute.deserialize(defaultSerializationService());
+        }
+        return assertThat(attribute);
+    }
 
 }

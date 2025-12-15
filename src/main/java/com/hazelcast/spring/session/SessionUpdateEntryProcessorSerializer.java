@@ -40,17 +40,18 @@ public class SessionUpdateEntryProcessorSerializer implements StreamSerializer<S
     public void write(@NonNull ObjectDataOutput out, @NonNull SessionUpdateEntryProcessor object) throws IOException {
         writeInstant(out, object.lastAccessedTime);
         writeDuration(out, object.maxInactiveInterval);
+        out.writeString(object.principalName);
 
         if (object.delta == null) {
              out.writeInt(-1);
         } else {
             // this part will be done on client side, so we don't need to worry that the value may be a GenericRecord
-            Set<Map.Entry<String, AttributeValue>> entries = object.delta.entrySet();
+            Set<Map.Entry<String, byte[]>> entries = object.delta.entrySet();
             out.writeInt(entries.size());
 
-            for (Map.Entry<String, AttributeValue> entry : entries) {
+            for (Map.Entry<String, byte[]> entry : entries) {
                 out.writeString(entry.getKey());
-                out.writeObject(entry.getValue());
+                out.writeByteArray(entry.getValue());
             }
         }
     }
@@ -60,19 +61,20 @@ public class SessionUpdateEntryProcessorSerializer implements StreamSerializer<S
     public SessionUpdateEntryProcessor read(@NonNull ObjectDataInput in) throws IOException {
         Instant lastAccessedTime = readInstant(in);
         Duration maxInactiveInterval = readDuration(in);
+        String principalName = in.readString();
 
         int count = in.readInt();
-        HashMap<String, AttributeValue> map = null;
+        HashMap<String, byte[]> map = null;
         if (count != -1) {
             map = new HashMap<>(count);
             for (int i = 0; i < count; i++) {
                 String key = in.readString();
-                AttributeValue value = objectAsValue(in.readObject());
+                byte[] value = in.readByteArray();
 
                 map.put(key, value);
             }
         }
-        return new SessionUpdateEntryProcessor(lastAccessedTime, maxInactiveInterval, map);
+        return new SessionUpdateEntryProcessor(lastAccessedTime, maxInactiveInterval, map, principalName);
     }
 
     private AttributeValue objectAsValue(Object o) {
@@ -82,10 +84,8 @@ public class SessionUpdateEntryProcessorSerializer implements StreamSerializer<S
         // client-server with no serializer configured on server side - in this case object in the map will be deserialized
         // as GenericRecord, schema will be taken from clients who distribute it automatically.
         if (o instanceof GenericRecord gr) {
-            var dataType = AttributeValue.AttributeValueDataType.from(gr.getInt8("dataType"));
             byte[] values = gr.getArrayOfInt8("value");
-            Object valueObject = AttributeValue.convertSerializedValueToObject(values, dataType);
-            return new AttributeValue(valueObject, dataType);
+            return AttributeValue.serialized(values);
         }
         return null;
     }

@@ -33,99 +33,80 @@ import java.util.Objects;
  * In client-server architecture we don't want to hold users' Java objects as pure, deserialized objects to avoid the need
  * to upload user code to server. Therefore, most of the user objects will be first serialized to
  * {@link Data} and kept in {@link AttributeValue} as a {@link Data#toByteArray() byte array representation}.
- * The {@link #dataType()} will provide context if deserialization via {@link Data} abstraction is needed.
  * <p>
- * For speed and simplicity, few types are stored as-is: String, Integer, Long. Those types are Java standard types, so there is no
- * risk of not having them on server JVM.
- *
- * @param object actual value of the attribute. String, Integer, Long or any other data type serialized as {@code byte[]}.
+ * For the speed we are caching the in-memory, deserialized object representation.
  *
  * @since 4.0.0
  */
-record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType dataType) {
-    @NonNull
-    static GenericRecord toGenericRecord(@NonNull Object value) {
-        if (value instanceof AttributeValue av) {
-            var builder = GenericRecordBuilder.compact("AttributeValue");
-            builder.setArrayOfInt8("value", av.convertObjectToValueBytes());
-            builder.setInt8("dataType", (byte) av.dataType.ordinal());
-            return builder.build();
-        }
-        throw new IllegalArgumentException(value.getClass().getName());
-    }
+final class AttributeValue {
+    private transient Object object;
+    private byte[] objectBytes;
 
-    @Nullable
-    public static AttributeValue toAttributeValue(@Nullable Object rawValue, @NonNull SerializationService serializationService) {
-        if (rawValue == null) {
+    public static AttributeValue serialized(byte[] value) {
+        if (value == null) {
             return null;
-        } else if (rawValue instanceof String s) {
-            return new AttributeValue(s, AttributeValue.AttributeValueDataType.STRING);
-        } else if (rawValue instanceof Integer s) {
-            return new AttributeValue(s, AttributeValue.AttributeValueDataType.INTEGER);
-        } else if (rawValue instanceof Long s) {
-            return new AttributeValue(s, AttributeValue.AttributeValueDataType.LONG);
-        } else {
-            byte[] serializedValue = serializationService.toData(rawValue).toByteArray();
-            return new AttributeValue(serializedValue, AttributeValue.AttributeValueDataType.DATA);
         }
+        AttributeValue attributeValue = new AttributeValue();
+        attributeValue.objectBytes = value;
+        return attributeValue;
     }
 
-    static Object convertSerializedValueToObject(byte[] value, AttributeValueDataType formAsEnum) {
-        return switch (formAsEnum) {
-            case STRING -> new String(value);
-            case DATA -> value;
-            case LONG ->  Long.parseLong(new String(value));
-            case INTEGER ->  Integer.parseInt(new String(value));
-        };
+    public static GenericRecord serializedGenericRecord(byte[] value) {
+        if (value == null) {
+            return null;
+        }
+        var builder = GenericRecordBuilder.compact("AttributeValue");
+        builder.setArrayOfInt8("objectBytes", value);
+        return builder.build();
     }
 
-    byte[] convertObjectToValueBytes() {
-        return switch (dataType) {
-            case STRING -> ((String) object).getBytes();
-            case DATA -> (byte[]) object;
-            case LONG, INTEGER ->  object.toString().getBytes();
-        };
+    public static AttributeValue deserialized(Object value) {
+        if (value == null) {
+            return null;
+        }
+        AttributeValue attributeValue = new AttributeValue();
+        attributeValue.object = value;
+        return attributeValue;
     }
 
     @NonNull
-    Object getDeserializedValue(SerializationService serializationService) {
-        return switch (dataType()) {
-            case DATA -> serializationService.toObject(new HeapData((byte[]) object()));
-            case STRING, LONG, INTEGER -> object();
-        };
+    Object deserialize(SerializationService serializationService) {
+        if (object == null) {
+            object = serializationService.toObject(new HeapData(objectBytes));
+        }
+        return object;
     }
 
     @Nullable
     static AttributeValue string(Object value) {
-        return value == null ? null : new AttributeValue(value, AttributeValueDataType.STRING);
+        return value == null ? null : AttributeValue.deserialized(value);
     }
 
     @Nullable
     static AttributeValue data(byte[] value) {
-        return value == null ? null : new AttributeValue(value, AttributeValueDataType.DATA);
+        return value == null ? null : AttributeValue.deserialized(value);
     }
 
-    enum AttributeValueDataType {
-        STRING,
-        INTEGER,
-        LONG,
-        DATA;
+    public Object object() {
+        return object;
+    }
 
-        /**
-         * Gets {@link AttributeValueDataType} of given ordinal.
-         * <p>
-         * Uses switch instead of {@link AttributeValueDataType#values()} for better performance - calling {@code values()}
-         * create new array each time, making a pressure on GC.
-         */
-        static AttributeValueDataType from(byte ord) {
-            return switch(ord) {
-                case (byte) 0 -> STRING;
-                case (byte) 1 -> INTEGER;
-                case (byte) 2 -> LONG;
-                case (byte) 3 -> DATA;
-                default -> throw new IllegalArgumentException("Unknown AttributeValueDataType identifier " + ord);
-            };
+    AttributeValue serialize(SerializationService serializationService) {
+        if (objectBytes == null) {
+            objectBytes = serializationService.toData(object).toByteArray();
         }
+        return this;
+    }
+    public byte[] objectBytes() {
+        return objectBytes;
+    }
+
+    @Override
+    public String toString() {
+        return "AttributeValue["
+                + "object=" + object
+                + "objectBytes=" + Arrays.toString(objectBytes)
+                + ']';
     }
 
     @Override
@@ -133,18 +114,17 @@ record AttributeValue(@NonNull Object object, @NonNull AttributeValueDataType da
         if (!(o instanceof AttributeValue that)) {
             return false;
         }
-        if (dataType != that.dataType) {
-            return false;
-        }
-        if (dataType == AttributeValue.AttributeValueDataType.DATA) {
-            return Arrays.equals((byte[]) object, (byte[]) that.object);
-        }
         return Objects.equals(object, that.object);
     }
 
     @Override
     public int hashCode() {
-        int objectHash = object instanceof byte[] bytes ? Arrays.hashCode(bytes) : object.hashCode();
-        return Objects.hash(objectHash, dataType);
+        return Objects.hashCode(object);
+    }
+
+    public void assertDeserialized() {
+        if (object == null) {
+            throw new IllegalStateException("Object is null, should have been deserialized before");
+        }
     }
 }
