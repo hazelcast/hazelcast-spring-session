@@ -26,7 +26,7 @@ val springSecurityVersion: String by project
 val hazelcastVersion: String by project
 
 val jakartaServletVersion = "6.1.0"
-val junitVersion = "5.12.1"
+val junitVersion = "6.0.1"
 val mockitoVersion = "5.16.1"
 val assertjVersion = "3.27.3"
 val testcontainersVersion = "2.0.1"
@@ -93,7 +93,7 @@ val integrationTest = tasks.register<Test>("integrationTest") {
 
 tasks.check {
     dependsOn(integrationTest)
-    dependsOn(tasks.jacocoTestCoverageVerification)
+    finalizedBy(tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
 }
 
 dependencies {
@@ -106,7 +106,12 @@ dependencies {
     implementation("org.springframework:spring-beans:$springFrameworkVersion")
     implementation("org.springframework:spring-core:$springFrameworkVersion")
 
+    // other
+    implementation("org.jspecify:jspecify:1.0.0")
+    implementation("org.slf4j:slf4j-api:2.0.17")
+
     // Test dependencies
+    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
@@ -120,6 +125,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     integrationTestImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
+    integrationTestImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
 }
 
 tasks.test {
@@ -130,11 +136,28 @@ tasks.test {
     }
 }
 
+tasks.withType<Test>().configureEach {
+    systemProperty("java.net.preferIPv4Stack", "true")
+    systemProperty("hazelcast.phone.home.enabled", "false")
+    jvmArgs(
+        "--add-exports", "java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+        "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED",
+        "--add-opens", "java.management/sun.management=ALL-UNNAMED",
+        "-Djava.net.preferIPv4Stack=true"
+    )
+}
+
 tasks.jacocoTestReport {
     reports {
-        xml.required.set(true)
-        csv.required.set(true)
+        xml.required = true
+        csv.required = true
     }
+    dependsOn(tasks.test, integrationTest)
 }
 
 tasks.jacocoTestCoverageVerification {
@@ -198,4 +221,9 @@ tasks.register("printVersion") {
     doLast {
         print(project.version)
     }
+}
+
+// used for easier process of assembly for IT re-testing
+tasks.register("prepareITs") {
+    dependsOn(tasks.assemble, copyHSSJar, copySpringJars);
 }
