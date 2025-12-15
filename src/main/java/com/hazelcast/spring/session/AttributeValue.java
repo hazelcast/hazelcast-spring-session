@@ -69,12 +69,10 @@ final class AttributeValue {
         return attributeValue;
     }
 
-    @NonNull
-    Object deserialize(SerializationService serializationService) {
+    void deserialize(SerializationService serializationService) {
         if (object == null) {
             object = serializationService.toObject(new HeapData(objectBytes));
         }
-        return object;
     }
 
     @Nullable

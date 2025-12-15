@@ -528,7 +528,7 @@ public class HazelcastIndexedSessionRepository
             if (saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
                 registerDelta(attributeName, attributeValue);
 			}
-            return (T) attributeValue.deserialize(serializationService);
+            return (T) attributeValue.object();
 		}
 
 		@Override
