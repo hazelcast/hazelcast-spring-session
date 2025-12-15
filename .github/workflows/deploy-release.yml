@@ -1,0 +1,86 @@
+name: Deploy Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: '(optional) Override release version (e.g., 4.0.0)'
+        required: false
+      nextVersion:
+        description: '(optional) Override next development version (e.g., 4.0.1-SNAPSHOT)'
+        required: false
+      automaticPublishing:
+        description: '(optional) Enable automatic publishing to Maven Central'
+        type: boolean
+        default: false
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<devops@hazelcast.com>"
+
+      - name: Release
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_OSS_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_OSS_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: |
+          set -euo pipefail ${RUNNER_DEBUG:+-x}
+          releaseVersion="${{ github.event.inputs.releaseVersion }}"
+          nextVersion="${{ github.event.inputs.nextVersion }}"
+          
+          ./gradlew --info --no-daemon release \
+            -Prelease.useAutomaticVersion=true \
+            -PmavenCentralAutomaticPublishing=${{ github.event.inputs.automaticPublishing }} \
+            ${releaseVersion:+-Prelease.releaseVersion="$releaseVersion"} \
+            ${nextVersion:+-Prelease.newVersion="$nextVersion"}
+          
+          RELEASED_VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
+          echo "RELEASED_VERSION=$RELEASED_VERSION" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          append_body: true
+          files: '**/build/libs/*.jar'
+          name: "${{ env.RELEASED_VERSION }}"
+          tag_name: "v${{ env.RELEASED_VERSION }}"
+          body: |
+            ## Usage
+
+            ### Maven
+            ```xml
+            <dependency>
+              <groupId>com.hazelcast.spring</groupId>
+              <artifactId>hazelcast-spring-session</artifactId>
+              <version>${{ env.RELEASED_VERSION }}</version>
+            </dependency>
+            ```
+
+            ### Gradle
+            ```kotlin
+            implementation("com.hazelcast.spring:hazelcast-spring-session:${{ env.RELEASED_VERSION }}")
+            ```
+      - name: Add summary
+        run: |
+          echo "Version ${RELEASED_VERSION} released :rocket: " >> $GITHUB_STEP_SUMMARY

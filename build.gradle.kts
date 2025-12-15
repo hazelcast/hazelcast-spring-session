@@ -1,17 +1,17 @@
 plugins {
     `java-library`
     checkstyle
+    id("com.vanniktech.maven.publish") version "0.34.0"
+    id("net.researchgate.release") version "3.1.0"
+    jacoco
 }
 
 group = "com.hazelcast.spring"
-version = "4.0.0-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion = JavaLanguageVersion.of(17)
     }
-    withJavadocJar()
-    withSourcesJar()
 }
 
 repositories {
@@ -26,7 +26,7 @@ val springSecurityVersion: String by project
 val hazelcastVersion: String by project
 
 val jakartaServletVersion = "6.1.0"
-val junitVersion = "5.12.1"
+val junitVersion = "6.0.1"
 val mockitoVersion = "5.16.1"
 val assertjVersion = "3.27.3"
 val testcontainersVersion = "2.0.1"
@@ -93,6 +93,7 @@ val integrationTest = tasks.register<Test>("integrationTest") {
 
 tasks.check {
     dependsOn(integrationTest)
+    finalizedBy(tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
 }
 
 dependencies {
@@ -105,7 +106,12 @@ dependencies {
     implementation("org.springframework:spring-beans:$springFrameworkVersion")
     implementation("org.springframework:spring-core:$springFrameworkVersion")
 
+    // other
+    implementation("org.jspecify:jspecify:1.0.0")
+    implementation("org.slf4j:slf4j-api:2.0.17")
+
     // Test dependencies
+    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
@@ -119,6 +125,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     integrationTestImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
+    integrationTestImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
 }
 
 tasks.test {
@@ -129,37 +136,94 @@ tasks.test {
     }
 }
 
-val enableCodeCoverage: String by project;
-if (enableCodeCoverage.toBoolean()) {
-    println("Enabling code coverage checks")
-    apply(plugin = "jacoco")
+tasks.withType<Test>().configureEach {
+    systemProperty("java.net.preferIPv4Stack", "true")
+    systemProperty("hazelcast.phone.home.enabled", "false")
+    jvmArgs(
+        "--add-exports", "java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+        "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util=ALL-UNNAMED",
+        "--add-opens", "java.base/java.util.concurrent=ALL-UNNAMED",
+        "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED",
+        "--add-opens", "java.management/sun.management=ALL-UNNAMED",
+        "-Djava.net.preferIPv4Stack=true"
+    )
+}
 
-    val jacocoTestReport = tasks.withType(JacocoReport::class.java) {
-        reports {
-            xml.required.set(true)
-            csv.required.set(true)
-        }
-        dependsOn(tasks.test, integrationTest)
+tasks.jacocoTestReport {
+    reports {
+        xml.required = true
+        csv.required = true
     }
+    dependsOn(tasks.test, integrationTest)
+}
 
-    val jacocoTestCoverageVerify = tasks.withType(JacocoCoverageVerification::class.java) {
-        violationRules {
-            rule {
-                limit {
-                    minimum = BigDecimal("0.5")
-                }
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = BigDecimal("0.5")
             }
         }
     }
+    dependsOn(tasks.jacocoTestReport)
+}
 
-    tasks.test {
-        finalizedBy(jacocoTestReport)
-    }
-    integrationTest {
-        finalizedBy(jacocoTestReport)
-    }
-    tasks.build {
-        finalizedBy(jacocoTestCoverageVerify)
+release {
+    tagTemplate = "v\${version}"
+    newVersionCommitMessage = "Start development"
+    preTagCommitMessage = "Release"
+    failOnSnapshotDependencies = true
+}
+
+tasks {
+    afterReleaseBuild {
+        dependsOn ("publishToMavenCentral")
     }
 }
 
+mavenPublishing {
+    publishToMavenCentral(automaticRelease = false)
+
+    signAllPublications()
+
+    pom {
+        name = "Hazelcast Spring Session"
+        description = "Spring Session implementation using Hazelcast"
+        url = "https://github.com/hazelcast/hazelcast-spring-session"
+
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            }
+        }
+
+        developers {
+            developer {
+                id = "hazelcast"
+                name = "Hazelcast Inc."
+                email = "info@hazelcast.com"
+            }
+        }
+
+        scm {
+            connection = "scm:git:git://github.com/hazelcast/hazelcast-spring-session.git"
+            developerConnection = "scm:git:ssh://github.com:hazelcast/hazelcast-spring-session.git"
+            url = "https://github.com/hazelcast/hazelcast-spring-session"
+        }
+    }
+}
+
+tasks.register("printVersion") {
+    doLast {
+        print(project.version)
+    }
+}
+
+// used for easier process of assembly for IT re-testing
+tasks.register("prepareITs") {
+    dependsOn(tasks.assemble, copyHSSJar, copySpringJars);
+}
