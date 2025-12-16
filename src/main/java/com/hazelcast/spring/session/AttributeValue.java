@@ -32,7 +32,7 @@ import java.util.Objects;
  * <p>
  * In client-server architecture we don't want to hold users' Java objects as pure, deserialized objects to avoid the need
  * to upload user code to server. Therefore, most of the user objects will be first serialized to
- * {@link Data} and kept in {@link AttributeValue} as a {@link Data#toByteArray() byte array representation}.
+ * {@link Data} and kept in {@code AttributeValue} as a {@link Data#toByteArray() byte array representation}.
  * <p>
  * For the speed we are caching the in-memory, deserialized object representation.
  *
