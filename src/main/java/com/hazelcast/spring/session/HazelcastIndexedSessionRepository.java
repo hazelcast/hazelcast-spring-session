@@ -376,7 +376,7 @@ public class HazelcastIndexedSessionRepository
 		BackingMapSession session = event.getValue();
 		if (session.getId().equals(session.getOriginalId())) {
 			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug("Session created with id: " + session.getId());
+                LOGGER.debug("Session created with id: {}", session.getId());
 			}
 			this.eventPublisher.publishEvent(new SessionCreatedEvent(this, new HazelcastSession(session)));
 		}
@@ -385,7 +385,7 @@ public class HazelcastIndexedSessionRepository
 	@Override
 	public void entryEvicted(@NonNull EntryEvent<String, BackingMapSession> event) {
 		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("Session evicted with id: " + event.getOldValue().getId());
+            LOGGER.debug("Session evicted with id: {}", event.getOldValue().getId());
 		}
 		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
@@ -404,7 +404,7 @@ public class HazelcastIndexedSessionRepository
 	@Override
 	public void entryExpired(EntryEvent<String, BackingMapSession> event) {
 		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("Session expired with id: " + event.getOldValue().getId());
+            LOGGER.debug("Session expired with id: {}", event.getOldValue().getId());
 		}
 		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
@@ -449,9 +449,15 @@ public class HazelcastIndexedSessionRepository
 			if (this.isNew || (saveMode == SaveMode.ALWAYS)) {
 				delegate.getAttributeNames()
 					.forEach((attributeName) -> registerDelta(attributeName, cached.getAttribute(attributeName)));
+                principalNameChanged = true;
 			}
 		}
-
+        /**
+         *  New principalName will be registered in {@link BackingMapSession#setAttribute}, so in case of these attributes
+         *  we only mark that there was a change.
+         *  <p>
+         *  Otherwise changed attribute will be added to {@link #delta}.
+         */
         private void registerDelta(String attributeName, @Nullable AttributeValue attribute) {
             if (PRINCIPAL_NAME_ATTRIBUTES.contains(attributeName)) {
                 principalNameChanged = true;

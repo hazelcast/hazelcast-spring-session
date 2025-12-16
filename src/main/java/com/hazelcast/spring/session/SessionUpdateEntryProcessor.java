@@ -46,6 +46,9 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
 
     Duration maxInactiveInterval;
 
+    /**
+     * Mapping of {@code attribute name} -> {@code serialized data} to be added, modified or removed.
+     */
     Map<String, byte[]> delta;
 
     String principalName;
@@ -60,7 +63,7 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
         this.principalName = principalName;
     }
 
-    public SessionUpdateEntryProcessor(HazelcastIndexedSessionRepository.HazelcastSession session) {
+    SessionUpdateEntryProcessor(HazelcastIndexedSessionRepository.HazelcastSession session) {
         if (session.lastAccessedTimeChanged) {
             setLastAccessedTime(session.getLastAccessedTime());
         }
@@ -68,14 +71,8 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
             setMaxInactiveInterval(session.getMaxInactiveInterval());
         }
         if (!session.delta.isEmpty()) {
-            delta = new HashMap<>();
-            session.delta.forEach((k, v) -> {
-                if (v == null) {
-                    delta.put(k, null);
-                } else {
-                    delta.put(k, v.objectBytes());
-                }
-            });
+            delta = new HashMap<>(session.delta.size());
+            session.delta.forEach((k, v) -> delta.put(k, v == null ? null : v.objectBytes()));
         }
         if (session.principalNameChanged()) {
             this.principalName = session.getDelegate().getPrincipalName();
@@ -119,8 +116,8 @@ public class SessionUpdateEntryProcessor implements EntryProcessor {
                 byte[] value = attribute.getValue();
                 if (attribute.getValue() != null) {
                     addValue(value, attribute.getKey(), attributeNames, attributeValues);
-                    if (attribute.getKey().equals(PRINCIPAL_NAME_ATTRIBUTE)
-                            || attribute.getKey().equals(PRINCIPAL_NAME_INDEX_NAME)) {
+
+                    if (attribute.getKey().equals(PRINCIPAL_NAME_ATTRIBUTE) || attribute.getKey().equals(PRINCIPAL_NAME_INDEX_NAME)) {
                         addValue(value, PRINCIPAL_NAME_ATTRIBUTE, attributeNames, attributeValues);
                         addValue(value, PRINCIPAL_NAME_INDEX_NAME, attributeNames, attributeValues);
 

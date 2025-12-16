@@ -42,6 +42,9 @@ final class AttributeValue {
     private transient Object object;
     private byte[] objectBytes;
 
+    private AttributeValue() {
+    }
+
     public static AttributeValue serialized(byte[] value) {
         if (value == null) {
             return null;
@@ -60,7 +63,8 @@ final class AttributeValue {
         return builder.build();
     }
 
-    public static AttributeValue deserialized(Object value) {
+    @Nullable
+    public static AttributeValue deserialized(@Nullable Object value) {
         if (value == null) {
             return null;
         }
@@ -69,32 +73,36 @@ final class AttributeValue {
         return attributeValue;
     }
 
-    void deserialize(SerializationService serializationService) {
+    void deserialize(@NonNull SerializationService serializationService) {
         if (object == null) {
             object = serializationService.toObject(new HeapData(objectBytes));
         }
     }
 
-    @Nullable
-    static AttributeValue string(Object value) {
-        return value == null ? null : AttributeValue.deserialized(value);
-    }
-
-    @Nullable
-    static AttributeValue data(byte[] value) {
-        return value == null ? null : AttributeValue.deserialized(value);
-    }
-
-    public Object object() {
-        return object;
-    }
-
-    AttributeValue serialize(SerializationService serializationService) {
+    @NonNull
+    AttributeValue serialize(@NonNull SerializationService serializationService) {
         if (objectBytes == null) {
             objectBytes = serializationService.toData(object).toByteArray();
         }
         return this;
     }
+
+    @Nullable
+    static AttributeValue string(Object value) {
+        return deserialized(value);
+    }
+
+    @Nullable
+    static AttributeValue data(byte[] value) {
+        return AttributeValue.deserialized(value);
+    }
+
+    @Nullable
+    public Object object() {
+        return object;
+    }
+
+    @Nullable
     public byte[] objectBytes() {
         return objectBytes;
     }
