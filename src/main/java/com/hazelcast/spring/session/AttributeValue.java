@@ -34,7 +34,7 @@ import java.util.Objects;
  * to upload user code to server. Therefore, most of the user objects will be first serialized to
  * {@link Data} and kept in {@link AttributeValue} as a {@link Data#toByteArray() byte array representation}.
  * <p>
- * For the speed we are caching the in-memory, deserialized object representation.
+ * For faster reads we are caching the deserialized object representation in the memory.
  *
  * @since 4.0.0
  */
