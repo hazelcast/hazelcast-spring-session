@@ -20,6 +20,7 @@ import java.time.Duration;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IExecutorService;
 import com.hazelcast.map.IMap;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
@@ -296,6 +297,8 @@ class HazelcastHttpSessionConfigurationTest {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(defaultHazelcastInstanceSessions);
             given(hazelcastInstance.getConfig()).willReturn(new Config());
+            IExecutorService defaultExecutorService = mock(IExecutorService.class);
+            given(hazelcastInstance.getExecutorService(anyString())).willReturn(defaultExecutorService);
 			return hazelcastInstance;
 		}
 
@@ -379,6 +382,8 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance qualifiedHazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(qualifiedHazelcastInstanceSessions);
+            IExecutorService defaultExecutorService = mock(IExecutorService.class);
+            given(hazelcastInstance.getExecutorService(anyString())).willReturn(defaultExecutorService);
             given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
@@ -398,6 +403,8 @@ class HazelcastHttpSessionConfigurationTest {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(primaryHazelcastInstanceSessions);
             given(hazelcastInstance.getConfig()).willReturn(new Config());
+            IExecutorService defaultExecutorService = mock(IExecutorService.class);
+            given(hazelcastInstance.getExecutorService(anyString())).willReturn(defaultExecutorService);
 			return hazelcastInstance;
 		}
 
@@ -419,6 +426,8 @@ class HazelcastHttpSessionConfigurationTest {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(qualifiedHazelcastInstanceSessions);
             given(hazelcastInstance.getConfig()).willReturn(new Config());
+            IExecutorService defaultExecutorService = mock(IExecutorService.class);
+            given(hazelcastInstance.getExecutorService(anyString())).willReturn(defaultExecutorService);
 			return hazelcastInstance;
 		}
 
@@ -445,6 +454,8 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance hazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(hazelcastInstanceSessions);
+            IExecutorService defaultExecutorService = mock(IExecutorService.class);
+            given(hazelcastInstance.getExecutorService(anyString())).willReturn(defaultExecutorService);
 			return hazelcastInstance;
 		}
 

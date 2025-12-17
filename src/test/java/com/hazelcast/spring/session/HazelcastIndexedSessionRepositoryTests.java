@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IExecutorService;
 import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.MapListener;
@@ -77,6 +78,7 @@ class HazelcastIndexedSessionRepositoryTests {
 	@BeforeEach
 	void setUp() {
 		given(this.hazelcastInstance.<String, BackingMapSession>getMap(anyString())).willReturn(this.sessions);
+        given(hazelcastInstance.getExecutorService(anyString())).willReturn(mock(IExecutorService.class));
 		this.repository = new HazelcastIndexedSessionRepository(this.hazelcastInstance);
         repository.setSerializationService(defaultSerializationService());
 		this.repository.afterPropertiesSet();
