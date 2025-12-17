@@ -54,6 +54,7 @@ import org.jspecify.annotations.NonNull;
  */
 @SuppressWarnings("ClassEscapesDefinedScope")
 public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
+
     @Override
     @NonNull
     public AttributeValue read(CompactReader reader) {

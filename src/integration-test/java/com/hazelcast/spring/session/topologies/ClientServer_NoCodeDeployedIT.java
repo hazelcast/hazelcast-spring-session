@@ -52,8 +52,7 @@ import static com.hazelcast.spring.session.BuildContext.HAZELCAST_DOCKER_VERSION
 @SuppressWarnings("resource")
 class ClientServer_NoCodeDeployedIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(
-            ClientServer_NoCodeDeployedIT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClientServer_NoCodeDeployedIT.class);
 	private static GenericContainer<?> container;
 
 	@BeforeAll

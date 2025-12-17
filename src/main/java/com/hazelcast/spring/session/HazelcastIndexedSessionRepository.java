@@ -327,8 +327,10 @@ public class HazelcastIndexedSessionRepository
                 sessions.lock(sessionId);
                 try {
                     BackingMapSession mapSession = sessions.get(sessionId);
-                    entryProcessor.processMapSession(mapSession);
-                    sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+                    if (mapSession != null) {
+                        entryProcessor.processMapSession(mapSession);
+                        sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+                    }
                 } finally {
                     sessions.unlock(sessionId);
                 }
@@ -449,7 +451,6 @@ public class HazelcastIndexedSessionRepository
 			if (this.isNew || (saveMode == SaveMode.ALWAYS)) {
 				delegate.getAttributeNames()
 					.forEach((attributeName) -> registerDelta(attributeName, cached.getAttribute(attributeName)));
-                principalNameChanged = true;
 			}
 		}
         /**

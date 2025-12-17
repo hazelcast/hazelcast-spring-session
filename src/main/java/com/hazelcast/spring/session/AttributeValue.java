@@ -45,7 +45,7 @@ final class AttributeValue {
     private AttributeValue() {
     }
 
-    public static AttributeValue serialized(byte[] value) {
+    static AttributeValue serialized(byte[] value) {
         if (value == null) {
             return null;
         }
@@ -54,7 +54,7 @@ final class AttributeValue {
         return attributeValue;
     }
 
-    public static GenericRecord serializedGenericRecord(byte[] value) {
+    static GenericRecord serializedGenericRecord(byte[] value) {
         if (value == null) {
             return null;
         }
@@ -64,7 +64,7 @@ final class AttributeValue {
     }
 
     @Nullable
-    public static AttributeValue deserialized(@Nullable Object value) {
+    static AttributeValue deserialized(@Nullable Object value) {
         if (value == null) {
             return null;
         }

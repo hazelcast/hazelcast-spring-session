@@ -14,6 +14,8 @@
             <serializers>
                 <serializer>com.hazelcast.spring.session.HazelcastSessionCompactSerializer</serializer>
                 <serializer>com.hazelcast.spring.session.AttributeValueCompactSerializer</serializer>
+                <serializer>com.hazelcast.spring.session.serialization.DurationSerializer</serializer>
+                <serializer>com.hazelcast.spring.session.serialization.InstantSerializer</serializer>
             </serializers>
         </compact-serialization>
     </serialization>

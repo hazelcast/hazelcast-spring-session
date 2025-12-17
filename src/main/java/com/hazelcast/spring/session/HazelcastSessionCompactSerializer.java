@@ -21,8 +21,6 @@ import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import org.jspecify.annotations.NonNull;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Set;
 
 /**
@@ -59,9 +57,6 @@ import java.util.Set;
 @SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastSessionCompactSerializer implements CompactSerializer<BackingMapSession> {
 
-    private static final String SECONDS = "_seconds";
-    private static final String NANOS = "_nanos";
-
     @Override
     @NonNull
     public BackingMapSession read(CompactReader reader) {
@@ -69,9 +64,9 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         BackingMapSession cached = new BackingMapSession(originalId);
         cached.setId(reader.readString("id"));
         cached.setPrincipalName(reader.readString("principalName"));
-        cached.setCreationTime(readInstant(reader, "creationTime"));
-        cached.setLastAccessedTime(readInstant(reader, "lastAccessedTime"));
-        cached.setMaxInactiveInterval(readDuration(reader, "maxInactiveInterval"));
+        cached.setCreationTime(reader.readCompact("creationTime"));
+        cached.setLastAccessedTime(reader.readCompact("lastAccessedTime"));
+        cached.setMaxInactiveInterval(reader.readCompact("maxInactiveInterval"));
         String[] attributeNames = reader.readArrayOfString("attributeNames");
         AttributeValue[] attributeValues = reader.readArrayOfCompact("attributeValues", AttributeValue.class);
 
@@ -88,9 +83,9 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         writer.writeString("originalId", session.getOriginalId());
         writer.writeString("id", session.getId());
         writer.writeString("principalName", session.getPrincipalName());
-        writeInstant(writer, session.getCreationTime(), "creationTime");
-        writeInstant(writer, session.getLastAccessedTime(), "lastAccessedTime");
-        writeDuration(writer, session.getMaxInactiveInterval(),  "maxInactiveInterval");
+        writer.writeCompact("creationTime", session.getCreationTime());
+        writer.writeCompact("lastAccessedTime", session.getLastAccessedTime());
+        writer.writeCompact("maxInactiveInterval", session.getMaxInactiveInterval());
         Set<String> attributeNames = session.getAttributeNameWithoutPrincipal();
         AttributeValue[] attributeValues = attributeNames.stream().map(session::getAttribute).toArray(AttributeValue[]::new);
 
@@ -109,27 +104,5 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
     public Class<BackingMapSession> getCompactClass() {
         return BackingMapSession.class;
     }
-    private void writeInstant(CompactWriter writer, Instant instant, String prefix) {
-        writer.writeInt64(prefix + SECONDS, instant.getEpochSecond());
-        writer.writeInt32(prefix + NANOS, instant.getNano());
-    }
 
-    @SuppressWarnings("SameParameterValue")
-    private void writeDuration(CompactWriter writer, Duration duration, String prefix) {
-        writer.writeInt64(prefix + SECONDS, duration.getSeconds());
-        writer.writeInt32(prefix + NANOS, duration.getNano());
-    }
-
-    private Instant readInstant(CompactReader reader, String prefix) {
-        long seconds = reader.readInt64(prefix + SECONDS);
-        int nanos = reader.readInt32(prefix + NANOS);
-        return Instant.ofEpochSecond(seconds, nanos);
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private Duration readDuration(CompactReader reader, String prefix) {
-        long seconds = reader.readInt64(prefix + SECONDS);
-        int nanos = reader.readInt32(prefix + NANOS);
-        return Duration.ofSeconds(seconds, nanos);
-    }
 }
