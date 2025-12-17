@@ -45,7 +45,8 @@ public class InstantSerializer implements CompactSerializer<Instant>, StreamSeri
         writer.writeInt32("nanos", instant.getNano());
     }
 
-    @Override @NonNull
+    @Override
+    @NonNull
     public Instant read(@NonNull ObjectDataInput in) throws IOException {
         long seconds = in.readLong();
         int nanos = in.readInt();
