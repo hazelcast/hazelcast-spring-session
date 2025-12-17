@@ -187,11 +187,11 @@ public class HazelcastIndexedSessionRepository
 	public HazelcastIndexedSessionRepository(@NonNull HazelcastInstance hazelcastInstance) {
 		Assert.notNull(hazelcastInstance, "HazelcastInstance must not be null");
 		this.hazelcastInstance = hazelcastInstance;
+        deployedOnAllMembers = new DeploymentChecker(hazelcastInstance).checkDeployedOnAllMembers();
         if (hazelcastInstance instanceof SerializationServiceSupport sss) {
             // can be a mock for tests
             this.serializationService = sss.getSerializationService();
         }
-        deployedOnAllMembers = true;
         LOGGER.info("HazelcastIndexedSessionRepository initialized");
 	}
 
@@ -421,7 +421,7 @@ public class HazelcastIndexedSessionRepository
 		this.sessionIdGenerator = sessionIdGenerator;
 	}
 
-	/**
+    /**
 	 * A custom implementation of {@link Session} that uses a {@link BackingMapSession} as the
 	 * basis for its mapping. It keeps track if changes have been made since last save.
 	 *
