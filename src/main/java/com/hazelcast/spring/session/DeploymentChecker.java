@@ -39,7 +39,10 @@ public class DeploymentChecker {
                                                                      .submitToAllMembers(new ClassAvailabilityProbe());
         for (Map.Entry<Member, Future<Boolean>> memberFutureEntry : probeResults.entrySet()) {
             try {
-                memberFutureEntry.getValue().get();
+                Boolean value = memberFutureEntry.getValue().get();
+                if (Boolean.FALSE.equals(value)) {
+                    return false;
+                }
             } catch (InterruptedException | ExecutionException e) {
                 return false;
             }
