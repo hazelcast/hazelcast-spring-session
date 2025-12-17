@@ -94,7 +94,7 @@ final class AttributeValue {
 
     @Nullable
     static AttributeValue data(byte[] value) {
-        return AttributeValue.deserialized(value);
+        return deserialized(value);
     }
 
     @Nullable
