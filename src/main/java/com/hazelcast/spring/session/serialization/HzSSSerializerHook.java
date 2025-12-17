@@ -22,6 +22,7 @@ import com.hazelcast.nio.serialization.DataSerializableFactory;
 import com.hazelcast.spring.session.SessionUpdateEntryProcessor;
 
 public class HzSSSerializerHook implements DataSerializerHook {
+    // TODO reference FactoryIdHelper once 5.7 will be minimum supported version
     public static final int F_ID_OFFSET_HZ_SPRING_SESSION = -3000;
     public static final String HZ_SS_DS_FACTORY = "hazelcast.serialization.ds.hazelcast.spring.session";
 
