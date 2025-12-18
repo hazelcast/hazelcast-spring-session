@@ -103,13 +103,4 @@ public @interface EnableHazelcastHttpSession {
 	 */
 	SaveMode saveMode() default SaveMode.ON_SET_ATTRIBUTE;
 
-    /**
-     * If true, Hazelcast Spring Session should be deployed on all nodes in the cluster.
-     * <p>
-     * By default, Hazelcast Spring Session will automatically check if internal classes are present on the classpath of
-     * other members, however user can override this check's result.
-     * @since 4.0.0
-     */
-    boolean deployedOnAllMembers() default true;
-
 }

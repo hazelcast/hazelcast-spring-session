@@ -539,10 +539,4 @@ class HazelcastHttpSessionConfigurationTest {
 
 	}
 
-    @Configuration(proxyBeanMethods = false)
-    @EnableHazelcastHttpSession(deployedOnAllMembers = false)
-    static class NotDeployedOnAllMembers extends BaseConfiguration {
-
-    }
-
 }

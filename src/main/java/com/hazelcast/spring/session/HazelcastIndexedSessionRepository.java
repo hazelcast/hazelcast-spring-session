@@ -34,6 +34,7 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryEvictedListener;
 import com.hazelcast.map.listener.EntryExpiredListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.nio.serialization.HazelcastSerializationException;
 import com.hazelcast.query.Predicates;
 import com.hazelcast.spi.impl.SerializationServiceSupport;
 
@@ -170,7 +171,7 @@ public class HazelcastIndexedSessionRepository
      * were configured on the server side or as {@link com.hazelcast.nio.serialization.genericrecord.GenericRecord} if serializers
      * were configured only on clients.
      */
-    private boolean deployedOnAllMembers;
+    private volatile boolean deployedOnAllMembers = true;
 
 	private IMap<String, BackingMapSession> sessions;
 
@@ -187,7 +188,6 @@ public class HazelcastIndexedSessionRepository
 	public HazelcastIndexedSessionRepository(@NonNull HazelcastInstance hazelcastInstance) {
 		Assert.notNull(hazelcastInstance, "HazelcastInstance must not be null");
 		this.hazelcastInstance = hazelcastInstance;
-        deployedOnAllMembers = new DeploymentChecker(hazelcastInstance).checkDeployedOnAllMembers();
         if (hazelcastInstance instanceof SerializationServiceSupport sss) {
             // can be a mock for tests
             this.serializationService = sss.getSerializationService();
@@ -279,7 +279,7 @@ public class HazelcastIndexedSessionRepository
 	}
 
     /**
-     * If true, this repository will assume that class instances are present on all members and we can use faster
+     * If true, this repository will assume that class instances are present on all members, and we can use faster
      * {@link com.hazelcast.map.EntryProcessor} to process sessions in-place, instead of a combination of
      * {@link IMap#get} + {@link IMap#set}.
      */
@@ -320,10 +320,16 @@ public class HazelcastIndexedSessionRepository
         } else if (session.hasChanges()) {
             SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor(session);
 
-            if (deployedOnAllMembers) {
-                //noinspection unchecked
-                this.sessions.executeOnKey(sessionId, entryProcessor);
-            } else {
+			if (deployedOnAllMembers) {
+				try {
+                    //noinspection unchecked
+                    this.sessions.executeOnKey(sessionId, entryProcessor);
+				} catch (HazelcastSerializationException e) {
+					deployedOnAllMembers = true;
+				}
+			}
+
+            if (!deployedOnAllMembers) {
                 sessions.lock(sessionId);
                 try {
                     BackingMapSession mapSession = sessions.get(sessionId);
