@@ -329,6 +329,7 @@ public class HazelcastIndexedSessionRepository
 				}
 			}
 
+            // revert back to slow path, as one of members does not have Hazelcast Spring Session deployed on the server
             if (!deployedOnAllMembers) {
                 sessions.lock(sessionId);
                 try {
