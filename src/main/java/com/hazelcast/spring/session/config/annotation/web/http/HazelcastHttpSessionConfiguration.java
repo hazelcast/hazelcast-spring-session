@@ -80,8 +80,6 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
-    private boolean deployedOnAllMembers;
-
     @Bean
 	public FindByIndexNameSessionRepository<?> sessionRepository() {
 		return createHazelcastIndexedSessionRepository();
@@ -150,7 +148,6 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		}
 		this.flushMode = attributes.getEnum("flushMode");
 		this.saveMode = attributes.getEnum("saveMode");
-        this.deployedOnAllMembers = attributes.getBoolean("deployedOnAllMembers");
    	}
 
 	private HazelcastIndexedSessionRepository createHazelcastIndexedSessionRepository() {
