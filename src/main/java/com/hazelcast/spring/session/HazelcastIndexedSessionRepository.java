@@ -325,7 +325,7 @@ public class HazelcastIndexedSessionRepository
                     //noinspection unchecked
                     this.sessions.executeOnKey(sessionId, entryProcessor);
 				} catch (HazelcastSerializationException e) {
-					deployedOnAllMembers = true;
+					deployedOnAllMembers = false;
 				}
 			}
 
