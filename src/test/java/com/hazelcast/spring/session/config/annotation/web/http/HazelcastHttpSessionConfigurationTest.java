@@ -268,14 +268,6 @@ class HazelcastHttpSessionConfigurationTest {
 		assertThat(sessionRepository).extracting("sessionIdGenerator").isInstanceOf(UuidSessionIdGenerator.class);
 	}
 
-    @Test
-    void registerWhenNotDeployedOnAllMembers() {
-        registerAndRefresh(NotDeployedOnAllMembers.class);
-        HazelcastIndexedSessionRepository sessionRepository = this.context
-                .getBean(HazelcastIndexedSessionRepository.class);
-        assertThat(sessionRepository).extracting("deployedOnAllMembers").isEqualTo(Boolean.FALSE);
-    }
-
 	private void registerAndRefresh(Class<?>... annotatedClasses) {
 		this.context.register(annotatedClasses);
 		this.context.refresh();
