@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.EntryProcessor;
 import com.hazelcast.map.IMap;
+import com.hazelcast.config.Config;
 import com.hazelcast.map.listener.MapListener;
 import com.hazelcast.query.impl.predicates.EqualPredicate;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,6 +78,7 @@ class HazelcastIndexedSessionRepositoryTests {
 	@BeforeEach
 	void setUp() {
 		given(this.hazelcastInstance.<String, BackingMapSession>getMap(anyString())).willReturn(this.sessions);
+		given(this.hazelcastInstance.getConfig()).willReturn(new Config());
 		this.repository = new HazelcastIndexedSessionRepository(this.hazelcastInstance);
         repository.setSerializationService(defaultSerializationService());
 		this.repository.afterPropertiesSet();

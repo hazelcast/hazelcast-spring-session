@@ -17,11 +17,10 @@
 package com.hazelcast.spring.session;
 
 import com.hazelcast.config.Config;
-import com.hazelcast.config.IndexConfig;
-import com.hazelcast.config.IndexType;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Utility class for Hazelcast integration tests.
@@ -38,14 +37,17 @@ public final class HazelcastITUtils {
 	 * @return the Hazelcast instance
 	 */
 	public static HazelcastInstance embeddedHazelcastServer() {
+		Config config = embeddedInstanceBasicConf();
+		return Hazelcast.newHazelcastInstance(config);
+	}
+
+	public static @NonNull Config embeddedInstanceBasicConf() {
 		Config config = new Config();
 		NetworkConfig networkConfig = config.getNetworkConfig();
 		networkConfig.setPort(0);
 		networkConfig.getJoin().getAutoDetectionConfig().setEnabled(false);
-		config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME)
-			.addIndexConfig(
-					new IndexConfig(IndexType.HASH, HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
-		return Hazelcast.newHazelcastInstance(HazelcastSessionConfiguration.applySerializationConfig(config));
+		networkConfig.getJoin().getMulticastConfig().setEnabled(true).setMulticastTimeToLive(0);
+		return HazelcastSessionConfiguration.applySerializationConfig(config);
 	}
 
 }

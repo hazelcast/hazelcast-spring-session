@@ -28,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -35,6 +37,8 @@ import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRI
 import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySerializationConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
+import static org.springframework.session.FlushMode.IMMEDIATE;
+import static org.springframework.session.SaveMode.ALWAYS;
 
 // IDE doesn't catch that nullability is checked in sub methods
 @SuppressWarnings("DataFlowIssue")
@@ -47,6 +51,7 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
         false         | false
         """)
 public class AttributeHandlingTest extends TestWithHazelcast {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AttributeHandlingTest.class);
 
     @Parameter(0)
     boolean codeDeployed;
@@ -69,8 +74,12 @@ public class AttributeHandlingTest extends TestWithHazelcast {
                 ? FACTORY.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig))
                 : FACTORY.newHazelcastInstance(getConfig());
 
-        this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance);
-        this.repository.setDeployedOnAllMembers(codeDeployed);
+
+        this.repository = new HazelcastIndexedSessionRepository(hazelcastInstance)
+                .setApplicationEventPublisher(e -> LOGGER.info("Event: {}", e))
+                .setDeployedOnAllMembers(codeDeployed)
+                .setSaveMode(ALWAYS)
+                .setFlushMode(IMMEDIATE);
         this.repository.afterPropertiesSet();
 
         var newMember = FACTORY.newHazelcastInstance(getConfig());
