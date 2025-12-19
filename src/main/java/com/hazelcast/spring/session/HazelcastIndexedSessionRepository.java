@@ -28,15 +28,20 @@ import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryEvictedListener;
 import com.hazelcast.map.listener.EntryExpiredListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.nio.serialization.HazelcastSerializationException;
 import com.hazelcast.query.Predicates;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.hazelcast.spi.impl.SerializationServiceSupport;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationEventPublisher;
@@ -44,7 +49,6 @@ import org.springframework.session.DelegatingIndexResolver;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.FlushMode;
 import org.springframework.session.IndexResolver;
-import org.springframework.session.MapSession;
 import org.springframework.session.PrincipalNameIndexResolver;
 import org.springframework.session.SaveMode;
 import org.springframework.session.Session;
@@ -56,6 +60,8 @@ import org.springframework.session.events.SessionDeletedEvent;
 import org.springframework.session.events.SessionExpiredEvent;
 import org.springframework.util.Assert;
 
+import static com.hazelcast.spring.session.BackingMapSession.PRINCIPAL_NAME_ATTRIBUTES;
+
 /**
  * A {@link org.springframework.session.SessionRepository} implementation that stores
  * sessions in Hazelcast's distributed {@link IMap}.
@@ -63,39 +69,35 @@ import org.springframework.util.Assert;
  * <p>
  * An example of how to create a new instance can be seen below:
  *
- * <pre class="code">
+ * <pre>{@code
  * Config config = new Config();
  *
  * // ... configure Hazelcast ...
+ * HazelcastSessionConfiguration.applySerializationConfig(config);
  *
  * HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
  *
  * HazelcastIndexedSessionRepository sessionRepository =
  *         new HazelcastIndexedSessionRepository(hazelcastInstance);
- * </pre>
+ * }</pre>
  *
  * In order to support finding sessions by principal name using
  * {@link #findByIndexNameAndIndexValue(String, String)} method, custom configuration of
- * {@code IMap} supplied to this implementation is required.
+ * {@code IMap} supplied to this implementation is recommended for performance reasons.
  *
- * The following snippet demonstrates how to define required configuration using
+ * The following snippet demonstrates how to define recommended configuration using
  * programmatic Hazelcast Configuration:
  *
- * <pre class="code">
- * AttributeConfig attributeConfig = new AttributeConfig()
- *         .setName(HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE)
- *         .setExtractorClassName(rincipalNameExtractor.class.getName());
- *
+ * <pre>{@code
  * Config config = new Config();
  *
  * config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME)
- *         .addAttributeConfig(attributeConfig)
  *         .addIndexConfig(new IndexConfig(
  *                 IndexType.HASH,
  *                 HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
  *
  * Hazelcast.newHazelcastInstance(config);
- * </pre>
+ * }</pre>
  *
  * This implementation listens for events on the Hazelcast-backed SessionRepository and
  * translates those events into the corresponding Spring Session events. Publish the
@@ -114,11 +116,14 @@ import org.springframework.util.Assert;
  * @author Eleftheria Stein
  * @since 2.2.0
  */
+@SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastIndexedSessionRepository
 		implements FindByIndexNameSessionRepository<HazelcastIndexedSessionRepository.HazelcastSession>,
-		EntryAddedListener<String, MapSession>, EntryEvictedListener<String, MapSession>,
-		EntryRemovedListener<String, MapSession>, EntryExpiredListener<String, MapSession>, InitializingBean,
-		DisposableBean {
+                   EntryAddedListener<String, BackingMapSession>, EntryEvictedListener<String, BackingMapSession>,
+                   EntryRemovedListener<String, BackingMapSession>, EntryExpiredListener<String, BackingMapSession>, InitializingBean,
+                   DisposableBean {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastIndexedSessionRepository.class);
 
 	/**
 	 * The default name of map used by Spring Session to store sessions.
@@ -132,14 +137,12 @@ public class HazelcastIndexedSessionRepository
 
 	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
-	private static final Log logger = LogFactory.getLog(HazelcastIndexedSessionRepository.class);
-
 	private final HazelcastInstance hazelcastInstance;
 
 	private ApplicationEventPublisher eventPublisher = (event) -> {
 	};
 
-	private Duration defaultMaxInactiveInterval = Duration.ofSeconds(MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS);
+	private Duration defaultMaxInactiveInterval = BackingMapSession.DEFAULT_MAX_INACTIVE_INTERVAL;
 
 	private IndexResolver<Session> indexResolver = new DelegatingIndexResolver<>(new PrincipalNameIndexResolver<>());
 
@@ -149,9 +152,32 @@ public class HazelcastIndexedSessionRepository
 
 	private SaveMode saveMode = SaveMode.ON_SET_ATTRIBUTE;
 
-	private IMap<String, MapSession> sessions;
+    /**
+     * If false, the {@link #save(HazelcastSession)} will fall back to simple algorithm:
+     * <ol>
+     *     <li> lock entry with session
+     *     <li> get current value from cluster
+     *     <li> process changes
+     *     <li> {@link IMap#set} the value
+     *     <li> unlock entry
+     * </ol>
+     * In this case {@link SessionUpdateEntryProcessor} will never be serialized and sent. We still need to serialize/deserialize
+     * user objects, but since processing is done on client and client is required to register serializers, we have no problem with this.
+     * <p>
+     * If the value is true, the {@link SessionUpdateEntryProcessor} will be sent to a cluster to process the changes. Processor
+     * must be present on all members, will be serialized using custom serializer, that will register itself automatically via ServiceLoader.
+     *
+     * User data will be handled in {@link SessionUpdateEntryProcessor} as pure Java objects <strong>if</strong> CompactSerializers
+     * were configured on the server side or as {@link com.hazelcast.nio.serialization.genericrecord.GenericRecord} if serializers
+     * were configured only on clients.
+     */
+    private volatile boolean deployedOnAllMembers = true;
+
+	private IMap<String, BackingMapSession> sessions;
 
 	private UUID sessionListenerId;
+
+    private SerializationService serializationService;
 
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
@@ -159,12 +185,17 @@ public class HazelcastIndexedSessionRepository
 	 * Create a new {@link HazelcastIndexedSessionRepository} instance.
 	 * @param hazelcastInstance the {@link HazelcastInstance} to use for managing sessions
 	 */
-	public HazelcastIndexedSessionRepository(HazelcastInstance hazelcastInstance) {
+	public HazelcastIndexedSessionRepository(@NonNull HazelcastInstance hazelcastInstance) {
 		Assert.notNull(hazelcastInstance, "HazelcastInstance must not be null");
 		this.hazelcastInstance = hazelcastInstance;
+        if (hazelcastInstance instanceof SerializationServiceSupport sss) {
+            // can be a mock for tests
+            this.serializationService = sss.getSerializationService();
+        }
+        LOGGER.info("HazelcastIndexedSessionRepository initialized");
 	}
 
-	@Override
+    @Override
 	public void afterPropertiesSet() {
 		this.sessions = this.hazelcastInstance.getMap(this.sessionMapName);
 		this.sessionListenerId = this.sessions.addEntryListener(this, true);
@@ -175,14 +206,14 @@ public class HazelcastIndexedSessionRepository
 		this.sessions.removeEntryListener(this.sessionListenerId);
 	}
 
-	/**
+    /**
 	 * Sets the {@link ApplicationEventPublisher} that is used to publish
 	 * {@link AbstractSessionEvent session events}. The default is to not publish session
 	 * events.
 	 * @param applicationEventPublisher the {@link ApplicationEventPublisher} that is used
 	 * to publish session events. Cannot be null.
 	 */
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+	public void setApplicationEventPublisher(@NonNull ApplicationEventPublisher applicationEventPublisher) {
 		Assert.notNull(applicationEventPublisher, "ApplicationEventPublisher cannot be null");
 		this.eventPublisher = applicationEventPublisher;
 	}
@@ -193,7 +224,7 @@ public class HazelcastIndexedSessionRepository
 	 * time out. The default is 30 minutes.
 	 * @param defaultMaxInactiveInterval the default maxInactiveInterval
 	 */
-	public void setDefaultMaxInactiveInterval(Duration defaultMaxInactiveInterval) {
+	public void setDefaultMaxInactiveInterval(@NonNull Duration defaultMaxInactiveInterval) {
 		Assert.notNull(defaultMaxInactiveInterval, "defaultMaxInactiveInterval must not be null");
 		this.defaultMaxInactiveInterval = defaultMaxInactiveInterval;
 	}
@@ -215,7 +246,7 @@ public class HazelcastIndexedSessionRepository
 	 * Set the {@link IndexResolver} to use.
 	 * @param indexResolver the index resolver
 	 */
-	public void setIndexResolver(IndexResolver<Session> indexResolver) {
+	public void setIndexResolver(@NonNull IndexResolver<Session> indexResolver) {
 		Assert.notNull(indexResolver, "indexResolver cannot be null");
 		this.indexResolver = indexResolver;
 	}
@@ -224,7 +255,7 @@ public class HazelcastIndexedSessionRepository
 	 * Set the name of map used to store sessions.
 	 * @param sessionMapName the session map name
 	 */
-	public void setSessionMapName(String sessionMapName) {
+	public void setSessionMapName(@NonNull String sessionMapName) {
 		Assert.hasText(sessionMapName, "Map name must not be empty");
 		this.sessionMapName = sessionMapName;
 	}
@@ -233,7 +264,7 @@ public class HazelcastIndexedSessionRepository
 	 * Sets the Hazelcast flush mode. Default flush mode is {@link FlushMode#ON_SAVE}.
 	 * @param flushMode the new Hazelcast flush mode
 	 */
-	public void setFlushMode(FlushMode flushMode) {
+	public void setFlushMode(@NonNull FlushMode flushMode) {
 		Assert.notNull(flushMode, "flushMode cannot be null");
 		this.flushMode = flushMode;
 	}
@@ -242,14 +273,32 @@ public class HazelcastIndexedSessionRepository
 	 * Set the save mode.
 	 * @param saveMode the save mode
 	 */
-	public void setSaveMode(SaveMode saveMode) {
+	public void setSaveMode(@NonNull SaveMode saveMode) {
 		Assert.notNull(saveMode, "saveMode must not be null");
 		this.saveMode = saveMode;
 	}
 
-	@Override
-	public HazelcastSession createSession() {
-		MapSession cached = new MapSession(this.sessionIdGenerator);
+    /**
+     * If true, this repository will assume that class instances are present on all members, and we can use faster
+     * {@link com.hazelcast.map.EntryProcessor} to process sessions in-place, instead of a combination of
+     * {@link IMap#get} + {@link IMap#set}.
+     */
+    public void setDeployedOnAllMembers(boolean deployedOnAllMembers) {
+        this.deployedOnAllMembers = deployedOnAllMembers;
+    }
+
+    /**
+     * Replaces {@link SerializationService} that we got from {@link HazelcastInstance}.
+     */
+    void setSerializationService(@NonNull SerializationService serializationService) {
+        Assert.notNull(serializationService, "serializationService must not be null");
+        this.serializationService = serializationService;
+    }
+
+    @Override
+    @NonNull
+    public HazelcastSession createSession() {
+		BackingMapSession cached = new BackingMapSession(this.sessionIdGenerator);
 		cached.setMaxInactiveInterval(this.defaultMaxInactiveInterval);
 		HazelcastSession session = new HazelcastSession(cached, true);
 		session.flushImmediateIfNecessary();
@@ -257,36 +306,51 @@ public class HazelcastIndexedSessionRepository
 	}
 
 	@Override
-	public void save(HazelcastSession session) {
+	public void save(@NonNull HazelcastSession session) {
+        final String sessionId = session.getId();
+        session.prepareAttributesSerializedForm(serializationService);
 		if (session.isNew) {
 			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
 					TimeUnit.SECONDS);
-		}
-		else if (session.sessionIdChanged) {
-			this.sessions.delete(session.originalId);
-			session.originalId = session.getId();
-			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
-					TimeUnit.SECONDS);
-		}
-		else if (session.hasChanges()) {
-			SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor();
-			if (session.lastAccessedTimeChanged) {
-				entryProcessor.setLastAccessedTime(session.getLastAccessedTime());
-			}
-			if (session.maxInactiveIntervalChanged) {
-				entryProcessor.setMaxInactiveInterval(session.getMaxInactiveInterval());
-			}
-			if (!session.delta.isEmpty()) {
-				entryProcessor.setDelta(new HashMap<>(session.delta));
-			}
-			this.sessions.executeOnKey(session.getId(), entryProcessor);
-		}
-		session.clearChangeFlags();
-	}
+        } else if (session.sessionIdChanged) {
+            this.sessions.delete(session.originalId);
+            session.originalId = sessionId;
+            this.sessions.set(sessionId, session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
+                              TimeUnit.SECONDS);
+        } else if (session.hasChanges()) {
+            SessionUpdateEntryProcessor entryProcessor = new SessionUpdateEntryProcessor(session);
 
-	@Override
-	public HazelcastSession findById(String id) {
-		MapSession saved = this.sessions.get(id);
+			if (deployedOnAllMembers) {
+				try {
+                    //noinspection unchecked
+                    this.sessions.executeOnKey(sessionId, entryProcessor);
+				} catch (HazelcastSerializationException e) {
+					deployedOnAllMembers = false;
+				}
+			}
+
+            // revert back to slow path, as one of members does not have Hazelcast Spring Session deployed on the server
+            if (!deployedOnAllMembers) {
+                sessions.lock(sessionId);
+                try {
+                    BackingMapSession mapSession = sessions.get(sessionId);
+                    if (mapSession != null) {
+                        entryProcessor.processMapSession(mapSession);
+                        sessions.set(sessionId, mapSession, session.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+                    }
+                } finally {
+                    sessions.unlock(sessionId);
+                }
+            }
+        }
+
+        session.clearChangeFlags();
+    }
+
+    @Override
+    @Nullable
+    public HazelcastSession findById(String id) {
+		BackingMapSession saved = this.sessions.get(id);
 		if (saved == null) {
 			return null;
 		}
@@ -294,63 +358,64 @@ public class HazelcastIndexedSessionRepository
 			deleteById(saved.getId());
 			return null;
 		}
-		return new HazelcastSession(saved, false);
+		return new HazelcastSession(saved);
 	}
 
 	@Override
-	public void deleteById(String id) {
+	public void deleteById(@NonNull String id) {
 		this.sessions.remove(id);
 	}
 
 	@Override
-	public Map<String, HazelcastSession> findByIndexNameAndIndexValue(String indexName, String indexValue) {
+    @NonNull
+	public Map<String, HazelcastSession> findByIndexNameAndIndexValue(@NonNull String indexName, @Nullable String indexValue) {
 		if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
 			return Collections.emptyMap();
 		}
-		Collection<MapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
+		Collection<BackingMapSession> sessions = this.sessions.values(Predicates.equal(PRINCIPAL_NAME_ATTRIBUTE, indexValue));
 		Map<String, HazelcastSession> sessionMap = new HashMap<>(sessions.size());
-		for (MapSession session : sessions) {
-			sessionMap.put(session.getId(), new HazelcastSession(session, false));
+		for (BackingMapSession session : sessions) {
+			sessionMap.put(session.getId(), new HazelcastSession(session));
 		}
 		return sessionMap;
 	}
 
 	@Override
-	public void entryAdded(EntryEvent<String, MapSession> event) {
-		MapSession session = event.getValue();
+	public void entryAdded(@NonNull EntryEvent<String, BackingMapSession> event) {
+		BackingMapSession session = event.getValue();
 		if (session.getId().equals(session.getOriginalId())) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Session created with id: " + session.getId());
+			if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Session created with id: {}", session.getId());
 			}
-			this.eventPublisher.publishEvent(new SessionCreatedEvent(this, session));
+			this.eventPublisher.publishEvent(new SessionCreatedEvent(this, new HazelcastSession(session)));
 		}
 	}
 
 	@Override
-	public void entryEvicted(EntryEvent<String, MapSession> event) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Session expired with id: " + event.getOldValue().getId());
+	public void entryEvicted(@NonNull EntryEvent<String, BackingMapSession> event) {
+		if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Session evicted with id: {}", event.getOldValue().getId());
 		}
-		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
+		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
 
 	@Override
-	public void entryRemoved(EntryEvent<String, MapSession> event) {
-		MapSession session = event.getOldValue();
+	public void entryRemoved(EntryEvent<String, BackingMapSession> event) {
+		BackingMapSession session = event.getOldValue();
 		if (session != null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Session deleted with id: " + session.getId());
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug("Session deleted with id: " + session.getId());
 			}
-			this.eventPublisher.publishEvent(new SessionDeletedEvent(this, session));
+			this.eventPublisher.publishEvent(new SessionDeletedEvent(this, new HazelcastSession(session)));
 		}
 	}
 
 	@Override
-	public void entryExpired(EntryEvent<String, MapSession> event) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Session expired with id: " + event.getOldValue().getId());
+	public void entryExpired(EntryEvent<String, BackingMapSession> event) {
+		if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Session expired with id: {}", event.getOldValue().getId());
 		}
-		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, event.getOldValue()));
+		this.eventPublisher.publishEvent(new SessionExpiredEvent(this, new HazelcastSession(event.getOldValue())));
 	}
 
 	/**
@@ -363,40 +428,62 @@ public class HazelcastIndexedSessionRepository
 		this.sessionIdGenerator = sessionIdGenerator;
 	}
 
-	/**
-	 * A custom implementation of {@link Session} that uses a {@link MapSession} as the
+    /**
+	 * A custom implementation of {@link Session} that uses a {@link BackingMapSession} as the
 	 * basis for its mapping. It keeps track if changes have been made since last save.
 	 *
 	 * @author Aleksandar Stojsavljevic
 	 */
-	final class HazelcastSession implements Session {
+	public final class HazelcastSession implements Session {
 
-		private final MapSession delegate;
+		private final BackingMapSession delegate;
 
 		private boolean isNew;
 
-		private boolean sessionIdChanged;
+		boolean sessionIdChanged;
 
-		private boolean lastAccessedTimeChanged;
+		boolean lastAccessedTimeChanged;
 
-		private boolean maxInactiveIntervalChanged;
+		boolean maxInactiveIntervalChanged;
 
 		private String originalId;
 
-		private Map<String, Object> delta = new HashMap<>();
+		final Map<String, AttributeValue> delta = new HashMap<>();
+        boolean principalNameChanged;
 
-		HazelcastSession(MapSession cached, boolean isNew) {
+		HazelcastSession(@NonNull BackingMapSession cached, boolean isNew) {
 			this.delegate = cached;
 			this.isNew = isNew;
 			this.originalId = cached.getId();
-			if (this.isNew || (HazelcastIndexedSessionRepository.this.saveMode == SaveMode.ALWAYS)) {
-				getAttributeNames()
-					.forEach((attributeName) -> this.delta.put(attributeName, cached.getAttribute(attributeName)));
+			if (this.isNew || (saveMode == SaveMode.ALWAYS)) {
+				delegate.getAttributeNames()
+					.forEach((attributeName) -> registerDelta(attributeName, cached.getAttribute(attributeName)));
 			}
+		}
+        /**
+         *  New principalName will be registered in {@link BackingMapSession#setAttribute}, so in case of these attributes
+         *  we only mark that there was a change.
+         *  <p>
+         *  Otherwise changed attribute will be added to {@link #delta}.
+         */
+        private void registerDelta(String attributeName, @Nullable AttributeValue attribute) {
+            if (PRINCIPAL_NAME_ATTRIBUTES.contains(attributeName)) {
+                principalNameChanged = true;
+                return;
+            }
+            this.delta.put(attributeName, attribute);
+        }
+
+        boolean principalNameChanged() {
+            return principalNameChanged;
+        }
+
+		HazelcastSession(@NonNull BackingMapSession cached) {
+			this(cached, false);
 		}
 
 		@Override
-		public void setLastAccessedTime(Instant lastAccessedTime) {
+		public void setLastAccessedTime(@NonNull Instant lastAccessedTime) {
 			this.delegate.setLastAccessedTime(lastAccessedTime);
 			this.lastAccessedTimeChanged = true;
 			flushImmediateIfNecessary();
@@ -413,13 +500,14 @@ public class HazelcastIndexedSessionRepository
 		}
 
 		@Override
-		public String getId() {
+        @NonNull
+        public String getId() {
 			return this.delegate.getId();
 		}
 
 		@Override
 		public String changeSessionId() {
-			String newSessionId = HazelcastIndexedSessionRepository.this.sessionIdGenerator.generate();
+			String newSessionId = sessionIdGenerator.generate();
 			this.delegate.setId(newSessionId);
 			this.sessionIdChanged = true;
 			return newSessionId;
@@ -442,46 +530,67 @@ public class HazelcastIndexedSessionRepository
 			return this.delegate.getMaxInactiveInterval();
 		}
 
-		@Override
+        @Override
+		@SuppressWarnings("unchecked")
+        @Nullable
 		public <T> T getAttribute(String attributeName) {
-			T attributeValue = this.delegate.getAttribute(attributeName);
-			if (attributeValue != null
-					&& HazelcastIndexedSessionRepository.this.saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
-				this.delta.put(attributeName, attributeValue);
+            AttributeValue attributeValue = this.delegate.getAttribute(attributeName);
+			if (attributeValue == null) {
+                return null;
+            }
+            attributeValue.deserialize(serializationService);
+            if (saveMode.equals(SaveMode.ON_GET_ATTRIBUTE)) {
+                registerDelta(attributeName, attributeValue);
 			}
-			return attributeValue;
+            return (T) attributeValue.object();
 		}
 
 		@Override
-		public Set<String> getAttributeNames() {
+        @NonNull
+        public Set<String> getAttributeNames() {
 			return this.delegate.getAttributeNames();
 		}
 
 		@Override
-		public void setAttribute(String attributeName, Object attributeValue) {
-			this.delegate.setAttribute(attributeName, attributeValue);
-			this.delta.put(attributeName, attributeValue);
+		public void setAttribute(@NonNull String attributeName, @Nullable Object attributeValue) {
+            if (attributeValue == null) {
+                this.delegate.removeAttribute(attributeName);
+                this.delta.put(attributeName, null);
+            } else {
+                AttributeValue value = AttributeValue.deserialized(attributeValue);
+
+                this.delegate.setAttribute(attributeName, value);
+                registerDelta(attributeName, value);
+            }
 			if (SPRING_SECURITY_CONTEXT.equals(attributeName)) {
-				Map<String, String> indexes = HazelcastIndexedSessionRepository.this.indexResolver
-					.resolveIndexesFor(this);
+				Map<String, String> indexes = indexResolver.resolveIndexesFor(this);
 				String principal = (attributeValue != null) ? indexes.get(PRINCIPAL_NAME_INDEX_NAME) : null;
-				this.delegate.setAttribute(PRINCIPAL_NAME_INDEX_NAME, principal);
-				this.delta.put(PRINCIPAL_NAME_INDEX_NAME, principal);
+				this.delegate.setPrincipalName(principal);
+                this.principalNameChanged = true;
 			}
 			flushImmediateIfNecessary();
 		}
 
-		@Override
-		public void removeAttribute(String attributeName) {
+        void prepareAttributesSerializedForm(SerializationService serializationService) {
+            this.delegate.prepareAttributesSerializedForm(serializationService);
+            delta.forEach((attributeName, attributeValue) -> {
+                if (attributeValue != null) {
+                    attributeValue.serialize(serializationService);
+                }
+            });
+        }
+
+        @Override
+		public void removeAttribute(@NonNull String attributeName) {
 			setAttribute(attributeName, null);
 		}
 
-		MapSession getDelegate() {
+		BackingMapSession getDelegate() {
 			return this.delegate;
 		}
 
 		boolean hasChanges() {
-			return (this.lastAccessedTimeChanged || this.maxInactiveIntervalChanged || !this.delta.isEmpty());
+			return (this.lastAccessedTimeChanged || this.maxInactiveIntervalChanged || !this.delta.isEmpty() || principalNameChanged);
 		}
 
 		void clearChangeFlags() {
@@ -493,11 +602,11 @@ public class HazelcastIndexedSessionRepository
 		}
 
 		private void flushImmediateIfNecessary() {
-			if (HazelcastIndexedSessionRepository.this.flushMode == FlushMode.IMMEDIATE) {
-				HazelcastIndexedSessionRepository.this.save(this);
+			if (flushMode == FlushMode.IMMEDIATE) {
+				save(this);
 			}
 		}
-
 	}
+
 
 }

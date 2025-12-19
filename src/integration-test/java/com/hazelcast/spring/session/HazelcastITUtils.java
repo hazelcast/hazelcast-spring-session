@@ -16,47 +16,36 @@
 
 package com.hazelcast.spring.session;
 
-import com.hazelcast.config.AttributeConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.IndexConfig;
 import com.hazelcast.config.IndexType;
 import com.hazelcast.config.NetworkConfig;
-import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-
-import org.springframework.session.MapSession;
 
 /**
  * Utility class for Hazelcast integration tests.
  *
  * @author Vedran Pavic
  */
-final class HazelcastITestUtils {
+public final class HazelcastITUtils {
 
-	private HazelcastITestUtils() {
+	private HazelcastITUtils() {
 	}
 
 	/**
 	 * Creates {@link HazelcastInstance} for use in integration tests.
 	 * @return the Hazelcast instance
 	 */
-	static HazelcastInstance embeddedHazelcastServer() {
+	public static HazelcastInstance embeddedHazelcastServer() {
 		Config config = new Config();
 		NetworkConfig networkConfig = config.getNetworkConfig();
 		networkConfig.setPort(0);
 		networkConfig.getJoin().getAutoDetectionConfig().setEnabled(false);
-		AttributeConfig attributeConfig = new AttributeConfig()
-			.setName(HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE)
-			.setExtractorClassName(PrincipalNameExtractor.class.getName());
 		config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME)
-			.addAttributeConfig(attributeConfig)
 			.addIndexConfig(
 					new IndexConfig(IndexType.HASH, HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
-		SerializerConfig serializerConfig = new SerializerConfig();
-		serializerConfig.setImplementation(new HazelcastSessionSerializer()).setTypeClass(MapSession.class);
-		config.getSerializationConfig().addSerializerConfig(serializerConfig);
-		return Hazelcast.newHazelcastInstance(config);
+		return Hazelcast.newHazelcastInstance(HazelcastSessionConfiguration.applySerializationConfig(config));
 	}
 
 }

@@ -82,7 +82,7 @@ class FlushImmediateHazelcastIndexedSessionRepositoryITests {
 
 		@Bean
 		HazelcastInstance hazelcastInstance() {
-			return HazelcastITestUtils.embeddedHazelcastServer();
+			return HazelcastITUtils.embeddedHazelcastServer();
 		}
 
 	}

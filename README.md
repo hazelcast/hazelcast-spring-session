@@ -41,33 +41,23 @@ To use the project, your Hazelcast instances must be configured correctly. An ex
 
 ```java
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository;
-import com.hazelcast.spring.session.PrincipalNameExtractor;
-import com.hazelcast.spring.session.HazelcastSessionSerializer;
-import com.hazelcast.spring.session.HazelcastSessionSerializer;
-import org.springframework.session.MapSession;
+import com.hazelcast.spring.session.HazelcastSessionConfiguration;
 import com.hazelcast.config.Config;
-import com.hazelcast.config.AttributeConfig;
-import com.hazelcast.config.SerializerConfig;
+import com.hazelcast.config.IndexConfig;
 ```
 
 ```java
 // 
 Config config = new Config();
-// add attribute configuration, so principal name can be retrieved more efficiently
-AttributeConfig attributeConfig = new AttributeConfig()
-        .setName(HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE)
-        .setExtractorClassName(PrincipalNameExtractor.class.getName());
 
 // configuration for the IMap storing the user session data
 config.getMapConfig(HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME)
-    .addAttributeConfig(attributeConfig)
     // we are adding an index on principal name for faster querying
     .addIndexConfig(
             new IndexConfig(IndexType.HASH, HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE));
+
 // serialization configuration - session objects must be sent between members
-SerializerConfig serializerConfig = new SerializerConfig();
-serializerConfig.setImplementation(new HazelcastSessionSerializer()).setTypeClass(MapSession.class);
-config.getSerializationConfig().addSerializerConfig(serializerConfig);
+HazelcastSessionConfiguration.applySerializationConfig(config);
 ```
 
 ## Building from source

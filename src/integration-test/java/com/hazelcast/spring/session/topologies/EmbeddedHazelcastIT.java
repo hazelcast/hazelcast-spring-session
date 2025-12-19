@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-package com.hazelcast.spring.session;
+package com.hazelcast.spring.session.topologies;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.spring.session.AbstractHazelcastIndexedSessionRepositoryIT;
+import com.hazelcast.spring.session.HazelcastITUtils;
+import com.hazelcast.spring.session.HazelcastIndexedSessionRepository;
 import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -34,17 +37,17 @@ import org.springframework.test.context.web.WebAppConfiguration;
  * @author Vedran Pavic
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration
-@WebAppConfiguration
-class EmbeddedHazelcastIndexedSessionRepositoryITests extends AbstractHazelcastIndexedSessionRepositoryITests {
+@ContextConfiguration(classes = EmbeddedHazelcastIT.HazelcastSessionConfig.class)
+class EmbeddedHazelcastIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
 	@EnableHazelcastHttpSession
-	@Configuration
+    @Configuration(proxyBeanMethods = false)
+    @WebAppConfiguration
 	static class HazelcastSessionConfig {
 
 		@Bean
 		HazelcastInstance hazelcastInstance() {
-			return HazelcastITestUtils.embeddedHazelcastServer();
+			return HazelcastITUtils.embeddedHazelcastServer();
 		}
 
 	}
