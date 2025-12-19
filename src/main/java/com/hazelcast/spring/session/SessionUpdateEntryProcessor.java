@@ -92,7 +92,11 @@ public class SessionUpdateEntryProcessor implements EntryProcessor, IdentifiedDa
         }
         processMapSession(value);
         var extendedEntry = (ExtendedMapEntry<String, BackingMapSession>) entry;
-        extendedEntry.setValue(value, value.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+        if (value.getMaxInactiveInterval() == null) {
+            extendedEntry.setValue(value);
+        } else {
+            extendedEntry.setValue(value, value.getMaxInactiveInterval().getSeconds(), TimeUnit.SECONDS);
+        }
         return Boolean.TRUE;
     }
 
@@ -136,7 +140,11 @@ public class SessionUpdateEntryProcessor implements EntryProcessor, IdentifiedDa
             builder.setArrayOfGenericRecord("attributeValues", attributeValues.toArray(new GenericRecord[0]));
         }
 
-        ((ExtendedMapEntry) entry).setValue(builder.build(), ttl, TimeUnit.SECONDS);
+        if (ttl == -1) {
+            entry.setValue(builder.build());
+        } else {
+            ((ExtendedMapEntry) entry).setValue(builder.build(), ttl, TimeUnit.SECONDS);
+        }
         return Boolean.TRUE;
     }
 
