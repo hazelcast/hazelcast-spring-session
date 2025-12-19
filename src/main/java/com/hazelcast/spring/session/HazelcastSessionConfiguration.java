@@ -30,8 +30,7 @@ public final class HazelcastSessionConfiguration {
 
     /**
      * Applies required serialization configuration,
-     * adds {@link AttributeValueCompactSerializer}, {@link DurationSerializer},
-     * {@link InstantSerializer} and {@link HazelcastSessionCompactSerializer}
+     * adds {@link AttributeValueCompactSerializer} and {@link HazelcastSessionCompactSerializer}
      * to {@link com.hazelcast.config.CompactSerializationConfig}.
      *
      * @return config provided by user (for fluent API)
@@ -40,16 +39,13 @@ public final class HazelcastSessionConfiguration {
     public static ClientConfig applySerializationConfig(@NonNull ClientConfig clientConfig) {
         clientConfig.getSerializationConfig().getCompactSerializationConfig()
                     .addSerializer(new AttributeValueCompactSerializer())
-                    .addSerializer(new InstantSerializer())
-                    .addSerializer(new DurationSerializer())
                     .addSerializer(new HazelcastSessionCompactSerializer());
         return clientConfig;
     }
 
     /**
      * Applies required serialization configuration,
-     * adds {@link AttributeValueCompactSerializer}, {@link DurationSerializer},
-     * {@link InstantSerializer} and {@link HazelcastSessionCompactSerializer}
+     * adds {@link AttributeValueCompactSerializer} and {@link HazelcastSessionCompactSerializer}
      * to {@link com.hazelcast.config.CompactSerializationConfig}.
      *
      * @return config provided by user (for fluent API)
@@ -58,8 +54,6 @@ public final class HazelcastSessionConfiguration {
     public static Config applySerializationConfig(@NonNull Config instanceConfig) {
         instanceConfig.getSerializationConfig().getCompactSerializationConfig()
                       .addSerializer(new AttributeValueCompactSerializer())
-                      .addSerializer(new InstantSerializer())
-                      .addSerializer(new DurationSerializer())
                       .addSerializer(new HazelcastSessionCompactSerializer());
         return instanceConfig;
     }

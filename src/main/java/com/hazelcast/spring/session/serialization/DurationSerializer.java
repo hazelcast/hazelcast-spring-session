@@ -24,74 +24,53 @@ import com.hazelcast.nio.serialization.StreamSerializer;
 import com.hazelcast.nio.serialization.compact.CompactReader;
 import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
+import com.hazelcast.spi.annotation.PrivateApi;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.Duration;
 
-public class DurationSerializer implements CompactSerializer<Duration>, StreamSerializer<Duration> {
+@PrivateApi
+public class DurationSerializer {
 
-    public static final String HZ_SPRING_SESSION_DURATION = "HzSpringSessionDuration";
+    private static final int NULL_MARKER = -1;
 
-    @Override
-    public void write(ObjectDataOutput out, Duration instant) throws IOException {
-        out.writeLong(instant.getSeconds());
-        out.writeInt(instant.getNano());
+    public static void write(ObjectDataOutput out, Duration duration) throws IOException {
+        if (duration == null) {
+            out.writeInt(NULL_MARKER);
+        } else {
+            out.writeLong(duration.getSeconds());
+            out.writeInt(duration.getNano());
+        }
     }
 
-    @Override
-    public void write(@NonNull CompactWriter writer, @NonNull Duration instant) {
-        writer.writeInt64("seconds", instant.getSeconds());
-        writer.writeInt32("nanos", instant.getNano());
+    public static void write(@NonNull CompactWriter writer, String fieldName, @Nullable Duration duration) {
+        if (duration == null) {
+            writer.writeInt64(fieldName + "_seconds", NULL_MARKER);
+        } else {
+            writer.writeInt64(fieldName + "_seconds", duration.getSeconds());
+            writer.writeInt32(fieldName + "_nanos", duration.getNano());
+        }
     }
 
-    @Override @NonNull
-    public Duration read(@NonNull ObjectDataInput in) throws IOException {
+    @Nullable
+    public static Duration read(@NonNull ObjectDataInput in) throws IOException {
         long seconds = in.readLong();
+        if (seconds == NULL_MARKER) {
+            return null;
+        }
         int nanos = in.readInt();
         return Duration.ofSeconds(seconds, nanos);
     }
 
-    @Override
-    @NonNull
-    public Duration read(@NonNull CompactReader reader) {
-        long seconds = reader.readInt64("seconds");
-        int nanos = reader.readInt32("nanos");
+    @Nullable
+    public static Duration read(@NonNull CompactReader reader, String fieldName) {
+        long seconds = reader.readInt64(fieldName + "_seconds");
+        if (seconds == NULL_MARKER) {
+            return null;
+        }
+        int nanos = reader.readInt32(fieldName + "_nanos");
         return Duration.ofSeconds(seconds, nanos);
-    }
-
-    @Override
-    public int getTypeId() {
-        return -3003;
-    }
-
-    @Override
-    @NonNull
-    public String getTypeName() {
-        return HZ_SPRING_SESSION_DURATION;
-    }
-
-    @Override
-    @NonNull
-    public Class<Duration> getCompactClass() {
-        return Duration.class;
-    }
-
-    public static class DurationSerializerHook implements SerializerHook<Duration> {
-
-        @Override
-        public Class<Duration> getSerializationType() {
-            return Duration.class;
-        }
-
-        @Override
-        public boolean isOverwritable() {
-            return false;
-        }
-
-        @Override
-        public Serializer createSerializer() {
-            return new DurationSerializer();
-        }
     }
 }

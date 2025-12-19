@@ -19,6 +19,8 @@ package com.hazelcast.spring.session;
 import com.hazelcast.nio.serialization.compact.CompactReader;
 import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
+import com.hazelcast.spring.session.serialization.DurationSerializer;
+import com.hazelcast.spring.session.serialization.InstantSerializer;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Set;
@@ -64,9 +66,9 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         BackingMapSession cached = new BackingMapSession(originalId);
         cached.setId(reader.readString("id"));
         cached.setPrincipalName(reader.readString("principalName"));
-        cached.setCreationTime(reader.readCompact("creationTime"));
-        cached.setLastAccessedTime(reader.readCompact("lastAccessedTime"));
-        cached.setMaxInactiveInterval(reader.readCompact("maxInactiveInterval"));
+        cached.setCreationTime(InstantSerializer.read(reader, "creationTime"));
+        cached.setLastAccessedTime(InstantSerializer.read(reader, "lastAccessedTime"));
+        cached.setMaxInactiveInterval(DurationSerializer.read(reader, "maxInactiveInterval"));
         String[] attributeNames = reader.readArrayOfString("attributeNames");
         AttributeValue[] attributeValues = reader.readArrayOfCompact("attributeValues", AttributeValue.class);
 
@@ -83,9 +85,9 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
         writer.writeString("originalId", session.getOriginalId());
         writer.writeString("id", session.getId());
         writer.writeString("principalName", session.getPrincipalName());
-        writer.writeCompact("creationTime", session.getCreationTime());
-        writer.writeCompact("lastAccessedTime", session.getLastAccessedTime());
-        writer.writeCompact("maxInactiveInterval", session.getMaxInactiveInterval());
+        InstantSerializer.write(writer, "creationTime", session.getCreationTime());
+        InstantSerializer.write(writer, "lastAccessedTime", session.getLastAccessedTime());
+        DurationSerializer.write(writer, "maxInactiveInterval", session.getMaxInactiveInterval());
         Set<String> attributeNames = session.getAttributeNameWithoutPrincipal();
         AttributeValue[] attributeValues = attributeNames.stream().map(session::getAttribute).toArray(AttributeValue[]::new);
 

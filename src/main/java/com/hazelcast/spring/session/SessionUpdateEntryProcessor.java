@@ -37,9 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder.compact;
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
-import static java.util.Objects.requireNonNull;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 
 /**
@@ -101,23 +99,15 @@ public class SessionUpdateEntryProcessor implements EntryProcessor, IdentifiedDa
     private Boolean processGenericRecord(Map.Entry entry, GenericRecord gr) {
         GenericRecordBuilder builder = gr.newBuilderWithClone();
 
-        GenericRecord maxInactiveIntervalRecord = gr.getGenericRecord("maxInactiveInterval");
-        requireNonNull(maxInactiveIntervalRecord, "maxInactiveInterval is null");
-        long ttl = maxInactiveIntervalRecord.getInt64("seconds");
-
+        long ttl = gr.getInt64("maxInactiveInterval_seconds");
         if (this.lastAccessedTime != null) {
-            builder.setGenericRecord("lastAccessedTime",
-                                     compact(InstantSerializer.HZ_SPRING_SESSION_INSTANT)
-                                             .setInt64("seconds", lastAccessedTime.getEpochSecond())
-                                             .setInt32("nanos", lastAccessedTime.getNano())
-                                             .build());
+            builder.setInt64("lastAccessedTime_seconds", this.lastAccessedTime.getEpochSecond());
+            builder.setInt32("lastAccessedTime_nanos", this.lastAccessedTime.getNano());
         }
         if (this.maxInactiveInterval != null) {
-            builder.setGenericRecord("maxInactiveInterval",
-                                     compact(DurationSerializer.HZ_SPRING_SESSION_DURATION)
-                                             .setInt64("seconds", maxInactiveInterval.getSeconds())
-                                             .setInt32("nanos", maxInactiveInterval.getNano())
-                                             .build());
+            ttl = this.maxInactiveInterval.getSeconds();
+            builder.setInt64("maxInactiveInterval_seconds", this.maxInactiveInterval.getSeconds());
+            builder.setInt32("maxInactiveInterval_nanos", this.maxInactiveInterval.getNano());
         }
         if (this.delta != null) {
             List<String> attributeNames = toList(gr.getArrayOfString("attributeNames"));
@@ -226,8 +216,8 @@ public class SessionUpdateEntryProcessor implements EntryProcessor, IdentifiedDa
 
     @Override
     public void writeData(ObjectDataOutput out) throws IOException {
-        out.writeObject(lastAccessedTime);
-        out.writeObject(maxInactiveInterval);
+        InstantSerializer.write(out, lastAccessedTime);
+        DurationSerializer.write(out, maxInactiveInterval);
         out.writeString(principalName);
 
         out.writeObject(delta);
@@ -235,18 +225,8 @@ public class SessionUpdateEntryProcessor implements EntryProcessor, IdentifiedDa
 
     @Override
     public void readData(ObjectDataInput in) throws IOException {
-        var lastAccessedTime = in.readObject();
-        if (lastAccessedTime instanceof Instant i) {
-            this.lastAccessedTime = i;
-        } else if (lastAccessedTime instanceof GenericRecord gr) {
-            this.lastAccessedTime = Instant.ofEpochSecond(gr.getInt64("seconds"), gr.getInt32("nanos"));
-        }
-        var maxInactiveInterval = in.readObject();
-        if (maxInactiveInterval instanceof Duration duration) {
-            this.maxInactiveInterval = duration;
-        } else if (maxInactiveInterval instanceof GenericRecord gr) {
-            this.maxInactiveInterval = Duration.ofSeconds(gr.getInt64("seconds"), gr.getInt32("nanos"));
-        }
+        lastAccessedTime = InstantSerializer.read(in);
+        maxInactiveInterval = DurationSerializer.read(in);
         principalName = in.readString();
 
         delta = in.readObject();

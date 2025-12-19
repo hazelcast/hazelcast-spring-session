@@ -18,81 +18,55 @@ package com.hazelcast.spring.session.serialization;
 
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
-import com.hazelcast.nio.serialization.Serializer;
-import com.hazelcast.nio.serialization.SerializerHook;
-import com.hazelcast.nio.serialization.StreamSerializer;
 import com.hazelcast.nio.serialization.compact.CompactReader;
-import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
+import com.hazelcast.spi.annotation.PrivateApi;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.Instant;
 
-public class InstantSerializer implements CompactSerializer<Instant>, StreamSerializer<Instant> {
+@PrivateApi
+public class InstantSerializer {
 
-    public static final String HZ_SPRING_SESSION_INSTANT = "HzSpringSessionInstant";
+    private static final int NULL_MARKER = -1;
 
-    @Override
-    public void write(ObjectDataOutput out, Instant instant) throws IOException {
-        out.writeLong(instant.getEpochSecond());
-        out.writeInt(instant.getNano());
+    public static void write(ObjectDataOutput out, Instant instant) throws IOException {
+        if (instant == null) {
+            out.writeLong(NULL_MARKER);
+        } else {
+            out.writeLong(instant.getEpochSecond());
+            out.writeInt(instant.getNano());
+        }
     }
 
-    @Override
-    public void write(@NonNull CompactWriter writer, @NonNull Instant instant) {
-        writer.writeInt64("seconds", instant.getEpochSecond());
-        writer.writeInt32("nanos", instant.getNano());
+    public static void write(@NonNull CompactWriter writer, @NonNull String fieldName, @Nullable Instant instant) {
+        if (instant == null) {
+            writer.writeInt64(fieldName + "_seconds", NULL_MARKER);
+        } else {
+            writer.writeInt64(fieldName + "_seconds", instant.getEpochSecond());
+            writer.writeInt32(fieldName + "_nanos", instant.getNano());
+        }
     }
 
-    @Override
-    @NonNull
-    public Instant read(@NonNull ObjectDataInput in) throws IOException {
+    @Nullable
+    public static Instant read(@NonNull ObjectDataInput in) throws IOException {
         long seconds = in.readLong();
+        if (seconds == NULL_MARKER) {
+            return null;
+        }
         int nanos = in.readInt();
         return Instant.ofEpochSecond(seconds, nanos);
     }
 
-    @Override
-    @NonNull
-    public Instant read(@NonNull CompactReader reader) {
-        long seconds = reader.readInt64("seconds");
-        int nanos = reader.readInt32("nanos");
+    @Nullable
+    public static Instant read(@NonNull CompactReader reader, String fieldName) {
+        long seconds = reader.readInt64(fieldName + "_seconds");
+        if (seconds == NULL_MARKER) {
+            return null;
+        }
+        int nanos = reader.readInt32(fieldName + "_nanos");
         return Instant.ofEpochSecond(seconds, nanos);
-    }
-
-    @Override
-    public int getTypeId() {
-        return -3002;
-    }
-
-    @Override
-    @NonNull
-    public String getTypeName() {
-        return HZ_SPRING_SESSION_INSTANT;
-    }
-
-    @Override
-    @NonNull
-    public Class<Instant> getCompactClass() {
-        return Instant.class;
-    }
-
-    public static class InstantSerializerHook implements SerializerHook<Instant> {
-
-        @Override
-        public Class<Instant> getSerializationType() {
-            return Instant.class;
-        }
-
-        @Override
-        public boolean isOverwritable() {
-            return false;
-        }
-
-        @Override
-        public Serializer createSerializer() {
-            return new InstantSerializer();
-        }
     }
 }
