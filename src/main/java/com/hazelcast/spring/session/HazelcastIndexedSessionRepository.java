@@ -320,6 +320,8 @@ public class HazelcastIndexedSessionRepository
      * If true, this repository will assume that class instances are present on all members, and we can use faster
      * {@link com.hazelcast.map.EntryProcessor} to process sessions in-place, instead of a combination of
      * {@link IMap#get} + {@link IMap#set}.
+	 *
+	 * @since 4.0.0
      */
     public HazelcastIndexedSessionRepository setDeployedOnAllMembers(boolean deployedOnAllMembers) {
         this.deployedOnAllMembers = deployedOnAllMembers;
@@ -330,6 +332,8 @@ public class HazelcastIndexedSessionRepository
      * Allows customization of {@link IMap} storing session information.
      *
      * @return this for fluent API
+	 *
+	 * @since 4.0.0
      */
     public HazelcastIndexedSessionRepository setSessionMapConfigCustomizer(@NonNull ConsumerEx<MapConfig> sessionMapConfigCustomizer) {
         Assert.notNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer must not be null");
@@ -339,6 +343,10 @@ public class HazelcastIndexedSessionRepository
 
     /**
      * Disables autoconfiguration of sessions' {@link IMap} index.
+	 *
+	 * @return this for fluent API
+	 *
+	 * @since 4.0.0
      */
     public HazelcastIndexedSessionRepository disableSessionMapAutoConfiguration() {
         sessionMapConfigCustomizer = null;
