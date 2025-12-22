@@ -130,5 +130,4 @@ public class AutoconfigurationTest extends TestWithHazelcast {
         MapConfig mapConfig = normalMember.getConfig().getMapConfig(mapName);
         assertThat(mapConfig.getIndexConfigs()).isEmpty();
     }
-
 }
