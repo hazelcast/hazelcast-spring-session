@@ -66,6 +66,7 @@ import org.springframework.util.Assert;
 
 import static com.hazelcast.config.IndexType.HASH;
 import static com.hazelcast.spring.session.BackingMapSession.PRINCIPAL_NAME_ATTRIBUTES;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link org.springframework.session.SessionRepository} implementation that stores
@@ -187,10 +188,11 @@ public class HazelcastIndexedSessionRepository
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
     /**
-     * Used to customize session map configuration. Null means autoconfiguration must not happen.
+     * Used to customize session map configuration.
      */
-    @Nullable
+    @NonNull
     private ConsumerEx<MapConfig> sessionMapConfigCustomizer = ConsumerEx.noop();
+    private boolean sessionMapAutoconfigurationEnabled = true;
 
 	/**
 	 * Create a new {@link HazelcastIndexedSessionRepository} instance.
@@ -208,10 +210,13 @@ public class HazelcastIndexedSessionRepository
 
     private void configureSessionMap(@NonNull HazelcastInstance hazelcastInstance) {
         var customizer = sessionMapConfigCustomizer;
-        if (customizer == null) {
+        if (!sessionMapAutoconfigurationEnabled) {
             LOGGER.debug("Not configuring session map {} per configuration", sessionMapName);
             return;
-        }
+        } else {
+			requireNonNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer must not be null when session map "
+					+ "autoconfiguration is enabled");
+		}
 
 		var mapConfig = new MapConfig(sessionMapName);
 		mapConfig.getIndexConfigs().add(new IndexConfig(HASH, PRINCIPAL_NAME_ATTRIBUTE));
@@ -349,7 +354,8 @@ public class HazelcastIndexedSessionRepository
 	 * @since 4.0.0
      */
     public HazelcastIndexedSessionRepository disableSessionMapAutoConfiguration() {
-        sessionMapConfigCustomizer = null;
+		sessionMapAutoconfigurationEnabled = false;
+        sessionMapConfigCustomizer = ConsumerEx.noop();
         return this;
     }
 

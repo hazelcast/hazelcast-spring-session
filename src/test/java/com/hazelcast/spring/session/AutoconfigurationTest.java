@@ -16,19 +16,17 @@
 
 package com.hazelcast.spring.session;
 
-import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.IndexConfig;
 import com.hazelcast.config.IndexType;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
-import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.session.FlushMode;
 
 import java.time.Duration;
@@ -36,15 +34,12 @@ import java.util.List;
 import java.util.Map;
 
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
-import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySerializationConfig;
+import static com.hazelcast.spring.session.TestUtils.getClientConfig;
+import static com.hazelcast.spring.session.TestUtils.getConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ParameterizedClass
-@CsvSource(useHeadersInDisplayName = true, textBlock = """
-        Client Server
-        true
-        false
-        """)
+@ValueSource(booleans =  {true, false})
 public class AutoconfigurationTest extends TestWithHazelcast {
 
     @Parameter(0)
@@ -54,21 +49,9 @@ public class AutoconfigurationTest extends TestWithHazelcast {
     void setUp() {
         Config config = getConfig();
 
-        FACTORY.newHazelcastInstance(config);
-        FACTORY.newHazelcastInstance(config);
-    }
-
-    private @NonNull ClientConfig getClientConfig() {
-        ClientConfig clientConfig = new ClientConfig();
-        clientConfig.setProperty("hazelcast.partition.count", "11");
-        return applySerializationConfig(clientConfig);
-    }
-
-    private @NonNull Config getConfig() {
-        Config config = new Config();
-        config.setProperty("hazelcast.partition.count", "11");
-        applySerializationConfig(config);
-        return config;
+        for (int i = 0; i < 2; i++) {
+            FACTORY.newHazelcastInstance(config);
+        }
     }
 
     @AfterEach

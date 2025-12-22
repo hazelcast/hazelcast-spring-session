@@ -34,7 +34,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
-import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySerializationConfig;
+import static com.hazelcast.spring.session.TestUtils.getConfig;
+import static com.hazelcast.spring.session.TestUtils.getConfigWithoutSerialization;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.session.FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME;
 import static org.springframework.session.FlushMode.IMMEDIATE;
@@ -178,18 +179,6 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         assertAttribute(sessionFound, "keyPojo")
                 .isInstanceOf(CustomPojo.class)
                 .isEqualTo(new CustomPojo(1, "1"));
-    }
-
-    private Config getConfig() {
-        Config config = getConfigWithoutSerialization();
-        applySerializationConfig(config);
-        return config;
-    }
-
-    private Config getConfigWithoutSerialization() {
-        Config config = new Config();
-        config.setProperty("hazelcast.partition.count", "11");
-        return config;
     }
 
     @Test
