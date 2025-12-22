@@ -26,5 +26,7 @@
             <AppenderRef ref="Console"/>
         </Root>
         <Logger name="com.hazelcast.spring" level="DEBUG"/>
+        <Logger name="com.hazelcast.internal" level="TRACE"/>
+        <Logger name="com.hazelcast.client" level="TRACE"/>
     </Loggers>
 </Configuration>
