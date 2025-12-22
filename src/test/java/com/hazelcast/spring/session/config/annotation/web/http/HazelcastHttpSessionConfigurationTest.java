@@ -272,7 +272,8 @@ class HazelcastHttpSessionConfigurationTest {
         registerAndRefresh(NoSessionMapIndexAutoConfiguration.class);
         HazelcastIndexedSessionRepository sessionRepository = this.context
                 .getBean(HazelcastIndexedSessionRepository.class);
-        assertThat(sessionRepository).extracting("sessionMapConfigCustomizer").isNull();
+        assertThat(sessionRepository).extracting("sessionMapConfigCustomizer").isNotNull();
+        assertThat(sessionRepository).extracting("sessionMapAutoconfigurationEnabled").isEqualTo(false);
     }
 
 	private void registerAndRefresh(Class<?>... annotatedClasses) {
