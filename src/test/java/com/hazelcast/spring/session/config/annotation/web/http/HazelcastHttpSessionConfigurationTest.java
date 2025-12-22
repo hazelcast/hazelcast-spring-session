@@ -532,7 +532,6 @@ class HazelcastHttpSessionConfigurationTest {
     @Configuration(proxyBeanMethods = false)
     @EnableHazelcastHttpSession(disableSessionMapAutoconfiguration = true)
     static class NoSessionMapIndexAutoConfiguration extends BaseConfiguration {
-
     }
 
 }
