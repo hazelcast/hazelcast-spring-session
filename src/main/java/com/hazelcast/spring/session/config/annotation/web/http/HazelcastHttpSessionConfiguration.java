@@ -89,11 +89,6 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		this.maxInactiveInterval = maxInactiveInterval;
 	}
 
-	@Deprecated
-	public void setMaxInactiveIntervalInSeconds(int maxInactiveIntervalInSeconds) {
-		setMaxInactiveInterval(Duration.ofSeconds(maxInactiveIntervalInSeconds));
-	}
-
 	public void setSessionMapName(String sessionMapName) {
 		this.sessionMapName = sessionMapName;
 	}
