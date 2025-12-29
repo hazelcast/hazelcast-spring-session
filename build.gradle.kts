@@ -21,6 +21,10 @@ repositories {
     maven { url = uri("https://repo.spring.io/snapshot") }
 }
 
+checkstyle {
+    toolVersion = "12.3.0"
+}
+
 // Overridable versions with -Pproperty=value
 val springSessionVersion: String by project
 val springFrameworkVersion: String by project
