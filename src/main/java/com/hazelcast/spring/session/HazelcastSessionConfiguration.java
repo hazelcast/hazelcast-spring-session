@@ -18,8 +18,6 @@ package com.hazelcast.spring.session;
 
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
-import com.hazelcast.spring.session.serialization.DurationSerializer;
-import com.hazelcast.spring.session.serialization.InstantSerializer;
 import org.jspecify.annotations.NonNull;
 
 /**
