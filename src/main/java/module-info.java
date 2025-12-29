@@ -27,4 +27,7 @@ module com.hazelcast.spring.session {
     exports com.hazelcast.spring.session;
     exports com.hazelcast.spring.session.config.annotation;
     exports com.hazelcast.spring.session.config.annotation.web.http;
+
+    provides com.hazelcast.internal.serialization.DataSerializerHook
+            with com.hazelcast.spring.session.serialization.HzSSSerializerHook;
 }
