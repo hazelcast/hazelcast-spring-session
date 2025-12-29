@@ -17,22 +17,11 @@
 package com.hazelcast.spring.session;
 
 import com.hazelcast.client.test.TestHazelcastFactory;
-import com.hazelcast.config.Config;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 
 abstract class TestWithHazelcast {
 
     protected static final TestHazelcastFactory FACTORY = new TestHazelcastFactory();
-
-    @BeforeAll
-    static void beforeAll() {
-        var conf = new Config();
-        conf.setProperty("hazelcast.partition.count", "11");
-        conf.getSerializationConfig().getCompactSerializationConfig()
-            .addSerializer(new HazelcastSessionCompactSerializer())
-            .addSerializer(new AttributeValueCompactSerializer());
-    }
 
     @AfterAll
     static void cleanup() {
