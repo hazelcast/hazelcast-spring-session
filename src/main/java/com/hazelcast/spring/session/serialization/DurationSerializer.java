@@ -18,11 +18,7 @@ package com.hazelcast.spring.session.serialization;
 
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
-import com.hazelcast.nio.serialization.Serializer;
-import com.hazelcast.nio.serialization.SerializerHook;
-import com.hazelcast.nio.serialization.StreamSerializer;
 import com.hazelcast.nio.serialization.compact.CompactReader;
-import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import com.hazelcast.spi.annotation.PrivateApi;
 import org.jspecify.annotations.NonNull;
@@ -38,7 +34,7 @@ public class DurationSerializer {
 
     public static void write(ObjectDataOutput out, Duration duration) throws IOException {
         if (duration == null) {
-            out.writeInt(NULL_MARKER);
+            out.writeLong(NULL_MARKER);
         } else {
             out.writeLong(duration.getSeconds());
             out.writeInt(duration.getNano());
