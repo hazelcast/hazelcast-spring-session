@@ -1,3 +1,5 @@
+@file:Suppress("SpellCheckingInspection")
+
 plugins {
     `java-library`
     checkstyle
@@ -56,12 +58,12 @@ val processBuildContext = tasks.register<ProcessResources>("processBuildContext"
 
 tasks.compileJava.get().dependsOn(processBuildContext)
 
-val mainArtifactFile = configurations.getAt("archives").artifacts.files.singleFile
+val mainArtifactFile : File = configurations.getAt("archives").artifacts.files.singleFile
 
-val integrationTestImplementation by configurations.getting {
+val integrationTestImplementation : Configuration by configurations.getting {
     extendsFrom(configurations.testImplementation.get())
 }
-val integrationTestRuntimeOnly by configurations.getting {
+val integrationTestRuntimeOnly : Configuration by configurations.getting {
     extendsFrom(configurations.testRuntimeOnly.get())
 }
 
@@ -190,8 +192,12 @@ tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.jacocoTestReport)
 }
 
+tasks.withType<Checkstyle>().configureEach {
+    exclude("**/module-info.java")
+}
+
 release {
-    tagTemplate = "v\${version}"
+    tagTemplate = $$"v${version}"
     newVersionCommitMessage = "Start development"
     preTagCommitMessage = "Release"
     failOnSnapshotDependencies = true
@@ -244,5 +250,5 @@ tasks.register("printVersion") {
 
 // used for easier process of assembly for IT re-testing
 tasks.register("prepareITs") {
-    dependsOn(tasks.assemble, copyHSSJar, copySpringJars);
+    dependsOn(tasks.assemble, copyHSSJar, copySpringJars)
 }
