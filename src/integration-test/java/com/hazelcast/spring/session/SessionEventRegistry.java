@@ -52,7 +52,7 @@ class SessionEventRegistry implements ApplicationListener<@NonNull AbstractSessi
 
 	@SuppressWarnings("unchecked")
 	<E extends AbstractSessionEvent> E getEvent(String sessionId) throws InterruptedException {
-		return (E) waitForEvent(sessionId);
+		return waitForEvent(sessionId);
 	}
 
 	@SuppressWarnings("unchecked")
