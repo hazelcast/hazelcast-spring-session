@@ -34,7 +34,7 @@ public class DurationSerializer {
         out.writeBoolean(duration == null);
         if (duration != null) {
             out.writeLong(duration.getSeconds());
-            out.writeInt( duration.getNano());
+            out.writeInt(duration.getNano());
         }
     }
 
