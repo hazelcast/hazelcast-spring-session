@@ -24,6 +24,7 @@ import java.lang.annotation.Target;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import com.hazelcast.map.IMap;
 import org.springframework.context.annotation.Import;
 import org.springframework.session.FlushMode;
 import org.springframework.session.MapSession;
@@ -102,5 +103,11 @@ public @interface EnableHazelcastHttpSession {
 	 * @since 2.2.0
 	 */
 	SaveMode saveMode() default SaveMode.ON_SET_ATTRIBUTE;
+
+    /**
+     * Disables index autoconfiguration of {@link #sessionMapName()} {@link IMap}.
+     * @since 4.0.0
+     */
+    boolean disableSessionMapAutoconfiguration() default false;
 
 }

@@ -21,6 +21,7 @@ import java.time.Instant;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
+import com.hazelcast.test.HazelcastTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import static com.hazelcast.test.HazelcastTestSupport.assertTrueEventually;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -156,8 +158,7 @@ class SessionEventHazelcastIndexedSessionRepositoryTests<S extends Session> {
 		this.repository.save(sessionToUpdate);
 
 		Thread.sleep(2000);
-
-		assertThat(this.repository.findById(sessionToUpdate.getId())).isNotNull();
+		assertTrueEventually(() -> assertThat(repository.findById(sessionToUpdate.getId())).isNotNull());
 	}
 
 	@Test // gh-1077

@@ -3,9 +3,15 @@
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://www.hazelcast.com/schema/config https://www.hazelcast.com/schema/config/hazelcast-config-5.6.xsd">
 
+	<properties>
+		<property name="hazelcast.logging.type">log4j2</property>
+	</properties>
+
 	<network>
 		<join>
 			<auto-detection enabled="false"/>
+			<tcp-ip enabled="true">
+			</tcp-ip>
 		</join>
 	</network>
 
