@@ -16,7 +16,6 @@
 
 module com.hazelcast.spring.session {
     requires com.hazelcast.core;
-    requires org.apache.commons.logging;
     requires spring.beans;
     requires spring.context;
     requires spring.core;

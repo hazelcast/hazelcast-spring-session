@@ -28,7 +28,10 @@ import java.io.IOException;
 import java.time.Duration;
 
 @PrivateApi
-public class DurationSerializer {
+public final class DurationSerializer {
+
+    private DurationSerializer() {
+    }
 
     public static void write(ObjectDataOutput out, Duration duration) throws IOException {
         out.writeBoolean(duration == null);
