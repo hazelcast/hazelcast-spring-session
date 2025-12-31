@@ -20,7 +20,11 @@ import com.hazelcast.config.CompactSerializationConfig;
 import com.hazelcast.config.SerializationConfig;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.DefaultSerializationServiceBuilder;
-import com.hazelcast.internal.serialization.impl.compact.InMemorySchemaService;
+import com.hazelcast.internal.serialization.impl.compact.Schema;
+import com.hazelcast.internal.serialization.impl.compact.SchemaService;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 final class TestUtils {
     private TestUtils() {
@@ -35,4 +39,36 @@ final class TestUtils {
                 .setSchemaService(new InMemorySchemaService())
                 .build();
     }
+
+    /**
+     * Equivalent to class in Hazelcast core, but it's not available in 5.4, so we need to copy for now.
+     */
+    public static class InMemorySchemaService implements SchemaService {
+        private final Map<Long, Schema> schemas = new ConcurrentHashMap<>();
+
+        public InMemorySchemaService() {
+        }
+
+        @Override
+        public Schema get(long schemaId) {
+            return schemas.get(schemaId);
+        }
+
+        @Override
+        public void put(Schema schema) {
+            long schemaId = schema.getSchemaId();
+            Schema existingSchema = schemas.putIfAbsent(schemaId, schema);
+            if (existingSchema != null && !schema.equals(existingSchema)) {
+                throw new IllegalStateException("Schema with schemaId " + schemaId + " already exists. "
+                                                        + "existing schema " + existingSchema
+                                                        + "new schema " + schema);
+            }
+        }
+
+        @Override
+        public void putLocal(Schema schema) {
+            put(schema);
+        }
+    }
+
 }
