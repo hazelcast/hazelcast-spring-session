@@ -16,11 +16,12 @@
 
 package com.hazelcast.spring.session.topologies;
 
+import com.hazelcast.config.IndexConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spring.session.AbstractHazelcastIndexedSessionRepositoryIT;
-import com.hazelcast.spring.session.HazelcastITUtils;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository;
 import com.hazelcast.spring.session.config.annotation.web.http.EnableHazelcastHttpSession;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.context.annotation.Bean;
@@ -28,6 +29,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.web.WebAppConfiguration;
+
+import static com.hazelcast.spring.session.HazelcastITUtils.embeddedHazelcastServer;
+import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME;
+import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for {@link HazelcastIndexedSessionRepository} using embedded
@@ -40,6 +46,14 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @ContextConfiguration(classes = EmbeddedHazelcastIT.HazelcastSessionConfig.class)
 class EmbeddedHazelcastIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
+	@Test
+	void hasIndexConfigured() {
+		assertThat(hazelcastInstance.getConfig().getMapConfig(DEFAULT_SESSION_MAP_NAME)
+									.getIndexConfigs())
+				.flatExtracting(IndexConfig::getAttributes)
+				.containsExactly(PRINCIPAL_NAME_ATTRIBUTE);
+	}
+
 	@EnableHazelcastHttpSession
     @Configuration(proxyBeanMethods = false)
     @WebAppConfiguration
@@ -47,7 +61,7 @@ class EmbeddedHazelcastIT extends AbstractHazelcastIndexedSessionRepositoryIT {
 
 		@Bean
 		HazelcastInstance hazelcastInstance() {
-			return HazelcastITUtils.embeddedHazelcastServer();
+			return embeddedHazelcastServer();
 		}
 
 	}

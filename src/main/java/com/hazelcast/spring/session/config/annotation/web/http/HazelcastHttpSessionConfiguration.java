@@ -80,6 +80,8 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
+    private boolean disableSessionMapAutoconfiguration;
+
     @Bean
 	public FindByIndexNameSessionRepository<?> sessionRepository() {
 		return createHazelcastIndexedSessionRepository();
@@ -143,6 +145,7 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		}
 		this.flushMode = attributes.getEnum("flushMode");
 		this.saveMode = attributes.getEnum("saveMode");
+        this.disableSessionMapAutoconfiguration = attributes.getBoolean("disableSessionMapAutoconfiguration");
    	}
 
 	private HazelcastIndexedSessionRepository createHazelcastIndexedSessionRepository() {
@@ -159,6 +162,9 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		sessionRepository.setFlushMode(this.flushMode);
 		sessionRepository.setSaveMode(this.saveMode);
         sessionRepository.setSessionIdGenerator(this.sessionIdGenerator);
+        if (this.disableSessionMapAutoconfiguration) {
+            sessionRepository.disableSessionMapAutoConfiguration();
+        }
 
 		this.sessionRepositoryCustomizers
 			.forEach((sessionRepositoryCustomizer) -> sessionRepositoryCustomizer.customize(sessionRepository));

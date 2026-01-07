@@ -26,8 +26,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.hazelcast.config.IndexConfig;
+import com.hazelcast.config.InvalidConfigurationException;
+import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.function.ConsumerEx;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
@@ -60,7 +64,9 @@ import org.springframework.session.events.SessionDeletedEvent;
 import org.springframework.session.events.SessionExpiredEvent;
 import org.springframework.util.Assert;
 
+import static com.hazelcast.config.IndexType.HASH;
 import static com.hazelcast.spring.session.BackingMapSession.PRINCIPAL_NAME_ATTRIBUTES;
+import static java.util.Objects.requireNonNull;
 
 /**
  * A {@link org.springframework.session.SessionRepository} implementation that stores
@@ -181,6 +187,13 @@ public class HazelcastIndexedSessionRepository
 
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
+    /**
+     * Used to customize session map configuration.
+     */
+    @NonNull
+    private ConsumerEx<MapConfig> sessionMapConfigCustomizer = ConsumerEx.noop();
+    private boolean sessionMapAutoconfigurationEnabled = true;
+
 	/**
 	 * Create a new {@link HazelcastIndexedSessionRepository} instance.
 	 * @param hazelcastInstance the {@link HazelcastInstance} to use for managing sessions
@@ -195,8 +208,32 @@ public class HazelcastIndexedSessionRepository
         LOGGER.info("HazelcastIndexedSessionRepository initialized");
 	}
 
+    private void configureSessionMap(@NonNull HazelcastInstance hazelcastInstance) {
+        var customizer = sessionMapConfigCustomizer;
+        if (!sessionMapAutoconfigurationEnabled) {
+            LOGGER.debug("Not configuring session map {} per configuration", sessionMapName);
+            return;
+        } else {
+			requireNonNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer must not be null when session map "
+					+ "autoconfiguration is enabled");
+		}
+
+		var mapConfig = new MapConfig(sessionMapName);
+		mapConfig.getIndexConfigs().add(new IndexConfig(HASH, PRINCIPAL_NAME_ATTRIBUTE));
+		customizer.accept(mapConfig);
+
+        try {
+            hazelcastInstance.getConfig().addMapConfig(mapConfig);
+			LOGGER.info("Automatic session map {} configuration submitted correctly", sessionMapName);
+        } catch (InvalidConfigurationException ice) {
+			// note: config override is not possible using dynamic configuration
+            LOGGER.info("Unable to automatically configure session map {}, probably configured earlier", sessionMapName);
+        }
+    }
+
     @Override
 	public void afterPropertiesSet() {
+		configureSessionMap(this.hazelcastInstance);
 		this.sessions = this.hazelcastInstance.getMap(this.sessionMapName);
 		this.sessionListenerId = this.sessions.addEntryListener(this, true);
 	}
@@ -213,9 +250,10 @@ public class HazelcastIndexedSessionRepository
 	 * @param applicationEventPublisher the {@link ApplicationEventPublisher} that is used
 	 * to publish session events. Cannot be null.
 	 */
-	public void setApplicationEventPublisher(@NonNull ApplicationEventPublisher applicationEventPublisher) {
+	public HazelcastIndexedSessionRepository setApplicationEventPublisher(@NonNull ApplicationEventPublisher applicationEventPublisher) {
 		Assert.notNull(applicationEventPublisher, "ApplicationEventPublisher cannot be null");
 		this.eventPublisher = applicationEventPublisher;
+		return this;
 	}
 
 	/**
@@ -224,54 +262,88 @@ public class HazelcastIndexedSessionRepository
 	 * time out. The default is 30 minutes.
 	 * @param defaultMaxInactiveInterval the default maxInactiveInterval
 	 */
-	public void setDefaultMaxInactiveInterval(@NonNull Duration defaultMaxInactiveInterval) {
+	public HazelcastIndexedSessionRepository setDefaultMaxInactiveInterval(@NonNull Duration defaultMaxInactiveInterval) {
 		Assert.notNull(defaultMaxInactiveInterval, "defaultMaxInactiveInterval must not be null");
 		this.defaultMaxInactiveInterval = defaultMaxInactiveInterval;
+		return this;
 	}
 
 	/**
 	 * Set the {@link IndexResolver} to use.
 	 * @param indexResolver the index resolver
 	 */
-	public void setIndexResolver(@NonNull IndexResolver<Session> indexResolver) {
+	public HazelcastIndexedSessionRepository setIndexResolver(@NonNull IndexResolver<Session> indexResolver) {
 		Assert.notNull(indexResolver, "indexResolver cannot be null");
 		this.indexResolver = indexResolver;
+		return this;
 	}
 
 	/**
 	 * Set the name of map used to store sessions.
 	 * @param sessionMapName the session map name
 	 */
-	public void setSessionMapName(@NonNull String sessionMapName) {
+	public HazelcastIndexedSessionRepository setSessionMapName(@NonNull String sessionMapName) {
 		Assert.hasText(sessionMapName, "Map name must not be empty");
 		this.sessionMapName = sessionMapName;
+		return this;
 	}
 
 	/**
 	 * Sets the Hazelcast flush mode. Default flush mode is {@link FlushMode#ON_SAVE}.
 	 * @param flushMode the new Hazelcast flush mode
 	 */
-	public void setFlushMode(@NonNull FlushMode flushMode) {
+	public HazelcastIndexedSessionRepository setFlushMode(@NonNull FlushMode flushMode) {
 		Assert.notNull(flushMode, "flushMode cannot be null");
 		this.flushMode = flushMode;
+		return this;
 	}
 
 	/**
 	 * Set the save mode.
 	 * @param saveMode the save mode
 	 */
-	public void setSaveMode(@NonNull SaveMode saveMode) {
+	public HazelcastIndexedSessionRepository setSaveMode(@NonNull SaveMode saveMode) {
 		Assert.notNull(saveMode, "saveMode must not be null");
 		this.saveMode = saveMode;
+		return this;
 	}
 
     /**
      * If true, this repository will assume that class instances are present on all members, and we can use faster
      * {@link com.hazelcast.map.EntryProcessor} to process sessions in-place, instead of a combination of
      * {@link IMap#get} + {@link IMap#set}.
+	 *
+	 * @since 4.0.0
      */
-    public void setDeployedOnAllMembers(boolean deployedOnAllMembers) {
+    public HazelcastIndexedSessionRepository setDeployedOnAllMembers(boolean deployedOnAllMembers) {
         this.deployedOnAllMembers = deployedOnAllMembers;
+		return this;
+    }
+
+    /**
+     * Allows customization of {@link IMap} storing session information.
+     *
+     * @return this for fluent API
+	 *
+	 * @since 4.0.0
+     */
+    public HazelcastIndexedSessionRepository setSessionMapConfigCustomizer(@NonNull ConsumerEx<MapConfig> sessionMapConfigCustomizer) {
+        Assert.notNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer must not be null");
+        this.sessionMapConfigCustomizer = sessionMapConfigCustomizer;
+        return this;
+    }
+
+    /**
+     * Disables autoconfiguration of sessions' {@link IMap} index.
+	 *
+	 * @return this for fluent API
+	 *
+	 * @since 4.0.0
+     */
+    public HazelcastIndexedSessionRepository disableSessionMapAutoConfiguration() {
+		sessionMapAutoconfigurationEnabled = false;
+        sessionMapConfigCustomizer = ConsumerEx.noop();
+        return this;
     }
 
     /**
@@ -294,7 +366,7 @@ public class HazelcastIndexedSessionRepository
 
 	@Override
 	public void save(@NonNull HazelcastSession session) {
-        final String sessionId = session.getId();
+		final String sessionId = session.getId();
         session.prepareAttributesSerializedForm(serializationService);
 		if (session.isNew) {
 			this.sessions.set(session.getId(), session.getDelegate(), session.getMaxInactiveInterval().getSeconds(),
@@ -391,7 +463,7 @@ public class HazelcastIndexedSessionRepository
 		BackingMapSession session = event.getOldValue();
 		if (session != null) {
 			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug("Session deleted with id: " + session.getId());
+                LOGGER.debug("Session deleted with id: {}", session.getId());
 			}
 			this.eventPublisher.publishEvent(new SessionDeletedEvent(this, new HazelcastSession(session)));
 		}

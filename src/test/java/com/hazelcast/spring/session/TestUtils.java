@@ -16,10 +16,15 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.CompactSerializationConfig;
+import com.hazelcast.config.Config;
 import com.hazelcast.config.SerializationConfig;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.DefaultSerializationServiceBuilder;
+import org.jspecify.annotations.NonNull;
+
+import static com.hazelcast.spring.session.HazelcastSessionConfiguration.applySerializationConfig;
 import com.hazelcast.internal.serialization.impl.compact.Schema;
 import com.hazelcast.internal.serialization.impl.compact.SchemaService;
 
@@ -38,6 +43,28 @@ final class TestUtils {
                 .setConfig(new SerializationConfig().setCompactSerializationConfig(compactSerializationConfig))
                 .setSchemaService(new InMemorySchemaService())
                 .build();
+    }
+
+    @NonNull
+    static Config getConfig() {
+        Config config = getConfigWithoutSerialization();
+        applySerializationConfig(config);
+        return config;
+    }
+
+    @NonNull
+    static Config getConfigWithoutSerialization() {
+        Config config = new Config();
+        // reduce number of partitions for faster startup
+        config.setProperty("hazelcast.partition.count", "11");
+        return config;
+    }
+
+    @NonNull
+    static ClientConfig getClientConfig() {
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.setProperty("hazelcast.partition.count", "11");
+        return applySerializationConfig(clientConfig);
     }
 
     /**

@@ -48,7 +48,7 @@ public abstract class AbstractHazelcastIndexedSessionRepositoryIT {
 	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
 	@Autowired
-	private HazelcastInstance hazelcastInstance;
+	protected HazelcastInstance hazelcastInstance;
 
 	@Autowired
 	private HazelcastIndexedSessionRepository repository;

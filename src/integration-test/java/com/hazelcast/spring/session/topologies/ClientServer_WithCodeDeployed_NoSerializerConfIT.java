@@ -72,6 +72,9 @@ class ClientServer_WithCodeDeployed_NoSerializerConfIT extends AbstractHazelcast
         container = new GenericContainer<>(HAZELCAST_DOCKER_VERSION)
                 .withExposedPorts(5701)
                 .withCopyFileToContainer(MountableFile.forClasspathResource("/hazelcast-server.xml"), "/opt/hazelcast/hazelcast.xml")
+                .withCopyFileToContainer(MountableFile.forClasspathResource("/log4j2.xml"),
+                                         "/opt/hazelcast/config/log4j2.xml")
+                .withEnv("LOGGING_CONFIG", "/opt/hazelcast/config/log4j2.xml")
                 .withEnv("HAZELCAST_CONFIG", "hazelcast.xml")
                 .withLogConsumer(new Slf4jLogConsumer(LOGGER).withPrefix("hz>"));
         Files.list(path.toPath()).forEach(file ->  container.withCopyFileToContainer(

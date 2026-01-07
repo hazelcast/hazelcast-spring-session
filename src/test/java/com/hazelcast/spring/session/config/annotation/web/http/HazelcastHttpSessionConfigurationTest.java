@@ -267,6 +267,15 @@ class HazelcastHttpSessionConfigurationTest {
 		assertThat(sessionRepository).extracting("sessionIdGenerator").isInstanceOf(UuidSessionIdGenerator.class);
 	}
 
+    @Test
+    void registerWhenAutoConfDisabled() {
+        registerAndRefresh(NoSessionMapIndexAutoConfiguration.class);
+        HazelcastIndexedSessionRepository sessionRepository = this.context
+                .getBean(HazelcastIndexedSessionRepository.class);
+        assertThat(sessionRepository).extracting("sessionMapConfigCustomizer").isNotNull();
+        assertThat(sessionRepository).extracting("sessionMapAutoconfigurationEnabled").isEqualTo(false);
+    }
+
 	private void registerAndRefresh(Class<?>... annotatedClasses) {
 		this.context.register(annotatedClasses);
 		this.context.refresh();
@@ -437,6 +446,7 @@ class HazelcastHttpSessionConfigurationTest {
 		HazelcastInstance hazelcastInstance() {
 			HazelcastInstance hazelcastInstance = mock(HazelcastInstance.class);
 			given(hazelcastInstance.getMap(anyString())).willReturn(hazelcastInstanceSessions);
+            given(hazelcastInstance.getConfig()).willReturn(new Config());
 			return hazelcastInstance;
 		}
 
@@ -519,5 +529,10 @@ class HazelcastHttpSessionConfigurationTest {
 		}
 
 	}
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableHazelcastHttpSession(disableSessionMapAutoconfiguration = true)
+    static class NoSessionMapIndexAutoConfiguration extends BaseConfiguration {
+    }
 
 }
