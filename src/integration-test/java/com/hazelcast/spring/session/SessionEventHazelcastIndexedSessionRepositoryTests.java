@@ -147,7 +147,8 @@ class SessionEventHazelcastIndexedSessionRepositoryTests<S extends Session> {
 	@Test
 	void saveUpdatesTimeToLiveTest() throws InterruptedException {
 		S sessionToSave = this.repository.createSession();
-		sessionToSave.setMaxInactiveInterval(Duration.ofSeconds(3));
+		// TTL must be much higher than sleep time to avoid flakiness
+		sessionToSave.setMaxInactiveInterval(Duration.ofMinutes(10));
 		this.repository.save(sessionToSave);
 
 		Thread.sleep(2000);
