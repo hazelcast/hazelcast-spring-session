@@ -28,45 +28,42 @@ import java.io.IOException;
 import java.time.Instant;
 
 @PrivateApi
-public class InstantSerializer {
+public final class InstantSerializer {
 
-    private static final int NULL_MARKER = -1;
+    private InstantSerializer() {
+    }
 
     public static void write(ObjectDataOutput out, Instant instant) throws IOException {
-        if (instant == null) {
-            out.writeLong(NULL_MARKER);
-        } else {
+        out.writeBoolean(instant == null);
+        if (instant != null) {
             out.writeLong(instant.getEpochSecond());
             out.writeInt(instant.getNano());
         }
     }
 
     public static void write(@NonNull CompactWriter writer, @NonNull String fieldName, @Nullable Instant instant) {
-        if (instant == null) {
-            writer.writeInt64(fieldName + "_seconds", NULL_MARKER);
-        } else {
-            writer.writeInt64(fieldName + "_seconds", instant.getEpochSecond());
-            writer.writeInt32(fieldName + "_nanos", instant.getNano());
-        }
+        writer.writeNullableInt64(fieldName + "_seconds", instant == null ? null : instant.getEpochSecond());
+        writer.writeNullableInt32(fieldName + "_nanos", instant == null ? null : instant.getNano());
     }
 
     @Nullable
     public static Instant read(@NonNull ObjectDataInput in) throws IOException {
-        long seconds = in.readLong();
-        if (seconds == NULL_MARKER) {
+        boolean isNullable = in.readBoolean();
+        if (isNullable) {
             return null;
         }
+        long seconds = in.readLong();
         int nanos = in.readInt();
         return Instant.ofEpochSecond(seconds, nanos);
     }
 
     @Nullable
     public static Instant read(@NonNull CompactReader reader, String fieldName) {
-        long seconds = reader.readInt64(fieldName + "_seconds");
-        if (seconds == NULL_MARKER) {
+        Long seconds = reader.readNullableInt64(fieldName + "_seconds");
+        Integer nanos = reader.readNullableInt32(fieldName + "_nanos");
+        if (seconds == null || nanos == null) {
             return null;
         }
-        int nanos = reader.readInt32(fieldName + "_nanos");
         return Instant.ofEpochSecond(seconds, nanos);
     }
 }

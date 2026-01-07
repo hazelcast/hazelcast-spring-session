@@ -18,11 +18,7 @@ package com.hazelcast.spring.session.serialization;
 
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
-import com.hazelcast.nio.serialization.Serializer;
-import com.hazelcast.nio.serialization.SerializerHook;
-import com.hazelcast.nio.serialization.StreamSerializer;
 import com.hazelcast.nio.serialization.compact.CompactReader;
-import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import com.hazelcast.spi.annotation.PrivateApi;
 import org.jspecify.annotations.NonNull;
@@ -32,45 +28,42 @@ import java.io.IOException;
 import java.time.Duration;
 
 @PrivateApi
-public class DurationSerializer {
+public final class DurationSerializer {
 
-    private static final int NULL_MARKER = -1;
+    private DurationSerializer() {
+    }
 
     public static void write(ObjectDataOutput out, Duration duration) throws IOException {
-        if (duration == null) {
-            out.writeInt(NULL_MARKER);
-        } else {
+        out.writeBoolean(duration == null);
+        if (duration != null) {
             out.writeLong(duration.getSeconds());
             out.writeInt(duration.getNano());
         }
     }
 
     public static void write(@NonNull CompactWriter writer, String fieldName, @Nullable Duration duration) {
-        if (duration == null) {
-            writer.writeInt64(fieldName + "_seconds", NULL_MARKER);
-        } else {
-            writer.writeInt64(fieldName + "_seconds", duration.getSeconds());
-            writer.writeInt32(fieldName + "_nanos", duration.getNano());
-        }
+        writer.writeNullableInt64(fieldName + "_seconds", duration == null ? null : duration.getSeconds());
+        writer.writeNullableInt32(fieldName + "_nanos", duration == null ? null : duration.getNano());
     }
 
     @Nullable
     public static Duration read(@NonNull ObjectDataInput in) throws IOException {
-        long seconds = in.readLong();
-        if (seconds == NULL_MARKER) {
+        boolean isNullable = in.readBoolean();
+        if (isNullable) {
             return null;
         }
+        long seconds = in.readLong();
         int nanos = in.readInt();
         return Duration.ofSeconds(seconds, nanos);
     }
 
     @Nullable
     public static Duration read(@NonNull CompactReader reader, String fieldName) {
-        long seconds = reader.readInt64(fieldName + "_seconds");
-        if (seconds == NULL_MARKER) {
+        Long seconds = reader.readNullableInt64(fieldName + "_seconds");
+        Integer nanos = reader.readNullableInt32(fieldName + "_nanos");
+        if (seconds == null || nanos == null) {
             return null;
         }
-        int nanos = reader.readInt32(fieldName + "_nanos");
         return Duration.ofSeconds(seconds, nanos);
     }
 }
