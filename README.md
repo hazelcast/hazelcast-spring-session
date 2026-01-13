@@ -76,7 +76,7 @@ git clone git@github.com:hazelcast/hazelcast-spring-session.git
 Install jars into your local Maven cache:
 
 ```bash
-./gradlew install
+./gradlew build publishToMavenLocal
 ```
 
 Compile and test; build all jars:
@@ -96,5 +96,9 @@ Hazelcast Spring Session is Open Source software released under the [Apache 2.0 
 ## Migration from `Spring Session Hazelcast` 3.x
 
 When migrating from [Spring Session](https://github.com/spring-projects/spring-session)'s Hazelcast module, which was under Spring Team ownership until version 4.0, you need to make some adjustments:
-1. GroupId is changed to `com.hazelcast` and artifactId is now `hazelcast-spring-session`.
+1. GroupId is changed to `com.hazelcast.spring` and artifactId is now `hazelcast-spring-session`.
 2. All Hazelcast-specific classes were moved from `org.springframework.session.hazelcast` to `com.hazelcast.spring.session`.
+3. Remove this configuration for PrincipalNameExtractor.
+4. Change serialization configuration. Replace previous SerializationConfig with the usage of `HazelcastSessionConfiguration.applySerializationConfig(config);`.
+
+For more details, please see https://docs.hazelcast.com/hazelcast/5.7-snapshot/spring/hazelcast-spring-session#migrate-from-spring-session-hazelcast-3-x.
