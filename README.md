@@ -21,14 +21,14 @@ To start using `hazelcast-spring-session`, you need to add following dependency:
 <dependency>
     <groupId>com.hazelcast</groupId>
     <artifactId>hazelcast-spring-session</artifactId>
-    <version>4.0.0-SNAPSHOT</version> <!-- note: SNAPSHOT is used here only before first major release -->
+    <version>4.0.0-RC1</version>
 </dependency>
 ```
 or using Gradle:
 
 ```kotlin
 // note: SNAPSHOT is used here only before first major release
-implementation("com.hazelcast:hazelcast-spring-session:4.0.0-SNAPSHOT")
+implementation("com.hazelcast:hazelcast-spring-session:4.0.0-RC1")
 ```
 
 Then you need to add `@EnableHazelcastHttpSession` annotation to your `@Configuration` class.
@@ -100,5 +100,10 @@ When migrating from [Spring Session](https://github.com/spring-projects/spring-s
 2. All Hazelcast-specific classes were moved from `org.springframework.session.hazelcast` to `com.hazelcast.spring.session`.
 3. Remove this configuration for PrincipalNameExtractor.
 4. Change serialization configuration. Replace previous SerializationConfig with the usage of `HazelcastSessionConfiguration.applySerializationConfig(config);`.
+
+Please note, that if you want to run Hazelcast Spring Session with Hazelcast 5.6 and Spring Boot 4, you need to add to your configuration class following exclusion:
+```java
+@EnableAutoConfiguration(excludeName = "com.hazelcast.spring.HazelcastObjectExtractionConfiguration")
+```
 
 For more details, please see https://docs.hazelcast.com/hazelcast/5.7-snapshot/spring/hazelcast-spring-session#migrate-from-spring-session-hazelcast-3-x.
