@@ -19,7 +19,7 @@ jobs:
       matrix:
         java: [ '17', '21', '25' ]
         hazelcast: [ '5.4.0', '5.5.0', '5.6.0' ]
-        spring: [ { springSession: '3.5.2', springFramework: '6.2.12', springSecurity: '6.5.5' }, { springSession: '4.0.0-M2', springFramework: '7.0.0', springSecurity: '7.0.0-M3' } ]
+        spring: [ { springSession: '3.5.2', springFramework: '6.2.12', springSecurity: '6.5.5' }, { springSession: '4.0.1', springFramework: '7.0.3', springSecurity: '7.0.2' } ]
 
     name: Build with Java ${{ matrix.java }} and Hazelcast ${{ matrix.hazelcast }}
 
@@ -51,7 +51,7 @@ jobs:
           build/test-results/
 
     - name: Upload build artifacts
-      if: success() && matrix.java == '17' && matrix.hazelcast == '5.6' && matrix.spring.springSession == '4.0.0-M2'
+      if: success() && matrix.java == '17' && matrix.hazelcast == '5.6' && matrix.spring.springSession == '4.0.1'
       uses: actions/upload-artifact@v6
       with:
         name: build-artifacts
