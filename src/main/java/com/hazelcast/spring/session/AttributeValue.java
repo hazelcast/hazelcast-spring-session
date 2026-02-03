@@ -91,7 +91,7 @@ public final class AttributeValue {
             object = serializationService.toObject(new HeapData(objectBytes));
         }
         //noinspection unchecked
-        return object == null ? null : (T) object;
+        return (T) object;
     }
 
     @NonNull
