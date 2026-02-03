@@ -16,11 +16,13 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.internal.serialization.Data;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.internal.serialization.impl.HeapData;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecord;
 import com.hazelcast.nio.serialization.genericrecord.GenericRecordBuilder;
+import com.hazelcast.spi.impl.SerializationServiceSupport;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -38,7 +40,7 @@ import java.util.Objects;
  *
  * @since 4.0.0
  */
-final class AttributeValue {
+public final class AttributeValue {
     private transient Object object;
     private byte[] objectBytes;
 
@@ -77,6 +79,19 @@ final class AttributeValue {
         if (object == null) {
             object = serializationService.toObject(new HeapData(objectBytes));
         }
+    }
+
+    /**
+     * Returns object deserialized from {@link #objectBytes()}.
+     * Once object is deserialized once, it will be cached and can be accessed also by {@link #object()}.
+     */
+    public <T> T deserialize(@NonNull HazelcastInstance hazelcastInstance) {
+        if (object == null) {
+            var serializationService = ((SerializationServiceSupport) hazelcastInstance).getSerializationService();
+            object = serializationService.toObject(new HeapData(objectBytes));
+        }
+        //noinspection unchecked
+        return object == null ? null : (T) object;
     }
 
     @NonNull

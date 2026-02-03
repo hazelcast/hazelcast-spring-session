@@ -43,7 +43,7 @@ import static org.springframework.session.FindByIndexNameSessionRepository.PRINC
  *
  * @since 4.0.0
  */
-class BackingMapSession {
+public class BackingMapSession {
     static final Set<String> PRINCIPAL_NAME_ATTRIBUTES = Set.of(PRINCIPAL_NAME_ATTRIBUTE, PRINCIPAL_NAME_INDEX_NAME);
 
     /**
