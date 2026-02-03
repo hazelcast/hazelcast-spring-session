@@ -19,6 +19,7 @@ package com.hazelcast.spring.session;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository.HazelcastSession;
 import org.assertj.core.api.ObjectAssert;
 import org.example.CustomPojo;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.DEFAULT_SESSION_MAP_NAME;
 import static com.hazelcast.spring.session.HazelcastIndexedSessionRepository.PRINCIPAL_NAME_ATTRIBUTE;
 import static com.hazelcast.spring.session.TestUtils.getConfig;
 import static com.hazelcast.spring.session.TestUtils.getConfigWithoutSerialization;
@@ -61,6 +63,8 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
     private HazelcastIndexedSessionRepository repository;
     private HazelcastIndexedSessionRepository otherMemberRepository;
+    private IMap<String, BackingMapSession> sessionsMap;
+    private HazelcastInstance hazelcastInstance;
 
     @BeforeEach
     void setUp() {
@@ -71,7 +75,7 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.setProperty("hazelcast.partition.count", "11");
-        HazelcastInstance hazelcastInstance = useClient
+        this.hazelcastInstance = useClient
                 ? FACTORY.newHazelcastClient(HazelcastSessionConfiguration.applySerializationConfig(clientConfig))
                 : FACTORY.newHazelcastInstance(getConfig());
 
@@ -87,6 +91,8 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         this.otherMemberRepository = new HazelcastIndexedSessionRepository(newMember);
         this.otherMemberRepository.setDeployedOnAllMembers(codeDeployed);
         this.otherMemberRepository.afterPropertiesSet();
+
+        this.sessionsMap = hazelcastInstance.getMap(DEFAULT_SESSION_MAP_NAME);
     }
 
     @AfterEach
@@ -129,6 +135,22 @@ public class AttributeHandlingTest extends TestWithHazelcast {
         assertAttribute(sessionFromSecondMember, "keyPojo")
                 .isInstanceOf(CustomPojo.class)
                 .isEqualTo(new CustomPojo(3, "3"));
+    }
+
+    @Test
+    void attributeExternalAccessWorks() {
+        HazelcastSession session = repository.createSession();
+
+        session.setAttribute("keyString", "value123");
+        session.setAttribute("keyPojo", new CustomPojo(1, "1"));
+        repository.save(session);
+
+        BackingMapSession backingMapSession = sessionsMap.get(session.getId());
+        assertThat(backingMapSession).isNotNull();
+        assertThat((String) backingMapSession.getAttribute("keyString").deserialize(hazelcastInstance))
+                .isEqualTo("value123");
+        assertThat((CustomPojo) backingMapSession.getAttribute("keyPojo").deserialize(hazelcastInstance))
+                .isEqualTo(new CustomPojo(1, "1"));
     }
 
     @Test
