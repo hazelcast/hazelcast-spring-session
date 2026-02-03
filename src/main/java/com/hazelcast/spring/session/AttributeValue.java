@@ -85,13 +85,12 @@ public final class AttributeValue {
      * Returns object deserialized from {@link #objectBytes()}.
      * Once object is deserialized once, it will be cached and can be accessed also by {@link #object()}.
      */
-    public <T> T deserialize(@NonNull HazelcastInstance hazelcastInstance) {
+    public <T> T deserialize(@NonNull HazelcastInstance hazelcastInstance, Class<T> clazz) {
         if (object == null) {
             var serializationService = ((SerializationServiceSupport) hazelcastInstance).getSerializationService();
             object = serializationService.toObject(new HeapData(objectBytes));
         }
-        //noinspection unchecked
-        return (T) object;
+        return clazz.cast(object);
     }
 
     @NonNull

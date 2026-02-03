@@ -147,9 +147,9 @@ public class AttributeHandlingTest extends TestWithHazelcast {
 
         BackingMapSession backingMapSession = sessionsMap.get(session.getId());
         assertThat(backingMapSession).isNotNull();
-        assertThat((String) backingMapSession.getAttribute("keyString").deserialize(hazelcastInstance))
+        assertThat(backingMapSession.getAttribute("keyString").deserialize(hazelcastInstance, String.class))
                 .isEqualTo("value123");
-        assertThat((CustomPojo) backingMapSession.getAttribute("keyPojo").deserialize(hazelcastInstance))
+        assertThat(backingMapSession.getAttribute("keyPojo").deserialize(hazelcastInstance, CustomPojo.class))
                 .isEqualTo(new CustomPojo(1, "1"));
     }
 
