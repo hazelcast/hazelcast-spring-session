@@ -250,6 +250,7 @@ public class HazelcastIndexedSessionRepository
 	 * @param applicationEventPublisher the {@link ApplicationEventPublisher} that is used
 	 * to publish session events. Cannot be null.
 	 */
+	@NonNull
 	public HazelcastIndexedSessionRepository setApplicationEventPublisher(@NonNull ApplicationEventPublisher applicationEventPublisher) {
 		Assert.notNull(applicationEventPublisher, "ApplicationEventPublisher cannot be null");
 		this.eventPublisher = applicationEventPublisher;
@@ -262,6 +263,7 @@ public class HazelcastIndexedSessionRepository
 	 * time out. The default is 30 minutes.
 	 * @param defaultMaxInactiveInterval the default maxInactiveInterval
 	 */
+	@NonNull
 	public HazelcastIndexedSessionRepository setDefaultMaxInactiveInterval(@NonNull Duration defaultMaxInactiveInterval) {
 		Assert.notNull(defaultMaxInactiveInterval, "defaultMaxInactiveInterval must not be null");
 		this.defaultMaxInactiveInterval = defaultMaxInactiveInterval;
@@ -272,6 +274,7 @@ public class HazelcastIndexedSessionRepository
 	 * Set the {@link IndexResolver} to use.
 	 * @param indexResolver the index resolver
 	 */
+	@NonNull
 	public HazelcastIndexedSessionRepository setIndexResolver(@NonNull IndexResolver<Session> indexResolver) {
 		Assert.notNull(indexResolver, "indexResolver cannot be null");
 		this.indexResolver = indexResolver;
@@ -282,6 +285,7 @@ public class HazelcastIndexedSessionRepository
 	 * Set the name of map used to store sessions.
 	 * @param sessionMapName the session map name
 	 */
+	@NonNull
 	public HazelcastIndexedSessionRepository setSessionMapName(@NonNull String sessionMapName) {
 		Assert.hasText(sessionMapName, "Map name must not be empty");
 		this.sessionMapName = sessionMapName;
@@ -292,6 +296,7 @@ public class HazelcastIndexedSessionRepository
 	 * Sets the Hazelcast flush mode. Default flush mode is {@link FlushMode#ON_SAVE}.
 	 * @param flushMode the new Hazelcast flush mode
 	 */
+	@NonNull
 	public HazelcastIndexedSessionRepository setFlushMode(@NonNull FlushMode flushMode) {
 		Assert.notNull(flushMode, "flushMode cannot be null");
 		this.flushMode = flushMode;
@@ -302,6 +307,7 @@ public class HazelcastIndexedSessionRepository
 	 * Set the save mode.
 	 * @param saveMode the save mode
 	 */
+	@NonNull
 	public HazelcastIndexedSessionRepository setSaveMode(@NonNull SaveMode saveMode) {
 		Assert.notNull(saveMode, "saveMode must not be null");
 		this.saveMode = saveMode;
@@ -315,12 +321,13 @@ public class HazelcastIndexedSessionRepository
 	 *
 	 * @since 4.0.0
      */
+	@NonNull
     public HazelcastIndexedSessionRepository setDeployedOnAllMembers(boolean deployedOnAllMembers) {
         this.deployedOnAllMembers = deployedOnAllMembers;
 		return this;
     }
 
-    /**
+	/**
      * Allows customization of {@link IMap} storing session information.
      *
      * @return this for fluent API
@@ -340,6 +347,7 @@ public class HazelcastIndexedSessionRepository
 	 *
 	 * @since 4.0.0
      */
+	@NonNull
     public HazelcastIndexedSessionRepository disableSessionMapAutoConfiguration() {
 		sessionMapAutoconfigurationEnabled = false;
         sessionMapConfigCustomizer = ConsumerEx.noop();
