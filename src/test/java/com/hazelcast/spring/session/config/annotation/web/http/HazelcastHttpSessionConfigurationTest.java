@@ -17,10 +17,12 @@
 package com.hazelcast.spring.session.config.annotation.web.http;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.hazelcast.spring.session.SessionMapCustomizer;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -275,6 +277,16 @@ class HazelcastHttpSessionConfigurationTest {
         assertThat(sessionRepository).extracting("sessionMapConfigCustomizer").isNotNull();
         assertThat(sessionRepository).extracting("sessionMapAutoconfigurationEnabled").isEqualTo(false);
     }
+
+    @Test
+    void registerWhenSessionMapCustomizationIsApplied() {
+        registerAndRefresh(CustomizedSessionMapIndexConfiguration.class);
+        HazelcastIndexedSessionRepository sessionRepository = this.context
+                .getBean(HazelcastIndexedSessionRepository.class);
+        assertThat(sessionRepository).extracting("sessionMapConfigCustomizer").isNotNull();
+        assertThat(sessionRepository).extracting("sessionMapAutoconfigurationEnabled").isEqualTo(true);
+		assertThat(CustomizedSessionMapIndexConfiguration.wasCalled).isTrue();
+	}
 
 	private void registerAndRefresh(Class<?>... annotatedClasses) {
 		this.context.register(annotatedClasses);
@@ -533,6 +545,19 @@ class HazelcastHttpSessionConfigurationTest {
     @Configuration(proxyBeanMethods = false)
     @EnableHazelcastHttpSession(disableSessionMapAutoconfiguration = true)
     static class NoSessionMapIndexAutoConfiguration extends BaseConfiguration {
+    }
+
+
+    @Configuration(proxyBeanMethods = false)
+    @EnableHazelcastHttpSession
+    static class CustomizedSessionMapIndexConfiguration extends BaseConfiguration {
+		static AtomicBoolean wasCalled = new AtomicBoolean(false);
+		@Bean
+		public SessionMapCustomizer sessionMapCustomizer() {
+			return mapConf -> {
+				wasCalled.set(true);
+			};
+		}
     }
 
 }
