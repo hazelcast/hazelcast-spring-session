@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import com.hazelcast.spring.session.SessionMapCustomizer;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,7 @@ import org.springframework.session.config.annotation.web.http.SpringHttpSessionC
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository;
 import com.hazelcast.spring.session.config.annotation.SpringSessionHazelcastInstance;
 import org.springframework.session.web.http.SessionRepositoryFilter;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -81,6 +83,8 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 	private SessionIdGenerator sessionIdGenerator = UuidSessionIdGenerator.getInstance();
 
     private boolean disableSessionMapAutoconfiguration;
+
+	private SessionMapCustomizer sessionMapCustomizer;
 
     @Bean
 	public FindByIndexNameSessionRepository<?> sessionRepository() {
@@ -130,6 +134,12 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		this.sessionRepositoryCustomizers = sessionRepositoryCustomizers.orderedStream().collect(Collectors.toList());
 	}
 
+	@Autowired(required = false)
+	public void setSessionMapConfigCustomizer(SessionMapCustomizer sessionMapCustomizer) {
+		Assert.notNull(sessionMapCustomizer, "sessionMapCustomizer must not be null");
+		this.sessionMapCustomizer = sessionMapCustomizer;
+	}
+
 	@Override
 	public void setImportMetadata(AnnotationMetadata importMetadata) {
 		Map<String, Object> attributeMap = importMetadata
@@ -164,7 +174,9 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
         sessionRepository.setSessionIdGenerator(this.sessionIdGenerator);
         if (this.disableSessionMapAutoconfiguration) {
             sessionRepository.disableSessionMapAutoConfiguration();
-        }
+        } else if (this.sessionMapCustomizer != null) {
+			sessionRepository.setSessionMapConfigCustomizer(this.sessionMapCustomizer);
+		}
 
 		this.sessionRepositoryCustomizers
 			.forEach((sessionRepositoryCustomizer) -> sessionRepositoryCustomizer.customize(sessionRepository));

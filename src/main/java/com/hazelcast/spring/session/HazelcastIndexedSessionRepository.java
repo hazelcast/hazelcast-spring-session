@@ -31,7 +31,6 @@ import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.function.ConsumerEx;
 import com.hazelcast.internal.serialization.SerializationService;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
@@ -191,7 +190,7 @@ public class HazelcastIndexedSessionRepository
      * Used to customize session map configuration.
      */
     @NonNull
-    private ConsumerEx<MapConfig> sessionMapConfigCustomizer = ConsumerEx.noop();
+    private SessionMapCustomizer sessionMapConfigCustomizer = SessionMapCustomizer.noop();
     private boolean sessionMapAutoconfigurationEnabled = true;
 
 	/**
@@ -220,7 +219,7 @@ public class HazelcastIndexedSessionRepository
 
 		var mapConfig = new MapConfig(sessionMapName);
 		mapConfig.getIndexConfigs().add(new IndexConfig(HASH, PRINCIPAL_NAME_ATTRIBUTE));
-		customizer.accept(mapConfig);
+		customizer.configure(mapConfig);
 
         try {
             hazelcastInstance.getConfig().addMapConfig(mapConfig);
@@ -327,7 +326,8 @@ public class HazelcastIndexedSessionRepository
 	 *
 	 * @since 4.0.0
      */
-    public HazelcastIndexedSessionRepository setSessionMapConfigCustomizer(@NonNull ConsumerEx<MapConfig> sessionMapConfigCustomizer) {
+	@NonNull
+    public HazelcastIndexedSessionRepository setSessionMapConfigCustomizer(@NonNull SessionMapCustomizer sessionMapConfigCustomizer) {
         Assert.notNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer must not be null");
         this.sessionMapConfigCustomizer = sessionMapConfigCustomizer;
         return this;
@@ -342,7 +342,7 @@ public class HazelcastIndexedSessionRepository
      */
     public HazelcastIndexedSessionRepository disableSessionMapAutoConfiguration() {
 		sessionMapAutoconfigurationEnabled = false;
-        sessionMapConfigCustomizer = ConsumerEx.noop();
+        sessionMapConfigCustomizer = SessionMapCustomizer.noop();
         return this;
     }
 
