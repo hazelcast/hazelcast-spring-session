@@ -102,8 +102,7 @@ final class AttributeValue {
         return object;
     }
 
-    @Nullable
-    public byte[] objectBytes() {
+    public byte @Nullable [] objectBytes() {
         return objectBytes;
     }
 
