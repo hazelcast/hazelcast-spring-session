@@ -134,6 +134,9 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 		this.sessionRepositoryCustomizers = sessionRepositoryCustomizers.orderedStream().collect(Collectors.toList());
 	}
 
+	/**
+	 * @since 4.0.0
+	 */
 	@Autowired(required = false)
 	public void setSessionMapConfigCustomizer(SessionMapCustomizer sessionMapCustomizer) {
 		Assert.notNull(sessionMapCustomizer, "sessionMapCustomizer must not be null");
