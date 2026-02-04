@@ -554,9 +554,8 @@ class HazelcastHttpSessionConfigurationTest {
 		static AtomicBoolean wasCalled = new AtomicBoolean(false);
 		@Bean
 		public SessionMapCustomizer sessionMapCustomizer() {
-			return mapConf -> {
-				wasCalled.set(true);
-			};
+			return SessionMapCustomizer.wrap(mapConf -> {
+			});
 		}
     }
 

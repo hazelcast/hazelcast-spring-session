@@ -24,6 +24,8 @@ import java.util.Objects;
 
 /**
  * A functional interface used to customize session map used by {@link HazelcastIndexedSessionRepository}.
+ *
+ * @since 4.0.0
  */
 @FunctionalInterface
 public interface SessionMapCustomizer {
