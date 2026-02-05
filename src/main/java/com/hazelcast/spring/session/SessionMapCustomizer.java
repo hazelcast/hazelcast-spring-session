@@ -29,9 +29,11 @@ import org.springframework.util.Assert;
 @FunctionalInterface
 public interface SessionMapCustomizer {
 
+    SessionMapCustomizer NOOP = conf -> {
+    };
+
     static @NonNull SessionMapCustomizer noop() {
-        return conf -> {
-        };
+        return NOOP;
     }
 
     /**
