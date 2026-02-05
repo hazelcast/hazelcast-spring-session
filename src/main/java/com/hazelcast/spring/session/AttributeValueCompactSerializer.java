@@ -52,8 +52,9 @@ import org.jspecify.annotations.NonNull;
  *
  * @since 4.0.0
  */
-@SuppressWarnings("ClassEscapesDefinedScope")
 public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
+
+    public static final AttributeValueCompactSerializer INSTANCE = new AttributeValueCompactSerializer();
 
     @Override
     @NonNull
@@ -79,5 +80,15 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
     @NonNull
     public Class<AttributeValue> getCompactClass() {
         return AttributeValue.class;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof AttributeValueCompactSerializer;
     }
 }
