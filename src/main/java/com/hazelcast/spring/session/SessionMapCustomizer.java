@@ -19,8 +19,7 @@ package com.hazelcast.spring.session;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.function.ConsumerEx;
 import org.jspecify.annotations.NonNull;
-
-import java.util.Objects;
+import org.springframework.util.Assert;
 
 /**
  * A functional interface used to customize session map used by {@link HazelcastIndexedSessionRepository}.
@@ -41,7 +40,7 @@ public interface SessionMapCustomizer {
     void configure(@NonNull MapConfig config);
 
     static SessionMapCustomizer wrap(@NonNull ConsumerEx<MapConfig> sessionMapConfigCustomizer) {
-        Objects.requireNonNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer can't be null");
+        Assert.notNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer can't be null");
         return sessionMapConfigCustomizer::accept;
     }
 }
