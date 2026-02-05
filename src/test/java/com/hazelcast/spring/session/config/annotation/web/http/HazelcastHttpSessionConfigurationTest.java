@@ -17,7 +17,6 @@
 package com.hazelcast.spring.session.config.annotation.web.http;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
@@ -280,12 +279,13 @@ class HazelcastHttpSessionConfigurationTest {
 
     @Test
     void registerWhenSessionMapCustomizationIsApplied() {
+		assertThat(CustomizedSessionMapIndexConfiguration.configurationInvoked).isFalse();
         registerAndRefresh(CustomizedSessionMapIndexConfiguration.class);
         HazelcastIndexedSessionRepository sessionRepository = this.context
                 .getBean(HazelcastIndexedSessionRepository.class);
         assertThat(sessionRepository).extracting("sessionMapConfigCustomizer").isNotNull();
         assertThat(sessionRepository).extracting("sessionMapAutoconfigurationEnabled").isEqualTo(true);
-		assertThat(CustomizedSessionMapIndexConfiguration.wasCalled).isTrue();
+		assertThat(CustomizedSessionMapIndexConfiguration.configurationInvoked).isTrue();
 	}
 
 	private void registerAndRefresh(Class<?>... annotatedClasses) {
@@ -551,10 +551,11 @@ class HazelcastHttpSessionConfigurationTest {
     @Configuration(proxyBeanMethods = false)
     @EnableHazelcastHttpSession
     static class CustomizedSessionMapIndexConfiguration extends BaseConfiguration {
-		static AtomicBoolean wasCalled = new AtomicBoolean(false);
+		static boolean configurationInvoked = false;
 		@Bean
 		public SessionMapCustomizer sessionMapCustomizer() {
 			return SessionMapCustomizer.wrap(mapConf -> {
+				configurationInvoked = true;
 			});
 		}
     }
