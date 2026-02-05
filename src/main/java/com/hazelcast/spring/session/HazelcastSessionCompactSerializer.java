@@ -56,8 +56,9 @@ import java.util.Set;
  *
  * @since 4.0.0
  */
-@SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastSessionCompactSerializer implements CompactSerializer<BackingMapSession> {
+
+    public static final HazelcastSessionCompactSerializer INSTANCE = new HazelcastSessionCompactSerializer();
 
     @Override
     @NonNull
