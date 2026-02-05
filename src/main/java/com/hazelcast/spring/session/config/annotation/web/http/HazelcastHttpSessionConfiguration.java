@@ -19,6 +19,7 @@ package com.hazelcast.spring.session.config.annotation.web.http;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -138,9 +139,9 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
 	 * @since 4.0.0
 	 */
 	@Autowired(required = false)
-	public void setSessionMapConfigCustomizer(SessionMapCustomizer sessionMapCustomizer) {
+	public void setSessionMapConfigCustomizer(@NonNull Optional<SessionMapCustomizer> sessionMapCustomizer) {
 		Assert.notNull(sessionMapCustomizer, "sessionMapCustomizer must not be null");
-		this.sessionMapCustomizer = sessionMapCustomizer;
+		this.sessionMapCustomizer = sessionMapCustomizer.orElse(SessionMapCustomizer.noop());
 	}
 
 	@Override
