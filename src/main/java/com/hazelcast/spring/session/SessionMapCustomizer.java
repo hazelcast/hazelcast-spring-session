@@ -45,4 +45,14 @@ public interface SessionMapCustomizer {
         Assert.notNull(sessionMapConfigCustomizer, "sessionMapConfigCustomizer can't be null");
         return sessionMapConfigCustomizer::accept;
     }
+
+    @NonNull
+    default SessionMapCustomizer andThen(@NonNull final SessionMapCustomizer otherSessionMapCustomizer) {
+        var thisCustomizer = this;
+        return mapConf -> {
+            thisCustomizer.configure(mapConf);
+            otherSessionMapCustomizer.configure(mapConf);
+        };
+    }
+
 }
