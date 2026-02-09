@@ -82,11 +82,14 @@ public final class AttributeValueCompactSerializer implements CompactSerializer<
         return AttributeValue.class;
     }
 
+    // singleton class, equals and hashCode only check if class is the same
     @Override
     public int hashCode() {
         return getClass().hashCode();
     }
 
+
+    // singleton class, equals and hashCode only check if class is the same
     @Override
     public boolean equals(Object obj) {
         return obj != null && obj.getClass().equals(this.getClass());
