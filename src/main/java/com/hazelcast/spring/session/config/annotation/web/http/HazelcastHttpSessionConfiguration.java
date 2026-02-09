@@ -180,11 +180,12 @@ public class HazelcastHttpSessionConfiguration implements ImportAware {
         if (this.disableSessionMapAutoconfiguration) {
             sessionRepository.disableSessionMapAutoConfiguration();
         } else if (this.sessionMapCustomizer != null) {
-			sessionRepository.setSessionMapConfigCustomizer(this.sessionMapCustomizer);
+			sessionRepository = sessionRepository.setSessionMapConfigCustomizer(this.sessionMapCustomizer);
 		}
 
+		final var finalSessionRepository = sessionRepository;
 		this.sessionRepositoryCustomizers
-			.forEach((sessionRepositoryCustomizer) -> sessionRepositoryCustomizer.customize(sessionRepository));
+			.forEach((sessionRepositoryCustomizer) -> sessionRepositoryCustomizer.customize(finalSessionRepository));
 		return sessionRepository;
 	}
 
