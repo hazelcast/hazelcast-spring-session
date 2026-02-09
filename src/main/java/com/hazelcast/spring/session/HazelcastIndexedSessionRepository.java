@@ -121,7 +121,6 @@ import static java.util.Objects.requireNonNull;
  * @author Eleftheria Stein
  * @since 2.2.0
  */
-@SuppressWarnings("ClassEscapesDefinedScope")
 public class HazelcastIndexedSessionRepository
 		implements FindByIndexNameSessionRepository<HazelcastIndexedSessionRepository.HazelcastSession>,
                    EntryAddedListener<String, BackingMapSession>, EntryEvictedListener<String, BackingMapSession>,
