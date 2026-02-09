@@ -82,14 +82,16 @@ public final class AttributeValueCompactSerializer implements CompactSerializer<
         return AttributeValue.class;
     }
 
-    // singleton class, equals and hashCode only check if class is the same
+    // This class acts like a singleton class, but can be dynamically created by CompactStreamSerializer, so it's not a real singleton.
+    // equals and hashCode only check if class is the same.
     @Override
     public int hashCode() {
         return getClass().hashCode();
     }
 
 
-    // singleton class, equals and hashCode only check if class is the same
+    // This class acts like a singleton class, but can be dynamically created by CompactStreamSerializer, so it's not a real singleton.
+    // equals and hashCode only check if class is the same.
     @Override
     public boolean equals(Object obj) {
         return obj != null && obj.getClass().equals(this.getClass());
