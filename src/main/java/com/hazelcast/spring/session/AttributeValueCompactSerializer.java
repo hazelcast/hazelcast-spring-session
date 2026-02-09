@@ -52,7 +52,7 @@ import org.jspecify.annotations.NonNull;
  *
  * @since 4.0.0
  */
-public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
+public final class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
 
     public static final AttributeValueCompactSerializer INSTANCE = new AttributeValueCompactSerializer();
 
@@ -84,11 +84,11 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
 
     @Override
     public int hashCode() {
-        return 0;
+        return getClass().hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof AttributeValueCompactSerializer;
+        return obj != null && obj.getClass().equals(this.getClass());
     }
 }

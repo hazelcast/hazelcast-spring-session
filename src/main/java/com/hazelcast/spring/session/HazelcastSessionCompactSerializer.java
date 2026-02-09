@@ -56,7 +56,7 @@ import java.util.Set;
  *
  * @since 4.0.0
  */
-public class HazelcastSessionCompactSerializer implements CompactSerializer<BackingMapSession> {
+public final class HazelcastSessionCompactSerializer implements CompactSerializer<BackingMapSession> {
 
     public static final HazelcastSessionCompactSerializer INSTANCE = new HazelcastSessionCompactSerializer();
 
@@ -110,11 +110,11 @@ public class HazelcastSessionCompactSerializer implements CompactSerializer<Back
 
     @Override
     public int hashCode() {
-        return 1;
+        return getClass().hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof HazelcastSessionCompactSerializer;
+        return obj != null && obj.getClass().equals(this.getClass());
     }
 }
