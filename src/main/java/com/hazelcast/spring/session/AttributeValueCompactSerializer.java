@@ -67,7 +67,7 @@ public final class AttributeValueCompactSerializer implements CompactSerializer<
 
     @Override
     public void write(@NonNull CompactWriter writer, @NonNull AttributeValue object) {
-        writer.writeArrayOfInt8(" objectBytes", object.objectBytes());
+        writer.writeArrayOfInt8("objectBytes", object.objectBytes());
     }
 
     @Override
