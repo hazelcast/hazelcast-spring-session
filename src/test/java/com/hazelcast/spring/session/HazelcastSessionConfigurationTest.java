@@ -16,6 +16,7 @@
 
 package com.hazelcast.spring.session;
 
+import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +33,19 @@ class HazelcastSessionConfigurationTest {
         Config c1 = new Config();
         applySerializationConfig(c1);
         Config c2 = new Config();
+        applySerializationConfig(c2);
+
+        assertThat(c1.getSerializationConfig()).isEqualTo(c2.getSerializationConfig());
+    }
+
+    /**
+     * Reproducer for <a href="https://hazelcast.atlassian.net/browse/SUP-1104">SUP-1104 ticket</a>.
+     */
+    @Test
+    void serializersAreReusedForClient() {
+        ClientConfig c1 = new ClientConfig();
+        applySerializationConfig(c1);
+        ClientConfig c2 = new ClientConfig();
         applySerializationConfig(c2);
 
         assertThat(c1.getSerializationConfig()).isEqualTo(c2.getSerializationConfig());
