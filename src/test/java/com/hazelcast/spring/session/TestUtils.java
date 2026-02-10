@@ -37,8 +37,8 @@ final class TestUtils {
 
     static SerializationService defaultSerializationService() {
         CompactSerializationConfig compactSerializationConfig = new CompactSerializationConfig();
-        compactSerializationConfig.addSerializer(new AttributeValueCompactSerializer());
-        compactSerializationConfig.addSerializer(new HazelcastSessionCompactSerializer());
+        compactSerializationConfig.addSerializer(AttributeValueCompactSerializer.INSTANCE);
+        compactSerializationConfig.addSerializer(HazelcastSessionCompactSerializer.INSTANCE);
         return new DefaultSerializationServiceBuilder()
                 .setConfig(new SerializationConfig().setCompactSerializationConfig(compactSerializationConfig))
                 .setSchemaService(new InMemorySchemaService())
