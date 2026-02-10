@@ -56,6 +56,9 @@ public final class AttributeValueCompactSerializer implements CompactSerializer<
 
     public static final AttributeValueCompactSerializer INSTANCE = new AttributeValueCompactSerializer();
 
+    private AttributeValueCompactSerializer() {
+    }
+
     @Override
     @NonNull
     public AttributeValue read(CompactReader reader) {

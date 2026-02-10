@@ -159,7 +159,7 @@ public class BackingMapSession {
     @Nullable
     public AttributeValue getAttribute(@NonNull String attributeName) {
         if (PRINCIPAL_NAME_ATTRIBUTES.contains(attributeName)) {
-            return AttributeValue.deserialized(principalName);
+            return principalName == null ? null : AttributeValue.deserialized(principalName);
         }
         return this.sessionAttrs.get(attributeName);
     }

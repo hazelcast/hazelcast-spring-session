@@ -60,6 +60,9 @@ public final class HazelcastSessionCompactSerializer implements CompactSerialize
 
     public static final HazelcastSessionCompactSerializer INSTANCE = new HazelcastSessionCompactSerializer();
 
+    private HazelcastSessionCompactSerializer() {
+    }
+
     @Override
     @NonNull
     public BackingMapSession read(CompactReader reader) {
