@@ -36,8 +36,8 @@ public final class HazelcastSessionConfiguration {
     @NonNull
     public static ClientConfig applySerializationConfig(@NonNull ClientConfig clientConfig) {
         clientConfig.getSerializationConfig().getCompactSerializationConfig()
-                    .addSerializer(new AttributeValueCompactSerializer())
-                    .addSerializer(new HazelcastSessionCompactSerializer());
+                    .addSerializer(AttributeValueCompactSerializer.INSTANCE)
+                    .addSerializer(HazelcastSessionCompactSerializer.INSTANCE);
         return clientConfig;
     }
 
@@ -51,8 +51,8 @@ public final class HazelcastSessionConfiguration {
     @NonNull
     public static Config applySerializationConfig(@NonNull Config instanceConfig) {
         instanceConfig.getSerializationConfig().getCompactSerializationConfig()
-                      .addSerializer(new AttributeValueCompactSerializer())
-                      .addSerializer(new HazelcastSessionCompactSerializer());
+                      .addSerializer(AttributeValueCompactSerializer.INSTANCE)
+                      .addSerializer(HazelcastSessionCompactSerializer.INSTANCE);
         return instanceConfig;
     }
 }

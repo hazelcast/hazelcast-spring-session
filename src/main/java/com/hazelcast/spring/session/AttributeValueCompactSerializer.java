@@ -52,8 +52,12 @@ import org.jspecify.annotations.NonNull;
  *
  * @since 4.0.0
  */
-@SuppressWarnings("ClassEscapesDefinedScope")
-public class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
+public final class AttributeValueCompactSerializer implements CompactSerializer<AttributeValue> {
+
+    public static final AttributeValueCompactSerializer INSTANCE = new AttributeValueCompactSerializer();
+
+    private AttributeValueCompactSerializer() {
+    }
 
     @Override
     @NonNull
@@ -79,5 +83,20 @@ public class AttributeValueCompactSerializer implements CompactSerializer<Attrib
     @NonNull
     public Class<AttributeValue> getCompactClass() {
         return AttributeValue.class;
+    }
+
+    // This class acts like a singleton class, but can be dynamically created by CompactStreamSerializer, so it's not a real singleton.
+    // equals and hashCode only check if class is the same.
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
+
+
+    // This class acts like a singleton class, but can be dynamically created by CompactStreamSerializer, so it's not a real singleton.
+    // equals and hashCode only check if class is the same.
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && obj.getClass().equals(this.getClass());
     }
 }
