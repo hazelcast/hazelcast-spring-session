@@ -102,6 +102,9 @@ val integrationTest = tasks.register<Test>("integrationTest") {
     dependsOn(copyHSSJar, copySpringJars)
     shouldRunAfter(tasks.test)
 
+    // workaround for https://github.com/testcontainers/testcontainers-java/issues/11491
+    systemProperty("api.version", "1.44")
+
     useJUnitPlatform()
     testLogging {
         events("passed", "skipped", "failed")
