@@ -101,7 +101,7 @@ When migrating from [Spring Session](https://github.com/spring-projects/spring-s
 3. Remove this configuration for PrincipalNameExtractor.
 4. Change serialization configuration. Replace previous SerializationConfig with the usage of `HazelcastSessionConfiguration.applySerializationConfig(config);`.
 
-Please note, that if you want to run Hazelcast Spring Session with Hazelcast 5.6 and Spring Boot 4, you need to add to your configuration class following exclusion:
+Please note, that if you want to run Hazelcast Spring Session with Hazelcast 5.6 and Spring Boot 4 with autoconfigurations enabled, you need to add to your configuration class following exclusion:
 ```java
 @EnableAutoConfiguration(excludeName = "com.hazelcast.spring.HazelcastObjectExtractionConfiguration")
 ```
