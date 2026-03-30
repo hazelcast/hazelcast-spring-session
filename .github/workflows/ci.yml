@@ -42,7 +42,7 @@ jobs:
         comment-type: both
         paths: |
           ${{ github.workspace }}/build/reports/jacoco/**/*.xml
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ github.token }}
         min-coverage-overall: 60
         update-comment: true
 
