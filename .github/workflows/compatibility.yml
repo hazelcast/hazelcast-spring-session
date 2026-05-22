@@ -7,8 +7,20 @@ on:
   workflow_dispatch:
 
 jobs:
+  get-hazelcast-versions:
+      runs-on: ubuntu-slim
+      outputs:
+          versions: ${{ steps.branches.outputs.versions }}
+      steps:
+        - id: get-maintenance-versions
+          uses: hazelcast/hazelcast/.github/actions/get-supported-maintenance-versions@master
+        - id: branches
+          run: |
+              echo "versions=$(jq --compact-output 'map(. | tostring + ".0")' <<< '${{ steps.get-maintenance-versions.outputs.versions }}')" >> ${GITHUB_OUTPUT}
+
   build:
     runs-on: ubuntu-latest
+    needs: get-hazelcast-versions
     permissions:
       contents: write
       actions: write
@@ -18,7 +30,7 @@ jobs:
     strategy:
       matrix:
         java: [ '17', '21', '25' ]
-        hazelcast: [ '5.4.0', '5.5.0', '5.6.0' ]
+        hazelcast: ${{ fromJSON(needs.get-hazelcast-versions.outputs.versions) }}
         spring: [ { springSession: '3.5.2', springFramework: '6.2.12', springSecurity: '6.5.5' }, { springSession: '4.0.1', springFramework: '7.0.3', springSecurity: '7.0.2' } ]
 
     name: Build with Java ${{ matrix.java }} and Hazelcast ${{ matrix.hazelcast }}
