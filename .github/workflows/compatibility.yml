@@ -31,7 +31,7 @@ jobs:
       matrix:
         java: [ '17', '21', '25' ]
         hazelcast: ${{ fromJSON(needs.get-hazelcast-versions.outputs.versions) }}
-        spring: [ { springSession: '3.5.6', springFramework: '6.2.18', springSecurity: '6.5.10' }, { springSession: '4.0.3', springFramework: '7.07', springSecurity: '7.0.5' } ]
+        spring: [ { springSession: '3.5.6', springFramework: '6.2.18', springSecurity: '6.5.10' }, { springSession: '4.0.3', springFramework: '7.0.7', springSecurity: '7.0.5' } ]
 
     name: Build with Java ${{ matrix.java }} and Hazelcast ${{ matrix.hazelcast }}
 
