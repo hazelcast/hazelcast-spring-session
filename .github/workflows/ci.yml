@@ -36,7 +36,7 @@ jobs:
       run: ./gradlew build
 
     - name: Add coverage to PR
-      uses: madrapps/jacoco-report@v1.7.2
+      uses: madrapps/jacoco-report@v1.8.0
       with:
         title: 'Code Coverage'
         comment-type: both
