@@ -9,7 +9,6 @@ updates:
       - "Source: Internal"
       - "Type: Dependencies"
     open-pull-requests-limit: 100
-    target-branch: master
 
   - package-ecosystem: "github-actions"
     directory: "/"
