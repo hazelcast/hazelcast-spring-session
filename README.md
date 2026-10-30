@@ -19,16 +19,15 @@ To start using `hazelcast-spring-session`, you need to add following dependency:
 
 ```xml
 <dependency>
-    <groupId>com.hazelcast</groupId>
+    <groupId>com.hazelcast.spring</groupId>
     <artifactId>hazelcast-spring-session</artifactId>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
 </dependency>
 ```
 or using Gradle:
 
 ```kotlin
-// note: SNAPSHOT is used here only before first major release
-implementation("com.hazelcast:hazelcast-spring-session:4.0.0")
+implementation("com.hazelcast.spring:hazelcast-spring-session:4.0.1")
 ```
 
 Then you need to add `@EnableHazelcastHttpSession` annotation to your `@Configuration` class.
