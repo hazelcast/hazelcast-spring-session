@@ -53,6 +53,7 @@ val processBuildContext = tasks.register<ProcessResources>("processBuildContext"
     println("processing resources from " + project.projectDir.path + "/src/integration-test/resources/")
     from(project.projectDir.path + "/src/integration-test/resources/")
     into(project.projectDir.path + "/src/integration-test/java/com/hazelcast/spring/session/")
+    inputs.property("hazelcastVersion", hazelcastVersion)
     include("**BuildContext.java")
     filesMatching("**BuildContext.java") {
         expand(project.properties)
