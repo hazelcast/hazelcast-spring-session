@@ -43,10 +43,10 @@ import com.hazelcast.spring.session.HazelcastIndexedSessionRepository;
 import com.hazelcast.spring.session.HazelcastSessionConfiguration;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.IndexConfig;
+import com.hazelcast.config.IndexType;
 ```
 
 ```java
-// 
 Config config = new Config();
 
 // configuration for the IMap storing the user session data
@@ -105,4 +105,4 @@ Please note, that if you want to run Hazelcast Spring Session with Hazelcast 5.6
 @EnableAutoConfiguration(excludeName = "com.hazelcast.spring.HazelcastObjectExtractionConfiguration")
 ```
 
-For more details, please see https://docs.hazelcast.com/hazelcast/5.7-snapshot/spring/hazelcast-spring-session#migrate-from-spring-session-hazelcast-3-x.
+For more details, please see https://docs.hazelcast.com/hazelcast/latest/spring/hazelcast-spring-session#migrate-from-spring-session-hazelcast-3-x.
