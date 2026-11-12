@@ -132,7 +132,7 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.17")
 
     // Test dependencies
-    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
+    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.26.1")
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
@@ -152,7 +152,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     integrationTestImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
-    integrationTestImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
+    integrationTestImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.26.1")
 }
 
 tasks.test {
