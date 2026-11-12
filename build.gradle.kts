@@ -34,7 +34,7 @@ val jakartaServletVersion = "6.1.0"
 val junitVersion = "6.0.1"
 val mockitoVersion = "5.16.1"
 val assertjVersion = "3.27.3"
-val testcontainersVersion = "2.0.1"
+val testcontainersVersion = "2.0.5"
 
 sourceSets {
     create("integrationTest", Action<SourceSet> {
