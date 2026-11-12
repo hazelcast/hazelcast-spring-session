@@ -128,7 +128,7 @@ dependencies {
     implementation("org.springframework:spring-core:$springFrameworkVersion")
 
     // other
-    implementation("org.jspecify:jspecify:1.0.0")
+    implementation("org.jspecify:jspecify:1.0.1")
     implementation("org.slf4j:slf4j-api:2.0.17")
 
     // Test dependencies
