@@ -129,7 +129,7 @@ dependencies {
 
     // other
     implementation("org.jspecify:jspecify:1.0.0")
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("org.slf4j:slf4j-api:2.0.20")
 
     // Test dependencies
     testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
