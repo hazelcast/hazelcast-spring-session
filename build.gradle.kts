@@ -3,8 +3,8 @@
 plugins {
     `java-library`
     checkstyle
-    id("com.vanniktech.maven.publish") version "0.34.0"
-    id("net.researchgate.release") version "3.1.0"
+    id("com.vanniktech.maven.publish") version "0.37.0"
+    id("net.researchgate.release") version "3.2.0"
     jacoco
 }
 
@@ -20,8 +20,12 @@ repositories {
     mavenCentral()
 }
 
+jacoco {
+    toolVersion = "0.8.16"
+}
+
 checkstyle {
-    toolVersion = "12.3.0"
+    toolVersion = "12.3.1"
 }
 
 // Overridable versions with -Pproperty=value
@@ -31,10 +35,10 @@ val springSecurityVersion: String by project
 val hazelcastVersion: String by project
 
 val jakartaServletVersion = "6.1.0"
-val junitVersion = "6.0.1"
-val mockitoVersion = "5.16.1"
+val junitVersion = "6.1.3"
+val mockitoVersion = "5.24.0"
 val assertjVersion = "3.27.7"
-val testcontainersVersion = "2.0.1"
+val testcontainersVersion = "2.0.5"
 
 sourceSets {
     create("integrationTest", Action<SourceSet> {
@@ -128,11 +132,11 @@ dependencies {
     implementation("org.springframework:spring-core:$springFrameworkVersion")
 
     // other
-    implementation("org.jspecify:jspecify:1.0.0")
-    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("org.jspecify:jspecify:1.0.1")
+    implementation("org.slf4j:slf4j-api:2.0.20")
 
     // Test dependencies
-    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
+    testImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.26.1")
     testImplementation("jakarta.servlet:jakarta.servlet-api:$jakartaServletVersion")
     testImplementation("org.assertj:assertj-core:$assertjVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
@@ -152,7 +156,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     integrationTestImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
-    integrationTestImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2")
+    integrationTestImplementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.26.1")
 }
 
 tasks.test {
